@@ -15,7 +15,8 @@ Feature-name | Support | Category | Description
 `Common-API` | X | `API` | **_Restrict_** API about only server for transaction-oriented communication.
 ---
 ### License
-- Copyright [2019] [eunseok kim]
+```
+Copyright [2019] [eunseok kim]
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,6 +29,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+```
 ---
 ### Developer
 - Eunseok, Kim (email: es.odysseus@gmail.com)
