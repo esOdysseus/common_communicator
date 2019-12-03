@@ -1,0 +1,20 @@
+#ifndef _BASE_DATA_TYPES_H_
+#define _BASE_DATA_TYPES_H_
+
+#include <memory>
+#include <IAppInf.h>
+#include <CRawMessage.h>
+
+class ICommunicator;
+
+namespace dtype_b
+{
+    using RawMsgType = std::shared_ptr<CRawMessage>;
+    using MsgType = std::shared_ptr<CRawMessage>;
+    using SegmentType = CRawMessage;
+    using SegmentsType = std::list<std::shared_ptr<SegmentType>>;
+    using AppType = std::shared_ptr<ICommunicator>;
+    using AppCallerType = std::shared_ptr<CAppInternalCaller>;
+}
+
+#endif // _BASE_DATA_TYPES_H_
