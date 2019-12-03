@@ -45,11 +45,11 @@ $ bash ./build.sh
 ---
 ## Common-API
    > API for loose-dependency between Middleware-Communication library and Application.
-    ```shell
-    $ cd ${work}/delivery/api/common_api
-    $ cat IAppInf.h
-    ```
-    - Common-API is described in "IAppInf.h file".
+   ```shell
+   $ cd ${work}/delivery/api/common_api
+   $ cat IAppInf.h
+   ```
+   - Common-API is described in "IAppInf.h file".
 ---
 ## Example
 - You can test the communicator SDK library by using following guide-line.
