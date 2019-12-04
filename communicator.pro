@@ -29,7 +29,7 @@ SOURCES += \
 
 HEADERS += \
 
-DESTDIR=$$_PRO_FILE_PWD_/delivery/
+DESTDIR=$$_PRO_FILE_PWD_/api/
 EXTRA_BINFILES += \
     $$_PRO_FILE_PWD_/debug/lib$$TARGET.so \
     $$_PRO_FILE_PWD_/debug/lib$$TARGET.so.$$VER_MAJ \

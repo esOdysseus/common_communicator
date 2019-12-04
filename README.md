@@ -32,14 +32,14 @@ limitations under the License.
 ```
 ---
 ### Developer
-- Eunseok, Kim (email: es.odysseus@gmail.com)
+- esOdysseus (email: es.odysseus@gmail.com)
 ---
 ### Latest Release
 - version 0.1.0 (Date: 2019-12-03)
 ---
 ## Installation
 > Please refer following commands.
-> So, you can see the SDK library(libcommunicator.so) in delivery folder.
+> So, you can see the SDK library(libcommunicator.so) in api folder.
 ```shell
 $ cd ${work}
 $ bash ./build.sh
@@ -48,7 +48,7 @@ $ bash ./build.sh
 ## Common-API
    > API for loose-dependency between Middleware-Communication library and Application.
    ```shell
-   $ cd ${work}/delivery/api/common_api
+   $ cd ${work}/api/common_api
    $ cat IAppInf.h
    ```
    - Common-API is described in "IAppInf.h file".
@@ -61,7 +61,7 @@ $ bash ./build.sh
    $ bash ./build.sh
    $ ./build/common_api/example_common_api ${IP} ${Port}
    ```
-   - Attention : You have to set "LD_LIBRARY_PATH" with "${work}/delivery/api/common_api".
+   - Attention : You have to set "LD_LIBRARY_PATH" with "${work}/api".
 ---
 ## TBD-list
 - It will support SOME/IP protocol by common-API.

@@ -15,7 +15,7 @@ using namespace std::placeholders;
 
 int main(int argc, char *argv[])
 {
-    cout << "Test01_____049" << endl;
+    cout << "Test-program for check operating of UDP/TCP server." << endl;
 
     auto handler = create_server("TestApp01", 
                                  "CServerUDP", enum_c::ServerType::E_SERVER_UDP, 

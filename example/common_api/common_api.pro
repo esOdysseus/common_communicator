@@ -13,11 +13,11 @@ QMAKE_CXXFLAGS += -std=c++11 -g3 -Os
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =
 
-LIBS += -lcommunicator -L$$_PRO_FILE_PWD_/../../delivery
+LIBS += -lcommunicator -L$$_PRO_FILE_PWD_/../../api
 
 INCLUDEPATH += \
     $$_PRO_FILE_PWD_    \
-    $$_PRO_FILE_PWD_/../../delivery/api/common_api
+    $$_PRO_FILE_PWD_/../../api/common_api
 
 SOURCES += \
     $$files($$PWD/*.cpp)  

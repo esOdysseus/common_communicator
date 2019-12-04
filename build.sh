@@ -1,7 +1,7 @@
 #!/bin/bash
 
 rm -rf ./debug
-rm -rf ./delivery/libcommunicator.so*
+rm -rf ./api/libcommunicator.so*
 
 if [ "${1}" != "clear" ]
 then
