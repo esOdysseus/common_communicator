@@ -16,7 +16,7 @@ Feature-name | Support | Category | Description
 ---
 ### License
 ```
-Copyright [2019] [eunseok kim]
+Copyright [2019] [es.odysseus@gmail.com]
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
