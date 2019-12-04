@@ -1,10 +1,10 @@
 # Project
 - Name : Common-Communicator
----
-## Simple-Description
+
+### Simple-Description
 - It's SDK library that support Transaction-orient(like as General UDP/TCP) and Service-orient(like as vSomeIP).
 - Objectives : Develop common-framework for communication with another device and another processor and cloud-server.
----
+
 ### Features
 Feature-name | Support | Category | Description
 :---|:---:|:---:|:---
@@ -13,8 +13,8 @@ Feature-name | Support | Category | Description
 `CPBigEndian` | O | `Protocol` | Sample protocol for Big-Endian type.
 `CPLittleEndian` | O | `Protocol` | Sample protocol for Little-Endian type.
 `Common-API` | X | `API` | **_Restrict_** API about only server for transaction-oriented communication.
----
-### License
+
+## License
 ```
 Copyright [2019] [es.odysseus@gmail.com]
 
@@ -30,10 +30,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ```
----
+
 ### Developer
 - esOdysseus (email: es.odysseus@gmail.com)
----
+
 ### Latest Release
 - version 0.1.0 (Date: 2019-12-03)
 ---
@@ -52,8 +52,8 @@ $ bash ./build.sh
    $ cat IAppInf.h
    ```
    - Common-API is described in "IAppInf.h file".
----
-## Example
+
+### Example
 - You can test the communicator SDK library by using following guide-line.
    > If you want to make a application with common-API, then reference following guide.
    ```shell
@@ -63,6 +63,11 @@ $ bash ./build.sh
    ```
    - Attention : You have to set "LD_LIBRARY_PATH" with "${work}/api".
 ---
-## TBD-list
+## History
+Commit-Date | Commit-ID | Version | Description
+:---|:---:|:---:|:---
+2019-12-4 | e5d31e09073be75c884eca4bd207b6e2c2be6895 | Ver 0.1.0 | First commit for Common-Communicator.
+
+### TBD-list
 - It will support SOME/IP protocol by common-API.
 - Common-API will be improved through review-processing & consideration variety of situation.
