@@ -5,10 +5,16 @@ TEMPLATE = app
 message( "[$$TARGET] BUILD_MODE=$$BUILD_MODE")
 message( "[$$TARGET] DESTDIR=$$DESTDIR")
 
-CONFIG += c++11 $$BUILD_MODE
+!include ($$DESTDIR/../../common_config.pri) {
+    message( "Not exist common_config.pri file." )
+}
 
-QMAKE_CXXFLAGS += -ftemplate-depth=3000
-QMAKE_CXXFLAGS += -std=c++11 -g3 -Os
+CONFIG += $$BUILD_MODE
+equals(BUILD_MODE, "debug") {
+    QMAKE_CXXFLAGS += -g3
+} else {
+    QMAKE_CXXFLAGS += -Os
+}
 
 LIBS += -lcommunicator -L$$DESTDIR/../lib
 

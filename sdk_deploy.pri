@@ -1,4 +1,6 @@
 # Installation
+CONFIG += create_pc create_prl no_install_prl
+
 DESTDIR=$$_PRO_FILE_PWD_/$$BUILD_MODE/lib
 headers.path = $$DESTDIR/../include
 headers.files = $$HEADERS

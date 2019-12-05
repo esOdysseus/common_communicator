@@ -5,11 +5,16 @@ VER_PAT = 1
 TEMPLATE = lib
 VERSION = $$VER_MAJ"."$$VER_MIN"."$$VER_PAT
 
-CONFIG += c++11 shared $$BUILD_MODE
-CONFIG += create_pc create_prl no_install_prl
+!include ($$_PRO_FILE_PWD_/common_config.pri) {
+    message( "Not exist common_config.pri file." )
+}
 
-QMAKE_CXXFLAGS += -ftemplate-depth=3000
-QMAKE_CXXFLAGS += -std=c++11 -g3 -Os -fPIC
+CONFIG += shared $$BUILD_MODE
+equals(BUILD_MODE, "debug") {
+    QMAKE_CXXFLAGS += -g3
+} else {
+    QMAKE_CXXFLAGS += -Os
+}
 
 INCLUDEPATH += \
     $$_PRO_FILE_PWD_/source/include/base    \
