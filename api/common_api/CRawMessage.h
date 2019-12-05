@@ -8,7 +8,7 @@
 
 class CRawMessage {
 public:
-    using MsgDataType = __int8_t;
+    using MsgDataType = uint8_t;
     using LanAddrType = std::shared_ptr<struct sockaddr_in>;
     using LanSockType = std::shared_ptr<int>;
 

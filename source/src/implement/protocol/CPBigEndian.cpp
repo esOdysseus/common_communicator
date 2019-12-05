@@ -6,8 +6,8 @@
 
 using namespace std;
 
-#define MAKE_RAW_DATA(dest, src, seq)	((__uint8_t*)(dest))[(seq)] = (src).big_endian.raw_##seq
-#define MAKE_PROTOCOL(dest, src, seq)	(dest).big_endian.raw_##seq = ((const __uint8_t*)(src))[(seq)]
+#define MAKE_RAW_DATA(dest, src, seq)	((uint8_t*)(dest))[(seq)] = (src).big_endian.raw_##seq
+#define MAKE_PROTOCOL(dest, src, seq)	(dest).big_endian.raw_##seq = ((const uint8_t*)(src))[(seq)]
 
 static const char* Protocol_NAME = "CPBigEndian";
 
@@ -74,7 +74,7 @@ bool CPBigEndian::pack(const void* msg_raw, size_t msg_size, enum_c::ServerType 
             
             // Make raw-data from protocol + msg_raw.
             size_t raw_size = msg_length + sizeof(protocol);
-            __uint8_t raw_data[raw_size] = {0,};
+            uint8_t raw_data[raw_size] = {0,};
             assert(pack_raw_data(msg_raw, msg_length, raw_data, raw_size) == true);
 
             // Make one-segment & regist the segment to segment-list.
@@ -122,7 +122,7 @@ const void* CPBigEndian::unpack_raw_data(const void* msg_raw, size_t msg_size) {
         MAKE_PROTOCOL(protocol, msg_raw, 7);
 
         assert( protocol.header.length <= (msg_size - sizeof(protocol)) );
-        return ( ((const __uint8_t*)msg_raw)+sizeof(protocol) );
+        return ( ((const uint8_t*)msg_raw)+sizeof(protocol) );
     }
     catch(const std::exception &e) {
         cout << "[Error] CPBigEndian::unpack_raw_data() : " << e.what() << endl;

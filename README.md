@@ -35,14 +35,14 @@ limitations under the License.
 - esOdysseus (email: es.odysseus@gmail.com)
 
 ### Latest Release
-- version 0.1.0 (Date: 2019-12-04)
+- version 0.1.1 (Date: 2019-12-05)
 ---
 ## Installation
 > Please refer following commands.
 > So, you can see the SDK library(libcommunicator.so) in api folder.
 ```shell
 $ cd ${work}
-$ bash ./build.sh
+$ bash ./build.sh release
 ```
 ---
 ## Common-API
@@ -57,16 +57,17 @@ $ bash ./build.sh
 - You can test the communicator SDK library by using following guide-line.
    > If you want to make a application with common-API, then reference following guide.
    ```shell
-   $ cd ${work}/example
-   $ bash ./build.sh
-   $ ./build/common_api/example_common_api ${IP} ${Port}
+   $ cd ${work}
+   $ bash ./build.sh release example
+   $ ./release/bin/example_common_api ${IP} ${Port}
    ```
-   - Attention : You have to set "LD_LIBRARY_PATH" with "${work}/api".
+   - Attention : You have to set "LD_LIBRARY_PATH" with "${work}/release/lib".
 ---
 ## History
 Commit-Date | Commit-ID | Version | Description
 :---|:---:|:---:|:---
 2019-12-4 | e5d31e09073be75c884eca4bd207b6e2c2be6895 | Ver 0.1.0 | First commit for Common-Communicator.
+2019-12-5 |  | Ver 0.1.1 | Change folder-tree and API-design change.
 
 ### TBD-list
 - It will support SOME/IP protocol by common-API.

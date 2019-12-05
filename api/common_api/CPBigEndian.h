@@ -5,9 +5,9 @@
 
 class CPBigEndian : public IProtocolInf<CNoneProtocol> {
 public:
-    using MsgID_Type = __uint32_t;
-    using Length_Type = __uint32_t;
-    using UnitData_Type = __uint8_t;
+    using MsgID_Type = uint32_t;
+    using Length_Type = uint32_t;
+    using UnitData_Type = uint8_t;
 
     using UProtocol = union UProtocol {
         struct big_endian{
