@@ -57,9 +57,15 @@ public:
 
     // >> Server/Client-side
     //   - Precondition : None
-    //   - Practice : Register handler for checking System-Ready INFO.
-    //   - Postcondition : When Self trig init()/exit(), the handler will be called.
+    //   - Practice : Register handler for checking System-init or quit INFO, normally.
+    //   - Postcondition : When Self trig init()/quit(), the handler will be called.
     void register_initialization_handler(InitialCB_Type &&handler);     // Mandatory
+
+    // >> Server/Client-side
+    //   - Precondition : None
+    //   - Practice : Register handler for checking System-quit INFO, abnormally.
+    //   - Postcondition : When the system was forced-quit abnormally in run-time, the handler will be called.
+    void register_quit_handler(QuitCB_Type &&handler);
 
     /******************************
      * Transaction API
@@ -79,13 +85,13 @@ public:
     //   - Postcondition: When Client try connect()/disconnect(), the Handler will be called.
     void register_connection_handler(ConnectionCB_Type &&handler);
 
-    // >> Server-side (Optional)
+    // >> Server-side
     //   - Precondition : None
     //   - Practice : Register handler for handling authentication of corresponder.
     //   - Postcondition : When connection_handling was successful.
     //                     And, if Client request using send_athentication(),
     //                     then the handler will be called.
-    // >> Client-side (Optional)
+    // >> Client-side
     //   - Precondition : None
     //   - Practice : Register handler for handling authentication of corresponder.
     //   - Postcondition : When connection_handling was successful.
@@ -114,9 +120,6 @@ public:
     //                           then Receive response/notification-message from Server.
     void register_message_handler(MessagePayloadCB_Type &&handler);      // Mandatory
 
-    // It means whether abnormally forced-quit, or not.
-    void register_quit_handler(QuitCB_Type &&handler);
-
     // >> Server-side (Optional)
     //   - Precondition : Handler registered by cb_register_athentication_handler() was called. 
     //   - Practice : Try to do Hand-shaking with regard to authentication.
@@ -136,7 +139,7 @@ public:
     //   - Practice : [REQ/RESP] Send request-message to Server.
     //   - Postcondition : If Server reply with response-message,
     //                     then Handler registered by cb_register_message_handler() will be called.
-    bool send(std::string client_id, std::shared_ptr<CPayload>&& payload);
+    bool send(std::string client_id, std::shared_ptr<CPayload>&& payload);      // Mandatory
 
     // [REQ/RESP] Send response-message to Client.
     bool send(std::string client_id, const void* msg, size_t msg_size);
@@ -160,12 +163,12 @@ public:
     //   - Precondition : Handler registered by cb_register_available_handler() was called.
     //   - Practice : [PUB/SUB] Delare Event-Accepting to Service-Provider.
     //   - Postcondition : Handler registered by cb_register_subscription_handler() will be called.
-    // void subscribe(void);
+    // void subscribe(void);   // Conditional-Mandatory
 
     //   - Precondition : Handler registered by cb_register_available_handler() was called.
     //   - Practice : [PUB/SUB] Delare Event-Rejecting to Service-Provider.
     //   - Postcondition : Handler registered by cb_register_subscription_handler() will be called.
-    // void unsubscribe(void);
+    // void unsubscribe(void);  // Conditional-Mandatory
 
     //   - Precondition : None
     //   - Practice : [PUB/SUB] Receiving ACK-message of Service-Provider correspond to subscribe()/unsubscribe().
@@ -186,7 +189,7 @@ public:
 
     //   - Precondition : Handler registered by cb_register_available_handler() was called.
     //   - Practice : [PUB/SUB] Send Notification-message to Subscribers.
-    // void notify(void);
+    // void notify(void);   // Conditional-Mandatory
 
     /******************************
      * Discovery API

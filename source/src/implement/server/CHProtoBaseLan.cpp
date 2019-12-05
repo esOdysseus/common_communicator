@@ -116,11 +116,11 @@ void CHProtoBaseLan<PROTOCOL>::run(void) {
                                                                  p_msg);  // trig app-function.
             }
         }
-        app->get_cb_handlers().cb_quit_handle(false);
+        app->get_cb_handlers().cb_initialization_handle(s_server->get_server_type(), false);
     }
     catch(const std::exception &e) {
         cout << "[Error] CHProtoBaseLan::run() : " << e.what() << endl;
-        app->get_cb_handlers().cb_quit_handle(true);
+        app->get_cb_handlers().cb_quit_handle(e);
         destroy();
     }
 }

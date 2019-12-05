@@ -3,36 +3,37 @@ VER_MAJ = 0
 VER_MIN = 1
 VER_PAT = 0
 TEMPLATE = lib
-VERSION = $$VER_MAJ.$$VER_MIN.$$VER_PAT
+VERSION = $$VER_MAJ"."$$VER_MIN"."$$VER_PAT
 
-# QT += qml quick widgets
-
-CONFIG += c++11 shared debug
+CONFIG += c++11 shared $$BUILD_MODE
+CONFIG += create_pc create_prl no_install_prl
 
 QMAKE_CXXFLAGS += -ftemplate-depth=3000
 QMAKE_CXXFLAGS += -std=c++11 -g3 -Os -fPIC
 
-# Additional import path used to resolve QML modules in Qt Creator's code model
-QML_IMPORT_PATH =
-
 INCLUDEPATH += \
-    $$_PRO_FILE_PWD_/source/Include/base    \
-    $$_PRO_FILE_PWD_/source/Include/implement    \
-    $$_PRO_FILE_PWD_/source/Lib/presentation   \
-    $$_PRO_FILE_PWD_/source/Lib
+    $$_PRO_FILE_PWD_/source/include/base    \
+    $$_PRO_FILE_PWD_/source/include/implement    \
+    $$_PRO_FILE_PWD_/source/lib/presentation   \
+    $$_PRO_FILE_PWD_/source/lib
 
 SOURCES += \
-    $$files($$PWD/source/Src/base/*.cpp)  \
-    $$files($$PWD/source/Src/implement/server/*.cpp)  \
-    $$files($$PWD/source/Src/implement/protocol/*.cpp)  \
-    $$files($$PWD/source/Lib/presentation/*.cpp)       \
+    $$files($$_PRO_FILE_PWD_/source/src/base/*.cpp)  \
+    $$files($$_PRO_FILE_PWD_/source/src/implement/server/*.cpp)  \
+    $$files($$_PRO_FILE_PWD_/source/src/implement/protocol/*.cpp)  \
+    $$files($$_PRO_FILE_PWD_/source/lib/presentation/*.cpp)       \
 
+# for installation.
 HEADERS += \
+    $$files($$_PRO_FILE_PWD_/api/common_api/*.h)    \
+    $$files($$_PRO_FILE_PWD_/api/common_api/*.hpp)
 
-DESTDIR=$$_PRO_FILE_PWD_/api/
-EXTRA_BINFILES += \
-    $$_PRO_FILE_PWD_/debug/lib$$TARGET.so \
-    $$_PRO_FILE_PWD_/debug/lib$$TARGET.so.$$VER_MAJ \
-    $$_PRO_FILE_PWD_/debug/lib$$TARGET.so.$$VER_MAJ.$$VER_MIN \
-    $$_PRO_FILE_PWD_/debug/lib$$TARGET.so.$$VERSION
+EXTRA_BINFILES = \
+    $$_PRO_FILE_PWD_/lib$$TARGET.so \
+    $$_PRO_FILE_PWD_/lib$$TARGET.so.$$VER_MAJ \
+    $$_PRO_FILE_PWD_/lib$$TARGET.so.$$VER_MAJ.$$VER_MIN \
+    $$_PRO_FILE_PWD_/lib$$TARGET.so.$$VERSION
 
+!include ($$_PRO_FILE_PWD_/sdk_deploy.pri) {
+    message( "Not exist sdk_deploy.pri file." )
+}

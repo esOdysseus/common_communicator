@@ -23,10 +23,10 @@ int main(int argc, char *argv[])
                                  argv[1]);
     CAppTest sample_App(handler);
 
-    handler->register_initialization_handler(bind(&CAppTest::vmc_ready_cb, &sample_App, _1, _2));
-    handler->register_connection_handler(bind(&CAppTest::vmc_connected_cb, &sample_App, _1, _2));
-    handler->register_message_handler(bind(&CAppTest::vmc_receive_msg_payload_cb, &sample_App, _1, _2));
-    handler->register_quit_handler(bind(&CAppTest::vmc_quit_cb, &sample_App, _1));
+    handler->register_initialization_handler(bind(&CAppTest::cb_initialization, &sample_App, _1, _2));
+    handler->register_connection_handler(bind(&CAppTest::cb_connected, &sample_App, _1, _2));
+    handler->register_message_handler(bind(&CAppTest::cb_receive_msg_handle, &sample_App, _1, _2));
+    handler->register_quit_handler(bind(&CAppTest::cb_abnormally_quit, &sample_App, _1));
 
     handler->init();
 

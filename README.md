@@ -35,7 +35,7 @@ limitations under the License.
 - esOdysseus (email: es.odysseus@gmail.com)
 
 ### Latest Release
-- version 0.1.0 (Date: 2019-12-03)
+- version 0.1.0 (Date: 2019-12-04)
 ---
 ## Installation
 > Please refer following commands.

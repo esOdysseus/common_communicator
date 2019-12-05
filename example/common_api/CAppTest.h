@@ -13,13 +13,13 @@ public:
 
     ~CAppTest(void);
 
-    void vmc_ready_cb(enum_c::ServerType server_type, bool flag_init);
+    void cb_initialization(enum_c::ServerType server_type, bool flag_init);
 
-    void vmc_connected_cb(std::string client_id, bool flag_connect);
+    void cb_connected(std::string client_id, bool flag_connect);
 
-    void vmc_receive_msg_payload_cb(std::string client_id, std::shared_ptr<CPayload> payload);
+    void cb_receive_msg_handle(std::string client_id, std::shared_ptr<CPayload> payload);
 
-    void vmc_quit_cb(bool flag_force_exit);
+    void cb_abnormally_quit(const std::exception &e);
 
 private:
     ServerHandler h_server;

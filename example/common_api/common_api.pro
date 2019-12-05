@@ -2,25 +2,24 @@ TARGET = example_common_api
 
 TEMPLATE = app
 
-# QT += qml quick widgets
+message( "[$$TARGET] BUILD_MODE=$$BUILD_MODE")
+message( "[$$TARGET] DESTDIR=$$DESTDIR")
 
-CONFIG += c++11 debug
-
-QMAKE_CXXFLAGS += -ftemplate-depth=3000
-QMAKE_CXXFLAGS += -std=c++11 -g3 -Os
+CONFIG += c++11 $$BUILD_MODE
 
 
-# Additional import path used to resolve QML modules in Qt Creator's code model
-QML_IMPORT_PATH =
-
-LIBS += -lcommunicator -L$$_PRO_FILE_PWD_/../../api
+LIBS += -lcommunicator -L$$DESTDIR/../lib
 
 INCLUDEPATH += \
     $$_PRO_FILE_PWD_    \
-    $$_PRO_FILE_PWD_/../../api/common_api
+    $$DESTDIR/../include
 
 SOURCES += \
-    $$files($$PWD/*.cpp)  
+    $$files($$_PRO_FILE_PWD_/*.cpp)  
 
+
+# for installation.
 HEADERS += \
+
+EXTRA_BINFILES += $$_PRO_FILE_PWD_/$$TARGET
 
