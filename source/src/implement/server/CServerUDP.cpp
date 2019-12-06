@@ -33,9 +33,6 @@
 #define PROTO_TYPE      PF_INET
 #define ADDR_TYPE       AF_INET
 
-using namespace std;
-
-// static const unsigned short client_bufsize = 20;
 
 CServerUDP::CServerUDP(void)
 : IServerInf() {
@@ -52,20 +49,20 @@ bool CServerUDP::init(std::string id, unsigned int port, const char* ip) {
     set_id(id);
 
     if (inited == true) {
-        cout << "Already Init() is called. Please check it." << endl;
+        std::cout << "Already Init() is called. Please check it." << std::endl;
         return inited;
     }
 
     // Input data checking.
     if(port == 0 || port >= 65535) {
-        cerr << "[Error] No port defined to listen to" << endl;
+        std::cerr << "[Error] No port defined to listen to" << std::endl;
         return false;
     }
 
     // make UDP-Socket
     sockfd = socket(PROTO_TYPE, SOCKET_TYPE, 0);
     if (sockfd < 0) {
-        cerr << errno << ": init()-1:  " << strerror(errno) << endl;
+        std::cerr << errno << ": init()-1:  " << strerror(errno) << std::endl;
         return false;
     }
 
@@ -93,13 +90,13 @@ bool CServerUDP::init(std::string id, unsigned int port, const char* ip) {
 bool CServerUDP::start(void) {
     
     if (inited != true) {
-        cout << "[Error] We need to init ServerTCP. Please check it." << endl;
+        std::cout << "[Error] We need to init ServerTCP. Please check it." << std::endl;
         return false;
     }
 
     // bind socket & server-address.
     if(bind(sockfd, (struct sockaddr*) &servaddr, sizeof(servaddr)) < 0) {
-        cerr << errno << ": start() :  " << strerror(errno) << endl;
+        std::cerr << errno << ": start() :  " << strerror(errno) << std::endl;
         return false;
     }
 
@@ -112,7 +109,7 @@ bool CServerUDP::accept(AppCallerType &app) {
         std::string client_addr;
         // sockfd is not client-socket-fd so, We will insert value-Zero(0) to parameter-2.
         if (thread_this_migrate(client_addr, 0, app) == false) {
-            cerr << "[Error] " << errno << ": CServerUDP::accept(): " << strerror(errno) << endl;
+            std::cerr << "[Error] " << errno << ": CServerUDP::accept(): " << strerror(errno) << std::endl;
             return false;
         }
         return true;
@@ -129,10 +126,10 @@ CServerUDP::MessageType CServerUDP::read_msg(int u_sockfd) {
     }
     assert(u_sockfd != 0 && read_buf != NULL && read_bufsize > 0);
 
-    MessageType msg = make_shared<CRawMessage>(u_sockfd);
+    MessageType msg = std::make_shared<CRawMessage>(u_sockfd);
 
     try {
-        auto cliaddr = make_shared<struct sockaddr_in>();
+        auto cliaddr = std::make_shared<struct sockaddr_in>();
         struct sockaddr_in * p_cliaddr = cliaddr.get();
         socklen_t clilen = sizeof( *p_cliaddr );
         std::string client_addr_str;
@@ -169,7 +166,7 @@ CServerUDP::MessageType CServerUDP::read_msg(int u_sockfd) {
         msg->set_source(cliaddr, client_addr_str.c_str());
     }
     catch(const std::exception &e) {
-        cerr << "[Error] " << errno << ": CServerUDP::read_msg(): " << strerror(errno) << endl;
+        std::cerr << "[Error] " << errno << ": CServerUDP::read_msg(): " << strerror(errno) << std::endl;
         msg->destroy();
     }
     return msg;
@@ -209,6 +206,9 @@ bool CServerUDP::write_msg(std::string client_id, MessageType msg) {
             // MSG_DONTROUTE : passing packet to Destination-address without gateway.
             // MSG_DONTWAIT : try non-blocking sending. (Error-Return value: EAGIN, EWOULDBLOCK)
             // MSG_MORE : there is additional packetes.
+            // MSG_CONFIRM : It's available only when you use UDP or Raw socket.
+            //             : It inform stat-data to Data-link layer that complete reply to client of current request.
+            //             : It cause that Data-link layer need not to send ARP packet to client.
             written_size = sendto(u_sockfd, (const void*)buffer, msg_size,  
                                   MSG_CONFIRM, (const struct sockaddr *)p_cliaddr, 
                                   clilen); 
@@ -220,7 +220,7 @@ bool CServerUDP::write_msg(std::string client_id, MessageType msg) {
         }
     }
     catch(const std::exception &e) {
-        cerr << "[Error] " << errno << ": CServerUDP::write_msg(): " << strerror(errno) << endl;
+        std::cerr << "[Error] " << errno << ": CServerUDP::write_msg(): " << strerror(errno) << std::endl;
         return false;
     }
     return true;
@@ -260,7 +260,7 @@ bool CServerUDP::insert_addr(std::string alias, const struct sockaddr_in *addres
         result = true;
     }
     catch(const std::exception &e) {
-        cerr << "[Error] " << " CServerUDP::insert_addr() : " << e.what() << endl;
+        std::cerr << "[Error] " << " CServerUDP::insert_addr() : " << e.what() << std::endl;
     }
     return result;
 }

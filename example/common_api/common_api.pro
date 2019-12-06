@@ -1,21 +1,16 @@
 TARGET = example_common_api
-
 TEMPLATE = app
 
-message( "[$$TARGET] BUILD_MODE=$$BUILD_MODE")
+isEmpty(DESTDIR) {
+    error("We need DESTDIR variable, please insert it.")
+}
+
 message( "[$$TARGET] DESTDIR=$$DESTDIR")
-
 !include ($$DESTDIR/../../common_config.pri) {
-    message( "Not exist common_config.pri file." )
+    error( "Not exist common_config.pri file." )
 }
 
-CONFIG += $$BUILD_MODE
-equals(BUILD_MODE, "debug") {
-    QMAKE_CXXFLAGS += -g3
-} else {
-    QMAKE_CXXFLAGS += -Os
-}
-
+# for building
 LIBS += -lcommunicator -L$$DESTDIR/../lib
 
 INCLUDEPATH += \

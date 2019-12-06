@@ -31,8 +31,6 @@
 #define PROTO_TYPE      PF_INET
 #define ADDR_TYPE       AF_INET
 
-using namespace std;
-
 
 CServerTCP::CServerTCP(void)
 : IServerInf() {
@@ -49,23 +47,23 @@ bool CServerTCP::init(std::string id, unsigned int port, const char* ip) {
     set_id(id);
 
     if (inited == true) {
-        cout << "Already Init() is called. Please check it." << endl;
+        std::cout << "Already Init() is called. Please check it." << std::endl;
         return inited;
     }
 
     // Input data checking.
     if(port == 0 || port >= 65535) {
-        cerr << "[Error] No port defined to listen to" << endl;
+        std::cerr << "[Error] No port defined to listen to" << std::endl;
         return false;
     }
 
     // make TCP-Socket
     if( (sockfd = socket(PROTO_TYPE, SOCKET_TYPE, 0)) < 0 ) {
-        cerr << errno << "  " << strerror(errno) << endl;
+        std::cerr << errno << "  " << strerror(errno) << std::endl;
         return false;
     }
     if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1) {
-        cerr << errno << "  " << strerror(errno) << endl;
+        std::cerr << errno << "  " << strerror(errno) << std::endl;
         return false;
     }
 
@@ -93,20 +91,20 @@ bool CServerTCP::init(std::string id, unsigned int port, const char* ip) {
 bool CServerTCP::start(void) {
     
     if (inited != true) {
-        cout << "[Error] We need to init ServerTCP. Please check it." << endl;
+        std::cout << "[Error] We need to init ServerTCP. Please check it." << std::endl;
         return false;
     }
 
     // bind socket & server-address.
     if(bind(sockfd, (struct sockaddr*) &servaddr, sizeof(servaddr)) < 0) {
-        cerr << errno << "  " << strerror(errno) << endl;
+        std::cerr << errno << "  " << strerror(errno) << std::endl;
         return false;
     }
 
     // start listen.
     if(listen(sockfd, 5) < 0)
     {//소켓을 수동 대기모드로 설정
-        cerr << errno << "Server : Can't listening connect." << endl;
+        std::cerr << errno << "Server : Can't listening connect." << std::endl;
         return false;
     }
 
@@ -122,7 +120,7 @@ bool CServerTCP::accept(AppCallerType &app) {
         // start accept-blocking.
         int newsockfd = ::accept(sockfd, (struct sockaddr*) &cliaddr, &clilen); // Blocking Function.
         if(newsockfd < 0) {
-            cerr << errno << "  " << strerror(errno) << endl;
+            std::cerr << errno << "  " << strerror(errno) << std::endl;
             return false;
         }
 
@@ -133,7 +131,7 @@ bool CServerTCP::accept(AppCallerType &app) {
         if ( client_id.empty() == false ) {
             // create thread with PROTOCOL for new-sesseion by new-user.
             if (thread_create(client_id, newsockfd, app) == false) {
-                cerr << errno << "  " << strerror(errno) << endl;
+                std::cerr << errno << "  " << strerror(errno) << std::endl;
                 return false;
             }
         }
@@ -153,13 +151,10 @@ CServerTCP::MessageType CServerTCP::read_msg(int u_sockfd) {
     assert(u_sockfd != 0 && read_buf != NULL && read_bufsize > 0);
     assert(isthere_client_id(u_sockfd) == true);
 
-    std::shared_ptr<int> socket = make_shared<int>(u_sockfd);
-    MessageType msg = make_shared<CRawMessage>(u_sockfd);
-    // cout << "[Debug] socket_num=" << *socket.get() << endl;
+    std::shared_ptr<int> socket = std::make_shared<int>(u_sockfd);
+    MessageType msg = std::make_shared<CRawMessage>(u_sockfd);
 
     try {
-        // std::lock_guard<std::mutex> guard(mtx_read);
-
         while(msg_size == read_bufsize) {
             // return value description
             // 0 : End of Field.
@@ -174,7 +169,7 @@ CServerTCP::MessageType CServerTCP::read_msg(int u_sockfd) {
         msg->set_source(socket, get_client_id(u_sockfd).c_str());
     }
     catch(const std::exception &e) {
-        cout << "[Error] CServerTCP::read() : " << e.what() << endl;
+        std::cout << "[Error] CServerTCP::read() : " << e.what() << std::endl;
         msg->destroy();
     }
     return msg;
@@ -210,7 +205,7 @@ bool CServerTCP::write_msg(std::string client_id, MessageType msg) {
         }
     }
     catch(const std::exception &e) {
-        cout << "[Error] CServerTCP::write() : " << e.what() << endl;
+        std::cout << "[Error] CServerTCP::write() : " << e.what() << std::endl;
         return false;
     }
     return true;
@@ -220,28 +215,28 @@ int CServerTCP::enable_keepalive(int sock) {
     int yes = 1;
 
     if(setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &yes, sizeof(int)) == -1) {
-        cerr << errno << "  " << strerror(errno) << endl;
+        std::cerr << errno << "  " << strerror(errno) << std::endl;
         return -1;
     }
 
     int idle = 1;
 
     if(setsockopt(sock, IPPROTO_TCP, TCP_KEEPIDLE, &idle, sizeof(int)) == -1) {
-        cerr << errno << "  " << strerror(errno) << endl;
+        std::cerr << errno << "  " << strerror(errno) << std::endl;
         return -1;
     }
 
     int interval = 1;
 
     if(setsockopt(sock, IPPROTO_TCP, TCP_KEEPINTVL, &interval, sizeof(int)) == -1) {
-        cerr << errno << "  " << strerror(errno) << endl;
+        std::cerr << errno << "  " << strerror(errno) << std::endl;
         return -1;
     }
 
     int maxpkt = 10;
 
     if(setsockopt(sock, IPPROTO_TCP, TCP_KEEPCNT, &maxpkt, sizeof(int)) == -1) {
-        cerr << errno << "  " << strerror(errno) << endl;
+        std::cerr << errno << "  " << strerror(errno) << std::endl;
         return -1;
     }
 
@@ -278,7 +273,7 @@ bool CServerTCP::insert_client(const int socket_num, std::string alias) {
         result = true;
     }
     catch(const std::exception &e) {
-        cerr << "[Error] " << " CServerUDP::insert_addr() : " << e.what() << endl;
+        std::cerr << "[Error] " << " CServerUDP::insert_addr() : " << e.what() << std::endl;
     }
     return result;
 }

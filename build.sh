@@ -12,8 +12,7 @@ echo "BUILD_MODE=${BUILD_MODE}"
 echo "INSTALL_FOLDER=${INSTALL_FOLDER}"
 echo
 
-if [ "${2}" == "clean" ]
-then
+if [ "${2}" == "clean" ];then
     echo ">>>> Clear all-data of installation & objects."
     make clean
     cd ./example
@@ -25,8 +24,7 @@ then
     rm -rf ./release
     rm -rf ./pkgconfig
     rm -rf ./Makefile
-elif [ "${2}" == "example" ]
-then
+elif [ "${2}" == "example" ];then
     echo ">>>> Build example & install"
     cd ./example
     qmake BUILD_MODE=${BUILD_MODE} DESTDIR=${INSTALL_FOLDER}/bin
