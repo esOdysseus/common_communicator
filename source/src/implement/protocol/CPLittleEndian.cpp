@@ -4,8 +4,6 @@
 #include <logger.h>
 #include <protocol/CPLittleEndian.h>
 
-using namespace std;
-
 static const char* Protocol_NAME = "CPLittleEndian";
 
 CPLittleEndian::CPLittleEndian(void) 

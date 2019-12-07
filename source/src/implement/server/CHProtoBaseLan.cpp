@@ -11,7 +11,6 @@ template class CHProtoBaseLan<CPBigEndian>;
 template class CHProtoBaseLan<CPLittleEndian>;
 template class CHProtoBaseLan<CNoneProtocol>;
 
-using namespace std;
 using namespace std::placeholders;
 
 template <typename PROTOCOL>

@@ -4,8 +4,6 @@
 #include <logger.h>
 #include <protocol/CPBigEndian.h>
 
-using namespace std;
-
 #define MAKE_RAW_DATA(dest, src, seq)	((uint8_t*)(dest))[(seq)] = (src).big_endian.raw_##seq
 #define MAKE_PROTOCOL(dest, src, seq)	(dest).big_endian.raw_##seq = ((const uint8_t*)(src))[(seq)]
 
