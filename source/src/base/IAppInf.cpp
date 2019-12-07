@@ -8,11 +8,11 @@
 /*****
  * Static Function.
  */ 
-std::shared_ptr<ICommunicator> create_server(std::string app_id, 
-                                             std::string server_id, 
-                                             enum_c::ServerType server_type, 
-                                             unsigned short port, 
-                                             const char* ip) {
+std::shared_ptr<ICommunicator> create_communicator(std::string app_id, 
+                                                   std::string server_id, 
+                                                   enum_c::ServerType server_type, 
+                                                   unsigned short port, 
+                                                   const char* ip) {
     return std::make_shared<ICommunicator>(app_id, server_id, server_type, port, ip);
 }
 

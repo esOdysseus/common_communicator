@@ -17,10 +17,10 @@ int main(int argc, char *argv[])
 {
     cout << "Test-program for check operating of UDP/TCP server." << endl;
 
-    auto handler = create_server("TestApp01", 
-                                 "CServerUDP", enum_c::ServerType::E_SERVER_UDP, 
-                                 atoi(argv[2]), 
-                                 argv[1]);
+    auto handler = create_communicator("TestApp01", 
+                                       "CServerUDP", enum_c::ServerType::E_SERVER_UDP, 
+                                       atoi(argv[2]), 
+                                       argv[1]);
     CAppTest sample_App(handler);
 
     handler->register_initialization_handler(bind(&CAppTest::cb_initialization, &sample_App, _1, _2));

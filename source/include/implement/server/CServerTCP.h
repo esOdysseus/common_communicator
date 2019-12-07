@@ -23,7 +23,7 @@ public:
 
     bool accept(AppCallerType &app) override;
 
-    MessageType read_msg(int u_sockfd) override;
+    MessageType read_msg(int u_sockfd, bool &is_new) override;
 
     bool write_msg(std::string client_id, MessageType msg) override;
 

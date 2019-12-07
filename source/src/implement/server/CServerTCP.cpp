@@ -1,5 +1,4 @@
 #include <cassert>
-#include <iostream>
 #include <string.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -10,6 +9,7 @@
 #include <netinet/tcp.h>
 #include <errno.h>
 
+#include <logger.h>
 #include <CRawMessage.h>
 #include <server/CServerTCP.h>
 
@@ -47,23 +47,23 @@ bool CServerTCP::init(std::string id, unsigned int port, const char* ip) {
     set_id(id);
 
     if (inited == true) {
-        std::cout << "Already Init() is called. Please check it." << std::endl;
+        LOGERR("Already Init() is called. Please check it.");
         return inited;
     }
 
     // Input data checking.
     if(port == 0 || port >= 65535) {
-        std::cerr << "[Error] No port defined to listen to" << std::endl;
+        LOGERR("No port defined to listen to");
         return false;
     }
 
     // make TCP-Socket
     if( (sockfd = socket(PROTO_TYPE, SOCKET_TYPE, 0)) < 0 ) {
-        std::cerr << errno << "  " << strerror(errno) << std::endl;
+        LOGERR("%d: %s", errno, strerror(errno));
         return false;
     }
     if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1) {
-        std::cerr << errno << "  " << strerror(errno) << std::endl;
+        LOGERR("%d: %s", errno, strerror(errno));
         return false;
     }
 
@@ -91,20 +91,20 @@ bool CServerTCP::init(std::string id, unsigned int port, const char* ip) {
 bool CServerTCP::start(void) {
     
     if (inited != true) {
-        std::cout << "[Error] We need to init ServerTCP. Please check it." << std::endl;
+        LOGERR("We need to init ServerTCP. Please check it.");
         return false;
     }
 
     // bind socket & server-address.
     if(bind(sockfd, (struct sockaddr*) &servaddr, sizeof(servaddr)) < 0) {
-        std::cerr << errno << "  " << strerror(errno) << std::endl;
+        LOGERR("%d: %s", errno, strerror(errno));
         return false;
     }
 
     // start listen.
     if(listen(sockfd, 5) < 0)
-    {//소켓을 수동 대기모드로 설정
-        std::cerr << errno << "Server : Can't listening connect." << std::endl;
+    {
+        LOGERR("%d: Server : Can't listening connect: %s", errno, strerror(errno));
         return false;
     }
 
@@ -120,7 +120,7 @@ bool CServerTCP::accept(AppCallerType &app) {
         // start accept-blocking.
         int newsockfd = ::accept(sockfd, (struct sockaddr*) &cliaddr, &clilen); // Blocking Function.
         if(newsockfd < 0) {
-            std::cerr << errno << "  " << strerror(errno) << std::endl;
+            LOGERR("%d: %s", errno, strerror(errno));
             return false;
         }
 
@@ -131,7 +131,7 @@ bool CServerTCP::accept(AppCallerType &app) {
         if ( client_id.empty() == false ) {
             // create thread with PROTOCOL for new-sesseion by new-user.
             if (thread_create(client_id, newsockfd, app) == false) {
-                std::cerr << errno << "  " << strerror(errno) << std::endl;
+                LOGERR("%d: Thread Create failed: %s", errno, strerror(errno));
                 return false;
             }
         }
@@ -142,7 +142,7 @@ bool CServerTCP::accept(AppCallerType &app) {
     return false;
 }
 
-CServerTCP::MessageType CServerTCP::read_msg(int u_sockfd) {
+CServerTCP::MessageType CServerTCP::read_msg(int u_sockfd, bool &is_new) {
     size_t msg_size = read_bufsize;
     
     if (u_sockfd == 0) {
@@ -169,7 +169,7 @@ CServerTCP::MessageType CServerTCP::read_msg(int u_sockfd) {
         msg->set_source(socket, get_client_id(u_sockfd).c_str());
     }
     catch(const std::exception &e) {
-        std::cout << "[Error] CServerTCP::read() : " << e.what() << std::endl;
+        LOGERR("%s", e.what());
         msg->destroy();
     }
     return msg;
@@ -205,7 +205,7 @@ bool CServerTCP::write_msg(std::string client_id, MessageType msg) {
         }
     }
     catch(const std::exception &e) {
-        std::cout << "[Error] CServerTCP::write() : " << e.what() << std::endl;
+        LOGERR("%s", e.what());
         return false;
     }
     return true;
@@ -273,7 +273,7 @@ bool CServerTCP::insert_client(const int socket_num, std::string alias) {
         result = true;
     }
     catch(const std::exception &e) {
-        std::cerr << "[Error] " << " CServerUDP::insert_addr() : " << e.what() << std::endl;
+        LOGERR("%s", e.what());
     }
     return result;
 }

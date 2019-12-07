@@ -12,11 +12,11 @@
 
 class ICommunicator;
 
-std::shared_ptr<ICommunicator> create_server(std::string app_id, 
-                                             std::string server_id, 
-                                             enum_c::ServerType server_type, 
-                                             unsigned short port, 
-                                             const char* ip=NULL);
+std::shared_ptr<ICommunicator> create_communicator(std::string app_id, 
+                                                   std::string server_id, 
+                                                   enum_c::ServerType server_type, 
+                                                   unsigned short port, 
+                                                   const char* ip=NULL);
 
 class ICommunicator {
 public:

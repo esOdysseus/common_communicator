@@ -1,7 +1,7 @@
 #include <cassert>
-#include <iostream>
 #include <string.h>
 
+#include <logger.h>
 #include <protocol/CPLittleEndian.h>
 
 using namespace std;
@@ -39,7 +39,7 @@ void CPLittleEndian::set_length(CPLittleEndian::Length_Type value) {
 }
 
 bool CPLittleEndian::pack(const void* msg_raw, size_t msg_size, enum_c::ServerType server_type) {
-    cout << "CPLittleEndian::pack() is called." << endl;
+    LOGD("It's called.");
 
     size_t msg_length = 0;
     auto lamda_get_length = [&](void) -> size_t {
@@ -81,14 +81,14 @@ bool CPLittleEndian::pack(const void* msg_raw, size_t msg_size, enum_c::ServerTy
         }
     }
     catch(const std::exception &e) {
-        cout << "[Error] CPLittleEndian::pack() : " << e.what() << endl;
+        LOGERR("%s", e.what());
         return false;
     }
     return true;
 }
 
 bool CPLittleEndian::unpack(const void* msg_raw, size_t msg_size) {
-    cout << "CPLittleEndian::unpack() is called." << endl;
+    LOGD("It's called.");
 
     try{
         // Make classified_data & protocol-data
@@ -99,7 +99,7 @@ bool CPLittleEndian::unpack(const void* msg_raw, size_t msg_size) {
         get_payload()->set_new_msg(classified_data, protocol.header.length);
     }
     catch(const std::exception &e) {
-        cout << "[Error] CPLittleEndian::unpack() : " << e.what() << endl;
+        LOGERR("%s", e.what());
         return false;
     }
     return true;
@@ -114,7 +114,7 @@ const void* CPLittleEndian::unpack_raw_data(const void* msg_raw, size_t msg_size
         return ( ((const uint8_t*)msg_raw)+sizeof(protocol) );
     }
     catch(const std::exception &e) {
-        cout << "[Error] CPLittleEndian::unpack_raw_data() : " << e.what() << endl;
+        LOGERR("%s", e.what());
     }
     return NULL;
 }
@@ -135,7 +135,7 @@ bool CPLittleEndian::pack_raw_data(const void* msg_raw, size_t msg_size, UnitDat
         memcpy(raw_data+sizeof(protocol), src_buf, protocol.header.length);
     }
     catch(const std::exception &e) {
-        cout << "[Error] CPLittleEndian::pack_raw_data() : " << e.what() << endl;
+        LOGERR("%s", e.what());
         return false;
     }
     return true;

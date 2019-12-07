@@ -13,9 +13,14 @@ VERSION = $$VER_MAJ"."$$VER_MIN"."$$VER_PAT
 CONFIG += shared
 QMAKE_CXXFLAGS += -fPIC
 
+equals(BUILD_MODE, "debug") {
+    DEFINES += LOG_DEBUG_MODE
+}
+
 INCLUDEPATH += \
     $$_PRO_FILE_PWD_/source/include/base    \
     $$_PRO_FILE_PWD_/source/include/implement    \
+    $$_PRO_FILE_PWD_/source/lib/logger
 
 SOURCES += \
     $$files($$_PRO_FILE_PWD_/source/src/base/*.cpp)  \

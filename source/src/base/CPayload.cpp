@@ -1,11 +1,9 @@
 #include <cassert>
-#include <iostream>
 
+#include <logger.h>
 #include <CPayload.h>
 #include <protocol/CPBigEndian.h>
 #include <protocol/CPLittleEndian.h>
-
-using namespace std;
 
 template std::shared_ptr<CPBigEndian> CPayload::get<CPBigEndian>(void);
 template std::shared_ptr<CPLittleEndian> CPayload::get<CPLittleEndian>(void);
@@ -41,7 +39,7 @@ std::shared_ptr<PROTOCOL> CPayload::get(void) {
         return std::dynamic_pointer_cast<PROTOCOL>(target);
     }
     catch(const std::exception &e) {
-        cout << "[Error] CPayload::get() : " << e.what() << endl;
+        LOGERR("%s", e.what());
         throw e;
     }
 }
@@ -64,7 +62,7 @@ bool CPayload::set_payload(const void* msg, size_t msg_size) {
         _payload_->set_new_msg(msg, msg_size);
     }
     catch(const std::exception &e) {
-        cout << "[Error] CPayload::set_payload() : " << e.what() << endl;
+        LOGERR("%s", e.what());
         return false;
     }
     return true;
@@ -76,14 +74,14 @@ bool CPayload::set_payload(std::shared_ptr<CPayload::DataType>&& msg_raw) {
         _payload_ = std::forward<std::shared_ptr<DataType>>(msg_raw);
     }
     catch(const std::exception &e) {
-        cout << "[Error] CPayload::set_payload() : " << e.what() << endl;
+        LOGERR("%s", e.what());
         return false;
     }
     return true;
 }
 
 bool CPayload::is_there_data(void) {
-    cout << "CPayload::is_there() is called." << endl;
+    LOGD("It's called.");
     return (_payload_->get_msg_size() > 0) ? true : false;
 }
 
@@ -100,6 +98,6 @@ void CPayload::insert_next(CPayload::PayloadType&& payload) {
         next = std::forward<PayloadType>(payload);
     }
     catch(const std::exception &e) {
-        cout << "[Error] CPayload::insert_next() : " << e.what() << endl;
+        LOGERR("%s", e.what());
     }
 }

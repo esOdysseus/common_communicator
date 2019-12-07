@@ -17,22 +17,22 @@ CAppTest::~CAppTest(void) {
 
 // This-APP was normal-ready/quit to communicate between VMs.
 void CAppTest::cb_initialization(enum_c::ServerType server_type, bool flag_init) {
-    cout << "[Debug] CAppTest::vmc_ready_cb() is called.(" << flag_init << ")" << endl;
+    cout << "[Debug] CAppTest::cb_initialization() is called.(" << flag_init << ")" << endl;
 }
 
 // This-APP was exit from communication-session, abnormally.
 void CAppTest::cb_abnormally_quit(const std::exception &e) {
-    cout << "[Debug] CAppTest::vmc_exit_cb() is called.(" << e.what() << ")" << endl;
+    cout << "[Debug] CAppTest::cb_abnormally_quit() is called.(" << e.what() << ")" << endl;
 }
 
 // Client was connected.
 void CAppTest::cb_connected(std::string client_id, bool flag_connect) {
-    cout << "[Debug] CAppTest::vmc_connected_cb() is called.(" << flag_connect << ")" << endl;
+    cout << "[Debug] CAppTest::cb_connected() is called.(" << flag_connect << ")" << endl;
 }
 
 // We receved a message from client_id.
 void CAppTest::cb_receive_msg_handle(std::string client_id, std::shared_ptr<CPayload> payload) {
-    cout << "[Debug] CAppTest::vmc_receive_msg_payload_cb() is called." << endl;
+    cout << "[Debug] CAppTest::cb_receive_msg_handle() is called." << endl;
 
     auto data = payload->get_payload();
     std::shared_ptr<CPBigEndian> protocol = payload->get<CPBigEndian>();

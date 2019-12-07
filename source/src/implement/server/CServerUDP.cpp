@@ -1,5 +1,4 @@
 #include <cassert>
-#include <iostream>
 #include <string.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -12,6 +11,7 @@
 #include <cassert>
 #include <memory>
 
+#include <logger.h>
 #include <CRawMessage.h>
 #include <server/CServerUDP.h>
 
@@ -49,20 +49,20 @@ bool CServerUDP::init(std::string id, unsigned int port, const char* ip) {
     set_id(id);
 
     if (inited == true) {
-        std::cout << "Already Init() is called. Please check it." << std::endl;
+        LOGERR("Already Init() is called. Please check it.");
         return inited;
     }
 
     // Input data checking.
     if(port == 0 || port >= 65535) {
-        std::cerr << "[Error] No port defined to listen to" << std::endl;
+        LOGERR("No port defined to listen to");
         return false;
     }
 
     // make UDP-Socket
     sockfd = socket(PROTO_TYPE, SOCKET_TYPE, 0);
     if (sockfd < 0) {
-        std::cerr << errno << ": init()-1:  " << strerror(errno) << std::endl;
+        LOGERR("%d: %s", errno, strerror(errno));
         return false;
     }
 
@@ -90,13 +90,13 @@ bool CServerUDP::init(std::string id, unsigned int port, const char* ip) {
 bool CServerUDP::start(void) {
     
     if (inited != true) {
-        std::cout << "[Error] We need to init ServerTCP. Please check it." << std::endl;
+        LOGERR("We need to init ServerTCP. Please check it.");
         return false;
     }
 
     // bind socket & server-address.
     if(bind(sockfd, (struct sockaddr*) &servaddr, sizeof(servaddr)) < 0) {
-        std::cerr << errno << ": start() :  " << strerror(errno) << std::endl;
+        LOGERR("%d: %s", errno, strerror(errno));
         return false;
     }
 
@@ -109,7 +109,7 @@ bool CServerUDP::accept(AppCallerType &app) {
         std::string client_addr;
         // sockfd is not client-socket-fd so, We will insert value-Zero(0) to parameter-2.
         if (thread_this_migrate(client_addr, 0, app) == false) {
-            std::cerr << "[Error] " << errno << ": CServerUDP::accept(): " << strerror(errno) << std::endl;
+            LOGERR("%d: %s", errno, strerror(errno));
             return false;
         }
         return true;
@@ -118,7 +118,7 @@ bool CServerUDP::accept(AppCallerType &app) {
     return false;
 }
 
-CServerUDP::MessageType CServerUDP::read_msg(int u_sockfd) {
+CServerUDP::MessageType CServerUDP::read_msg(int u_sockfd, bool &is_new) {
     size_t msg_size = read_bufsize;
     
     if (u_sockfd == 0) {
@@ -162,11 +162,11 @@ CServerUDP::MessageType CServerUDP::read_msg(int u_sockfd) {
             }
         }
 
-        assert( insert_addr(client_addr_str, p_cliaddr) == true );
+        assert( insert_addr(client_addr_str, *p_cliaddr, is_new) == true );
         msg->set_source(cliaddr, client_addr_str.c_str());
     }
     catch(const std::exception &e) {
-        std::cerr << "[Error] " << errno << ": CServerUDP::read_msg(): " << strerror(errno) << std::endl;
+        LOGERR("%d: %s", errno, strerror(errno));
         msg->destroy();
     }
     return msg;
@@ -220,7 +220,7 @@ bool CServerUDP::write_msg(std::string client_id, MessageType msg) {
         }
     }
     catch(const std::exception &e) {
-        std::cerr << "[Error] " << errno << ": CServerUDP::write_msg(): " << strerror(errno) << std::endl;
+        LOGERR("%d: %s", errno, strerror(errno));
         return false;
     }
     return true;
@@ -244,23 +244,25 @@ CServerUDP::AddressType CServerUDP::get_addr(std::string alias) {
     return address;
 }
 
-bool CServerUDP::insert_addr(std::string alias, const struct sockaddr_in *address) {
+bool CServerUDP::insert_addr(std::string alias, const struct sockaddr_in &address, bool & is_new) {
     bool result = false;
 
     try {
-        if( address == NULL || alias.empty() == true ) {
+        if( alias.empty() == true ) {
             return result;
         }
 
+        is_new = false;
         if ( m_alias_addr.find(alias) == m_alias_addr.end() ) {
             m_alias_addr[alias] = std::make_shared<struct sockaddr_in>();
             struct sockaddr_in* p_addr = m_alias_addr[alias].get();
-            memcpy(p_addr, address, sizeof(*address));
+            memcpy(p_addr, &address, sizeof(address));
+            is_new = true;
         }
         result = true;
     }
     catch(const std::exception &e) {
-        std::cerr << "[Error] " << " CServerUDP::insert_addr() : " << e.what() << std::endl;
+        LOGERR("%s", e.what());
     }
     return result;
 }

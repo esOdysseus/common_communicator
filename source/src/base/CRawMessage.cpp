@@ -1,11 +1,10 @@
-#include <iostream>
 #include <cassert>
 #include <algorithm>
 #include <memory>
+
+#include <logger.h>
 #include <CRawMessage.h>
 #include <type_traits>
-
-using namespace std;
 
 template bool CRawMessage::set_source(std::shared_ptr<struct sockaddr_in> addr, const char* addr_str);
 template bool CRawMessage::set_source(std::shared_ptr<int> addr, const char* addr_str);
@@ -27,7 +26,7 @@ CRawMessage::CSource::~CSource(void){
         alias.clear();
     }
     catch(const std::exception &e) {
-        cout << "[Error] CRawMessage::~CSource() : " << e.what() << endl;
+        LOGERR("%s", e.what());
     }
 }
 
@@ -36,22 +35,22 @@ void CRawMessage::CSource::init(std::shared_ptr<ADDR_TYPE> addr,
                                 const char* alias, 
                                 enum_c::ServerType server_type) {
     try {
-        std::shared_ptr<void> dumy = static_pointer_cast<void>(addr);
+        std::shared_ptr<void> dumy = std::static_pointer_cast<void>(addr);
         this->address = move(dumy);
         this->addr_type = server_type;
         this->alias = alias;
     }
     catch(const std::exception &e) {
-        cout << "[Error] CRawMessage::init() : " << e.what() << endl;
+        LOGERR("%s", e.what());
     }
 }
 
 template <typename ADDR_TYPE> 
 std::shared_ptr<ADDR_TYPE> CRawMessage::CSource::get_address(void) {
     try{
-        return static_pointer_cast<ADDR_TYPE>(address);
+        return std::static_pointer_cast<ADDR_TYPE>(address);
     }catch(const std::exception &e) {
-        cout << "[Error] CRawMessage::get_address() : " << e.what() << endl;
+        LOGERR("%s", e.what());
     }
 }
 
@@ -87,7 +86,7 @@ bool CRawMessage::init(int sockfd, size_t capacity) {
         this->socketfd = sockfd;
     }
     catch(const std::exception &e) {
-        cout << "CRawMessage::init() : " << e.what() << endl;
+        LOGERR("%s", e.what());
         return false;
     }
     return true;
@@ -129,7 +128,7 @@ size_t CRawMessage::get_msg(void* buffer, size_t cap) {
         return msg_size;
     }
     catch( const std::exception &e ) {
-        cout << "[Error] CRawMessage::get_msg() : " << e.what() << endl;
+        LOGERR("%s", e.what());
     }
     return 0;
 }
@@ -166,7 +165,7 @@ bool CRawMessage::set_new_msg(const void* buf, size_t msize) {
         *(msg+msg_size) = '\0';     // append NULL for string.
     }
     catch(const std::exception &e) {
-        cout << "[Error] CRawMessage::set_new_msg() : " << e.what() << endl;
+        LOGERR("%s", e.what());
         return false;
     }
     return true;
@@ -188,7 +187,7 @@ bool CRawMessage::append_msg(void* buf, size_t msize) {
         *(msg+msg_size) = '\0';     // append NULL for string.
     }
     catch(const std::exception &e) {
-        cout << "[Error] CRawMessage::append() : " << e.what() << endl;
+        LOGERR("%s", e.what());
         return false;
     }
     return true;
@@ -201,7 +200,7 @@ bool CRawMessage::set_source(std::shared_ptr<ADDR_TYPE> addr, const char* addr_s
         source.init(addr,addr_str, server_type);
     }
     catch(const std::exception &e) {
-        cout << "[Error] CRawMessage::set_source() : " << e.what() << endl;
+        LOGERR("%s", e.what());
         return false;
     }
     return true;
@@ -215,7 +214,7 @@ CRawMessage::LanAddrType CRawMessage::get_source_addr(std::string& alias, enum_c
         return source.get_address<struct sockaddr_in>();
     }
     catch(const std::exception &e) {
-        cout << "[Error] CRawMessage::get_source() : " << e.what() << endl;
+        LOGERR("%s", e.what());
     }
 }
 
@@ -227,7 +226,7 @@ CRawMessage::LanSockType CRawMessage::get_source_sock(std::string& alias, enum_c
         return source.get_address<int>();
     }
     catch(const std::exception &e) {
-        cout << "[Error] CRawMessage::get_source() : " << e.what() << endl;
+        LOGERR("%s", e.what());
     }
 }
 
@@ -256,7 +255,7 @@ enum_c::ServerType CRawMessage::policy_addr(void) {
         }
     }
     catch(const std::exception &e) {
-        cout << "[Error] CRawMessage::policy_addr() : " << e.what() << endl;
+        LOGERR("%s", e.what());
     }
 
     return enum_c::ServerType::E_SERVER_NOT_DEF;
@@ -276,7 +275,7 @@ bool CRawMessage::extend_capacity(size_t append_capacity) {
         capacity += append_capacity;
     }
     catch(const std::exception &e) {
-        cout << "[Error] CRawMessage::extend_capacity() : " << e.what() << endl;
+        LOGERR("%s", e.what());
         return false;
     }
     return true;

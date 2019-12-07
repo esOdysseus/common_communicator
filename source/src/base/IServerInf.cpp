@@ -3,6 +3,7 @@
 #include <string.h> 
 #include <arpa/inet.h>
 
+#include <logger.h>
 #include <IServerInf.h>
 #include <IHProtocolInf.h>
 #include <protocol/CPBigEndian.h>
@@ -12,8 +13,6 @@
 template class IServerInf<CHProtoBaseLan<CPBigEndian>>;
 template class IServerInf<CHProtoBaseLan<CPLittleEndian>>;
 template class IServerInf<CHProtoBaseLan<CNoneProtocol>>;
-
-using namespace std;
 
 static const unsigned short client_bufsize = 20;
 
@@ -42,7 +41,7 @@ template <typename PROTOCOL_H>
 template<typename _Callable>
 IServerInf<PROTOCOL_H>::CLooper::CLooper(_Callable&& __f, HProtocolType& instance) {
     this->h_protocol = move(instance);
-    this->h_thread = make_shared<std::thread>(std::forward<_Callable>(__f), this->h_protocol);
+    this->h_thread = std::make_shared<std::thread>(std::forward<_Callable>(__f), this->h_protocol);
 }
 
 template <typename PROTOCOL_H> 
@@ -79,6 +78,9 @@ bool IServerInf<PROTOCOL_H>::stop(void) {
 
     if (sockfd) {
         res = close(sockfd);
+        if(res < 0) {
+            LOGW("socket closing is failed.");
+        }
         sockfd = 0;
     }
 
@@ -89,9 +91,6 @@ bool IServerInf<PROTOCOL_H>::stop(void) {
 
     // clear variables.
     clear();
-    if(res < 0) {
-        std::cerr << "[Error] stop() is failed." << std::endl;
-    }
     return true;
 }
 
@@ -110,19 +109,19 @@ void IServerInf<PROTOCOL_H>::clear(void) {
 template <typename PROTOCOL_H> 
 bool IServerInf<PROTOCOL_H>::thread_create(std::string& client_id, int socketfd, AppCallerType& app) {
     try {
-        HProtocolType h_protocol = make_shared<PROTOCOL_H>(client_id, socketfd, 
+        HProtocolType h_protocol = std::make_shared<PROTOCOL_H>(client_id, socketfd, 
                                                       SharedThisType::shared_from_this(), 
                                                       app);
         
         if ( mLooperPool.find(client_id) == mLooperPool.end() ) {
-            mLooperPool.emplace(client_id, make_shared<CLooper>(&IHProtocolInf::run, h_protocol));
+            mLooperPool.emplace(client_id, std::make_shared<CLooper>(&IHProtocolInf::run, h_protocol));
         }
         else {
-            cout << "[Warn] accept : Already, thread was created by " << client_id << endl;
+            LOGW("Already, thread was created by %s", client_id.c_str());
         }
         return true;
     } catch (const std::exception &e) {
-        cerr << errno << ": thread_create(): " << strerror(errno) << endl;
+        LOGERR("%d: %s", errno, strerror(errno));
     }
     return false;
 }
@@ -134,13 +133,13 @@ bool IServerInf<PROTOCOL_H>::thread_this_migrate(std::string& client_id, int soc
             client_id = "ALL_CLIENT";
         }
         
-        HProtocolType h_protocol = make_shared<PROTOCOL_H>(client_id, socketfd, 
+        HProtocolType h_protocol = std::make_shared<PROTOCOL_H>(client_id, socketfd, 
                                                       SharedThisType::shared_from_this(), 
                                                       app);
         h_protocol->run();
         return true;
     } catch (const std::exception &e) {
-        cerr << errno << ": thread_this_migrate(): " << strerror(errno) << endl;
+        LOGERR("%d: %s", errno, strerror(errno));
     }
     return false;
 }
@@ -157,7 +156,7 @@ std::string IServerInf<PROTOCOL_H>::make_client_id(const int addr_type, const st
         char client_addr[client_bufsize] = {0,};
 
         inet_ntop(addr_type, &cliaddr.sin_addr.s_addr, client_addr, sizeof(client_addr));
-        cout << "Server : " << client_addr << ":" << cliaddr.sin_port << " client connected." << endl;
+        LOGD("Server : %s:%d  client connected.", client_addr, cliaddr.sin_port);
 
         if (strcmp(client_addr, "0.0.0.0") != 0) {
             client_id = client_addr;
@@ -165,7 +164,7 @@ std::string IServerInf<PROTOCOL_H>::make_client_id(const int addr_type, const st
         }
     }
     catch(const std::exception &e){
-        cout << "[Error] CServerTCP::make_client_id() : " << e.what() << endl;
+        LOGERR("%s", e.what());
     }
 
     return client_id;

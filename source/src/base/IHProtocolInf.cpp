@@ -3,8 +3,6 @@
 #include <cassert>
 #include <IHProtocolInf.h>
 
-using namespace std;
-
 IHProtocolInf::~IHProtocolInf(void) {
     if (h_socket != 0) {
         close(h_socket);

@@ -24,7 +24,7 @@ public:
 
     bool accept(AppCallerType &app) override;
 
-    MessageType read_msg(int u_sockfd) override;
+    MessageType read_msg(int u_sockfd, bool &is_new) override;
 
     bool write_msg(std::string client_id, MessageType msg) override;
 
@@ -36,7 +36,7 @@ private:
     
     AddressType get_addr(std::string alias);
 
-    bool insert_addr(std::string alias, const struct sockaddr_in * address);
+    bool insert_addr(std::string alias, const struct sockaddr_in &address, bool & is_new);
 
     void remove_addr(std::string alias);
 

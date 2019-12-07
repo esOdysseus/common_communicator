@@ -1,7 +1,7 @@
 #include <cassert>
-#include <iostream>
 #include <string.h>
 
+#include <logger.h>
 #include <protocol/CPBigEndian.h>
 
 using namespace std;
@@ -42,7 +42,7 @@ void CPBigEndian::set_length(CPBigEndian::Length_Type value) {
 }
 
 bool CPBigEndian::pack(const void* msg_raw, size_t msg_size, enum_c::ServerType server_type) {
-    cout << "CPBigEndian::pack() is called." << endl;
+    LOGD("It's called.");
 
     size_t msg_length = 0;
     auto lamda_get_length = [&](void) -> size_t {
@@ -84,14 +84,14 @@ bool CPBigEndian::pack(const void* msg_raw, size_t msg_size, enum_c::ServerType 
         }
     }
     catch(const std::exception &e) {
-        cout << "[Error] CPBigEndian::pack() : " << e.what() << endl;
+        LOGERR("%s", e.what());
         return false;
     }
     return true;
 }
 
 bool CPBigEndian::unpack(const void* msg_raw, size_t msg_size) {
-    cout << "CPBigEndian::unpack() is called." << endl;
+    LOGD("It's called.");
 
     try{
         // Make classified_data & protocol-data
@@ -102,7 +102,7 @@ bool CPBigEndian::unpack(const void* msg_raw, size_t msg_size) {
         get_payload()->set_new_msg(classified_data, protocol.header.length);
     }
     catch(const std::exception &e) {
-        cout << "[Error] CPBigEndian::unpack() : " << e.what() << endl;
+        LOGERR("%s", e.what());
         return false;
     }
     return true;
@@ -125,7 +125,7 @@ const void* CPBigEndian::unpack_raw_data(const void* msg_raw, size_t msg_size) {
         return ( ((const uint8_t*)msg_raw)+sizeof(protocol) );
     }
     catch(const std::exception &e) {
-        cout << "[Error] CPBigEndian::unpack_raw_data() : " << e.what() << endl;
+        LOGERR("%s", e.what());
     }
     return NULL;
 }
@@ -154,7 +154,7 @@ bool CPBigEndian::pack_raw_data(const void* msg_raw, size_t msg_size, UnitData_T
         memcpy(raw_data+sizeof(protocol), src_buf, protocol.header.length);\
     }
     catch(const std::exception &e) {
-        cout << "[Error] CPBigEndian::pack_raw_data() : " << e.what() << endl;
+        LOGERR("%s", e.what());
         return false;
     }
     return true;

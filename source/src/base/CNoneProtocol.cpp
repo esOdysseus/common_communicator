@@ -1,3 +1,4 @@
+#include <logger.h>
 #include <IProtocolInf.h>
 
 CNoneProtocol::CNoneProtocol(void) : IProtocolInf() {};
@@ -11,7 +12,7 @@ bool CNoneProtocol::pack(const void* msg_raw, size_t msg_size, enum_c::ServerTyp
         one_segment->set_new_msg(msg_raw, msg_size);
         segments.push_back(one_segment);
     }catch(const std::exception &e) {
-        std::cout << "[Error] CNoneProtocol::pack() : " << e.what() << std::endl;
+        LOGERR("%s", e.what());
         return false;
     }
     return true; 
@@ -22,7 +23,7 @@ bool CNoneProtocol::unpack(const void* msg_raw, size_t msg_size) {
         // Set classified_data of msg_raw to payload.
         get_payload()->set_new_msg(msg_raw, msg_size);
     }catch(const std::exception &e) {
-        std::cout << "[Error] CNoneProtocol::unpack() : " << e.what() << std::endl;
+        LOGERR("%s", e.what());
         return false;
     }
     return true; 

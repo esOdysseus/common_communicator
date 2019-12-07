@@ -39,7 +39,7 @@ public:
 
     virtual bool accept(AppCallerType &app) = 0;
 
-    virtual MessageType read_msg(int u_sockfd) = 0;
+    virtual MessageType read_msg(int u_sockfd, bool &is_new) = 0;
 
     virtual bool write_msg(std::string client_id, MessageType msg) = 0;
 

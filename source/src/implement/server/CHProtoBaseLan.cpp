@@ -1,5 +1,5 @@
 #include <cassert>
-#include <iostream>
+#include <logger.h>
 #include <Enum_common.h>
 #include <IAppInf.h>
 #include <IProtocolInf.h>
@@ -42,7 +42,7 @@ bool CHProtoBaseLan<PROTOCOL>::set_app_call_back(void) {
  */ 
 template <typename PROTOCOL>
 bool CHProtoBaseLan<PROTOCOL>::write(std::string client_id, const void* msg, size_t msg_size) {
-    cout << "[Debug] CHProtoBaseLan::write() is called." << endl;
+    LOGD("It's called.");
     try {
         SegmentsType segments = encapsulation<PROTOCOL>(msg, msg_size, s_server->get_server_type());
 
@@ -52,7 +52,7 @@ bool CHProtoBaseLan<PROTOCOL>::write(std::string client_id, const void* msg, siz
         }
     }
     catch(const std::exception &e) {
-        cout << "[Error] CHProtoBaseLan::write() : " << e.what() << endl;
+        LOGERR("%s", e.what());
         return false;
     }
     return true;
@@ -63,7 +63,7 @@ bool CHProtoBaseLan<PROTOCOL>::write(std::string client_id, const void* msg, siz
  */ 
 template <typename PROTOCOL>
 bool CHProtoBaseLan<PROTOCOL>::write_payload(std::string client_id, std::shared_ptr<CPayload>&& payload) {
-    cout << "[Debug] CHProtoBaseLan::write() is called." << endl;
+    LOGD("It's called.");
     try {
         std::shared_ptr<PROTOCOL> pro_payload = std::dynamic_pointer_cast<PROTOCOL>(payload);
         SegmentsType segments = encapsulation<PROTOCOL>(pro_payload, s_server->get_server_type());
@@ -74,7 +74,7 @@ bool CHProtoBaseLan<PROTOCOL>::write_payload(std::string client_id, std::shared_
         }
     }
     catch(const std::exception &e) {
-        cout << "[Error] CHProtoBaseLan::write() : " << e.what() << endl;
+        LOGERR("%s", e.what());
         return false;
     }
     return true;
@@ -88,10 +88,10 @@ void CHProtoBaseLan<PROTOCOL>::run(void) {
     // application call-back setting
     assert( set_app_call_back() == true );
 
-    cout << "Thread_ID : " << get_thread_id() << endl;
-    cout << "App_ID : " << app->get_app_id() << endl;
-    cout << "Server_ID : " << s_server->get_id() << endl;
-    cout << "Server_Type : " << s_server->get_server_type() << endl;
+    LOGD("Thread_ID   : %s", get_thread_id().c_str());
+    LOGD("App_ID      : %s", app->get_app_id().c_str());
+    LOGD("Server_ID   : %s", s_server->get_id().c_str());
+    LOGD("Server_Type : %d", s_server->get_server_type());
 
     // trig initial-call-back to application.
     if( s_server->get_server_type() == enum_c::ServerType::E_SERVER_TCP ) {
@@ -100,14 +100,19 @@ void CHProtoBaseLan<PROTOCOL>::run(void) {
 
     try {
         while(get_running_flag()) {
+            bool is_new = false;
             RawMsgType msg_raw;
 
             // check received message 
-            msg_raw = s_server->read_msg(get_sockfd());     // get raw message. (Blocking)
-            if(msg_raw->get_msg_size() > 0) {
-                cout << "Received MSG : " << (const char*)(msg_raw->get_msg_read_only()) << endl;
-                cout << "Client Info : " << msg_raw->get_source_alias() << endl;
+            msg_raw = s_server->read_msg(get_sockfd(), is_new);     // get raw message. (Blocking)
+            if( is_new == true ) {
+                app->get_cb_handlers().cb_connection_handle( msg_raw->get_source_alias(), true );
             }
+
+            // if(msg_raw->get_msg_size() > 0) {
+            //     LOGD("Received MSG : %s", (const char*)(msg_raw->get_msg_read_only()));
+            //     LOGD("Client Info  : %s", msg_raw->get_source_alias().c_str());
+            // }
 
             // message parsing with regard to PROTOCOL.
             ProtocolType p_msg = decapsulation<PROTOCOL>(msg_raw);
@@ -119,7 +124,7 @@ void CHProtoBaseLan<PROTOCOL>::run(void) {
         app->get_cb_handlers().cb_initialization_handle(s_server->get_server_type(), false);
     }
     catch(const std::exception &e) {
-        cout << "[Error] CHProtoBaseLan::run() : " << e.what() << endl;
+        LOGERR("%s", e.what());
         app->get_cb_handlers().cb_quit_handle(e);
         destroy();
     }
