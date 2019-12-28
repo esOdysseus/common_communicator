@@ -8,8 +8,6 @@ namespace enum_c
         E_SERVER_TCP = 1,
         E_SERVER_UDP = 2
     } ServerType;
-
-
 }
 
 

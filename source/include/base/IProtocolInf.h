@@ -13,7 +13,7 @@
 
 class CNoneProtocol;
 
-template <typename NEXT_PROTOCOL>
+// template <typename NEXT_PROTOCOL>
 class IProtocolInf : public CPayload {
 public:
     using RawMsgType = dtype_b::RawMsgType;
@@ -36,25 +36,25 @@ public:
         bool res = false;
         
         try {
-            if (std::is_same<NEXT_PROTOCOL, CNoneProtocol>::value == false) {
-                assert( this->get_next().get() != NULL );
+            // if (std::is_same<NEXT_PROTOCOL, CNoneProtocol>::value == false) {
+            //     assert( this->get_next().get() != NULL );
 
-                // Get next-protocol from Linked-list of This-protocol.
-                std::shared_ptr<NEXT_PROTOCOL> next_protocol = std::dynamic_pointer_cast<NEXT_PROTOCOL>(this->get_next());
-                // Recursive packing processing is start.
-                SegmentsType& u_segments = next_protocol->pack_recursive(msg, msg_size, server_type);
+            //     // Get next-protocol from Linked-list of This-protocol.
+            //     std::shared_ptr<NEXT_PROTOCOL> next_protocol = std::dynamic_pointer_cast<NEXT_PROTOCOL>(this->get_next());
+            //     // Recursive packing processing is start.
+            //     SegmentsType& u_segments = next_protocol->pack_recursive(msg, msg_size, server_type);
                 
-                // Current-protocol packing processing is start.
-                SegmentsType::iterator itor;
-                for( itor=u_segments.begin(); itor != u_segments.end(); itor++ ) {
-                    RawMsgType& segment = *itor;
-                    res = pack(segment->get_msg_read_only(), segment->get_msg_size(), server_type);
-                    assert(res == true);
-                }
-            }
-            else {
-                assert( (res = pack(msg, msg_size, server_type)) == true );
-            }
+            //     // Current-protocol packing processing is start.
+            //     SegmentsType::iterator itor;
+            //     for( itor=u_segments.begin(); itor != u_segments.end(); itor++ ) {
+            //         RawMsgType& segment = *itor;
+            //         res = pack(segment->get_msg_read_only(), segment->get_msg_size(), server_type);
+            //         assert(res == true);
+            //     }
+            // }
+            // else {
+            //     assert( (res = pack(msg, msg_size, server_type)) == true );
+            // }
         }
         catch(const std::exception &e) {
             std::cout << "[Error] IProtocolInf::pack_recursive() : " << e.what() << std::endl;
@@ -68,18 +68,18 @@ public:
         bool res = false;
 
         try{
-            assert( (res = unpack(msg_raw, msg_size)) == true );
-            assert( (res = is_there_data()) == true );
+            // assert( (res = unpack(msg_raw, msg_size)) == true );
+            // assert( (res = is_there_data()) == true );
 
-            MsgType payload = get_payload();
-            if (std::is_same<NEXT_PROTOCOL, CNoneProtocol>::value == false) {
-                std::shared_ptr<NEXT_PROTOCOL> next_protocol = std::make_shared<NEXT_PROTOCOL>();
-                res = next_protocol->unpack_recurcive(payload->get_msg_read_only(), 
-                                                      payload->get_msg_size());
-                assert(res == true);
-                payload.reset();
-                payload = move(next_protocol->get_payload());
-            }
+            // MsgType payload = get_payload();
+            // if (std::is_same<NEXT_PROTOCOL, CNoneProtocol>::value == false) {
+            //     std::shared_ptr<NEXT_PROTOCOL> next_protocol = std::make_shared<NEXT_PROTOCOL>();
+            //     res = next_protocol->unpack_recurcive(payload->get_msg_read_only(), 
+            //                                           payload->get_msg_size());
+            //     assert(res == true);
+            //     payload.reset();
+            //     payload = move(next_protocol->get_payload());
+            // }
         }
         catch(const std::exception &e) {
             std::cout << "[Error] IProtocolInf::unpack_recurcive() : " << e.what() << std::endl;
@@ -92,10 +92,16 @@ public:
     SegmentsType& get_segments(void) { return segments; }
 
     // fragment message. & make some segments.
-    virtual bool pack(const void* msg_raw, size_t msg_size, enum_c::ServerType server_type) = 0;
+    virtual bool pack(const void* msg_raw, size_t msg_size, enum_c::ServerType server_type) {
+        std::cout << "[Error] IProtocolInf::pack() : undefined function." << std::endl;
+        exit(-1);
+    }
 
     // classify segment. & extract payloads. & combine payloads. => make One-payload.
-    virtual bool unpack(const void* msg_raw, size_t msg_size) = 0;
+    virtual bool unpack(const void* msg_raw, size_t msg_size) {
+        std::cout << "[Error] IProtocolInf::unpack() : undefined function." << std::endl;
+        exit(-1);
+    }
 
 protected:
     SegmentsType segments;   // packed messages.
@@ -103,7 +109,7 @@ protected:
 };
 
 
-class CNoneProtocol : public IProtocolInf<CNoneProtocol> {
+class CNoneProtocol : public IProtocolInf {
 public:
     CNoneProtocol(void);
 

@@ -10,9 +10,7 @@
 #include <protocol/CPLittleEndian.h>
 #include <server/CHProtoBaseLan.h>
 
-template class IServerInf<CHProtoBaseLan<CPBigEndian>>;
-template class IServerInf<CHProtoBaseLan<CPLittleEndian>>;
-template class IServerInf<CHProtoBaseLan<CNoneProtocol>>;
+template class IServerInf<CHProtoBaseLan>;
 
 static const unsigned short client_bufsize = 20;
 
@@ -107,11 +105,12 @@ void IServerInf<PROTOCOL_H>::clear(void) {
 }
 
 template <typename PROTOCOL_H> 
-bool IServerInf<PROTOCOL_H>::thread_create(std::string& client_id, int socketfd, AppCallerType& app) {
+bool IServerInf<PROTOCOL_H>::thread_create(std::string& client_id, int socketfd, 
+                                           AppCallerType& app, Json_DataType &json_manager) {
     try {
         HProtocolType h_protocol = std::make_shared<PROTOCOL_H>(client_id, socketfd, 
                                                       SharedThisType::shared_from_this(), 
-                                                      app);
+                                                      app, json_manager);
         
         if ( mLooperPool.find(client_id) == mLooperPool.end() ) {
             mLooperPool.emplace(client_id, std::make_shared<CLooper>(&IHProtocolInf::run, h_protocol));
@@ -127,7 +126,8 @@ bool IServerInf<PROTOCOL_H>::thread_create(std::string& client_id, int socketfd,
 }
 
 template <typename PROTOCOL_H> 
-bool IServerInf<PROTOCOL_H>::thread_this_migrate(std::string& client_id, int socketfd, AppCallerType& app) {
+bool IServerInf<PROTOCOL_H>::thread_this_migrate(std::string& client_id, int socketfd, 
+                                                 AppCallerType& app, Json_DataType &json_manager) {
     try {
         if (client_id.empty()) {
             client_id = "ALL_CLIENT";
@@ -135,7 +135,7 @@ bool IServerInf<PROTOCOL_H>::thread_this_migrate(std::string& client_id, int soc
         
         HProtocolType h_protocol = std::make_shared<PROTOCOL_H>(client_id, socketfd, 
                                                       SharedThisType::shared_from_this(), 
-                                                      app);
+                                                      app, json_manager);
         h_protocol->run();
         return true;
     } catch (const std::exception &e) {

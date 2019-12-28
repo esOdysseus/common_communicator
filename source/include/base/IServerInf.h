@@ -2,7 +2,6 @@
 #ifndef ISERVER_INTERFACE_H_
 #define ISERVER_INTERFACE_H_
 
-#include <iostream>
 #include <string>
 #include <memory>
 #include <thread>
@@ -15,6 +14,7 @@
 #include <CRawMessage.h>
 #include <Enum_common.h>
 #include <BaseDatatypes.h>
+#include <json_manipulator.h>
 
 class IHProtocolInf;
 
@@ -37,7 +37,7 @@ public:
 
     virtual bool start(void) = 0;
 
-    virtual bool accept(AppCallerType &app) = 0;
+    virtual bool accept(AppCallerType &app, Json_DataType &json_manager) = 0;
 
     virtual MessageType read_msg(int u_sockfd, bool &is_new) = 0;
 
@@ -54,9 +54,9 @@ protected:
 
     void clear(void);
 
-    bool thread_create(std::string& client_addr, int socketfd, AppCallerType& app);
+    bool thread_create(std::string& client_addr, int socketfd, AppCallerType& app, Json_DataType &json_manager);
 
-    bool thread_this_migrate(std::string& client_addr, int socketfd, AppCallerType& app);
+    bool thread_this_migrate(std::string& client_addr, int socketfd, AppCallerType& app, Json_DataType &json_manager);
 
     void set_id(std::string& value) { id = value; }
 

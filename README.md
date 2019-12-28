@@ -44,6 +44,11 @@ limitations under the License.
 $ cd ${work}
 $ bash ./build.sh release
 ```
+### Library Dependency
+- glibc     : for socket communication.
+- stdc++11  : base library for overall-src.
+- rapidjson : for json file read/write. (include header-files to "lib/json/rapidjson")
+    > reference-Site: https://github.com/Tencent/rapidjson/blob/master/example/tutorial/tutorial.cpp
 ---
 ## Common-API
    > API for loose-dependency between Middleware-Communication library and Application.

@@ -1,6 +1,8 @@
 #include <cassert>
 #include <memory>
 
+#include <logger.h>
+#include <json_manipulator.h>
 #include <IAppInf.h>
 #include <server/CServerUDP.h>
 #include <server/CServerTCP.h>
@@ -8,11 +10,19 @@
 /*****
  * Static Function.
  */ 
+static Json_DataType json_manager = std::make_shared<json_mng::CMjson>();
 std::shared_ptr<ICommunicator> create_communicator(std::string app_id, 
                                                    std::string server_id, 
                                                    enum_c::ServerType server_type, 
                                                    unsigned short port, 
-                                                   const char* ip) {
+                                                   const char* ip,
+                                                   const char* protocol_desp_path) {
+    if (protocol_desp_path != NULL) {
+        json_manager.reset();
+        json_manager = std::make_shared<json_mng::CMjson>();
+        assert( json_manager->parse(protocol_desp_path) == true);
+        LOGD("Json protocol-descriptor parsing is successful.");
+    }
     return std::make_shared<ICommunicator>(app_id, server_id, server_type, port, ip);
 }
 
@@ -137,7 +147,7 @@ int ICommunicator::run(void) {
             auto server = std::make_shared<CServerTCP>();
             server->init(server_id, port, ip.c_str());
             server->start();
-            while(server->accept(app_caller) && is_running_continue());
+            while(server->accept(app_caller, json_manager) && is_running_continue());
         }
         break;
     case enum_c::ServerType::E_SERVER_UDP:
@@ -145,7 +155,7 @@ int ICommunicator::run(void) {
             auto server = std::make_shared<CServerUDP>();
             server->init(server_id, port, ip.c_str());
             server->start();
-            while(server->accept(app_caller) && is_running_continue());
+            while(server->accept(app_caller, json_manager) && is_running_continue());
         }
         break;
     default:

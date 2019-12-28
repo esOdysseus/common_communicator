@@ -16,16 +16,20 @@ QMAKE_CXXFLAGS += -fPIC
 equals(BUILD_MODE, "debug") {
     DEFINES += LOG_DEBUG_MODE
 }
+DEFINES += JSON_LIB_RAPIDJSON       # or JSON_LIB_HLOHMANN
 
 INCLUDEPATH += \
     $$_PRO_FILE_PWD_/source/include/base    \
     $$_PRO_FILE_PWD_/source/include/implement    \
-    $$_PRO_FILE_PWD_/source/lib/logger
+    $$_PRO_FILE_PWD_/source/lib/logger  \
+    $$_PRO_FILE_PWD_/source/lib/json    \
+    $$_PRO_FILE_PWD_/source/lib/exception
 
 SOURCES += \
     $$files($$_PRO_FILE_PWD_/source/src/base/*.cpp)  \
     $$files($$_PRO_FILE_PWD_/source/src/implement/server/*.cpp)  \
-    $$files($$_PRO_FILE_PWD_/source/src/implement/protocol/*.cpp)
+    $$files($$_PRO_FILE_PWD_/source/src/implement/protocol/*.cpp)   \
+    $$files($$_PRO_FILE_PWD_/source/lib/json/*.cpp)
 
 # for installation.
 DESTDIR=$$_PRO_FILE_PWD_/$$BUILD_MODE/lib

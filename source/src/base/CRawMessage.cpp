@@ -233,7 +233,7 @@ CRawMessage::LanSockType CRawMessage::get_source_sock(std::string& alias, enum_c
 const struct sockaddr_in* CRawMessage::get_source_addr_read_only(enum_c::ServerType server_type) {
     std::string src_name;
     LanAddrType src = get_source_addr(src_name, server_type);
-    // cout << "[Debug] CRawMessage::get_source_read_only(): source-Name=" << src_name << endl;
+    LOGD("source-Name=%s", src_name.c_str());
     return (const struct sockaddr_in*)src.get();
 }
 

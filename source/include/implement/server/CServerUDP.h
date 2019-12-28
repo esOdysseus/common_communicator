@@ -8,7 +8,7 @@
 #include <server/CHProtoBaseLan.h>
 #include <protocol/CPBigEndian.h>
 
-class CServerUDP : public IServerInf<CHProtoBaseLan<CPBigEndian>> {
+class CServerUDP : public IServerInf<CHProtoBaseLan> {
 public:
     using AddressType = CRawMessage::LanAddrType;
     using AddressMapType = std::map<std::string, AddressType>;
@@ -22,7 +22,7 @@ public:
 
     bool start(void) override;
 
-    bool accept(AppCallerType &app) override;
+    bool accept(AppCallerType &app, Json_DataType &json_manager) override;
 
     MessageType read_msg(int u_sockfd, bool &is_new) override;
 

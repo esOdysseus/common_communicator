@@ -1,0 +1,28 @@
+/*
+ * Protocol Description
+ */
+{
+    "protocol-libpath": "/home/eunseok/project_2020/workspace/vscode/common_communicator/config/libprotocol.so.0.1.0",         // absolute-full-path
+    "protocol-list": [
+        "CPBigEndian",
+        "CPLitleEndian"
+    ],
+    "protocol-desp": [
+        {
+            "name": "CPBigEndian",
+            "index": "0",
+            "properties": {
+                "msg_id": "0x00",   // manual manipulate property.
+                "length": "none"    // auto manipulate property.
+            }
+        },
+        {
+            "name": "CPLittleEndian",
+            "index": "1",
+            "properties": {
+                "msg_id": "0x00",   // manual manipulate property.
+                "length": "none"    // auto manipulate property.
+            }
+        }
+    ]
+}

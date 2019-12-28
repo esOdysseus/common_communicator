@@ -112,7 +112,7 @@ bool CServerTCP::start(void) {
     return started;
 }
 
-bool CServerTCP::accept(AppCallerType &app) {
+bool CServerTCP::accept(AppCallerType &app, Json_DataType &json_manager) {
     if(started) {
         struct sockaddr_in cliaddr;
         socklen_t clilen = sizeof(cliaddr);
@@ -130,7 +130,7 @@ bool CServerTCP::accept(AppCallerType &app) {
 
         if ( client_id.empty() == false ) {
             // create thread with PROTOCOL for new-sesseion by new-user.
-            if (thread_create(client_id, newsockfd, app) == false) {
+            if (thread_create(client_id, newsockfd, app, json_manager) == false) {
                 LOGERR("%d: Thread Create failed: %s", errno, strerror(errno));
                 return false;
             }

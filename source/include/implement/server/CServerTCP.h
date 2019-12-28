@@ -8,7 +8,7 @@
 #include <server/CHProtoBaseLan.h>
 #include <IProtocolInf.h>
 
-class CServerTCP : public IServerInf<CHProtoBaseLan<CNoneProtocol>> {
+class CServerTCP : public IServerInf<CHProtoBaseLan> {
 public:
     using SocketMapType = std::map<int, std::string>;  // socket, client-id
 
@@ -21,7 +21,7 @@ public:
 
     bool start(void) override;
 
-    bool accept(AppCallerType &app) override;
+    bool accept(AppCallerType &app, Json_DataType &json_manager) override;
 
     MessageType read_msg(int u_sockfd, bool &is_new) override;
 

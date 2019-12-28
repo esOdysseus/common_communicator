@@ -6,17 +6,16 @@
 #include <IHProtocolInf.h>
 #include <BaseDatatypes.h>
 #include <CRawMessage.h>
+#include <json_manipulator.h>
 
-template <typename PROTOCOL>
 class CHProtoBaseLan : public IHProtocolInf {
 public:
-    using ServerType = std::shared_ptr<IServerInf<CHProtoBaseLan<PROTOCOL>>>;
-    using ProtocolType = std::shared_ptr<PROTOCOL>;
+    using ServerType = std::shared_ptr<IServerInf<CHProtoBaseLan>>;
     using AddressType = CRawMessage::LanAddrType;
 
 public:
     CHProtoBaseLan(std::string client_addr, int socket_handler, 
-                   ServerType &&server, AppCallerType &app);
+                   ServerType &&server, AppCallerType &app, Json_DataType &json_manager);
 
     ~CHProtoBaseLan(void);
 

@@ -3,7 +3,7 @@
 
 #include <IProtocolInf.h>
 
-class CPBigEndian : public IProtocolInf<CNoneProtocol> {
+class CPBigEndian : public IProtocolInf {
 public:
     using MsgID_Type = uint32_t;
     using Length_Type = uint32_t;

@@ -33,6 +33,7 @@ std::shared_ptr<PROTOCOL> CPayload::get(void) {
             }
             else{
                 target.reset();
+                break;
             }
         }
 

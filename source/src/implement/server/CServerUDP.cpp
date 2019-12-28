@@ -104,11 +104,11 @@ bool CServerUDP::start(void) {
     return started;
 }
 
-bool CServerUDP::accept(AppCallerType &app) {
+bool CServerUDP::accept(AppCallerType &app, Json_DataType &json_manager) {
     if(started) {
         std::string client_addr;
         // sockfd is not client-socket-fd so, We will insert value-Zero(0) to parameter-2.
-        if (thread_this_migrate(client_addr, 0, app) == false) {
+        if (thread_this_migrate(client_addr, 0, app, json_manager) == false) {
             LOGERR("%d: %s", errno, strerror(errno));
             return false;
         }

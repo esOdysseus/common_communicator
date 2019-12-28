@@ -19,7 +19,8 @@ int main(int argc, char *argv[])
     auto handler = create_communicator("TestApp01", 
                                        "CServerUDP", enum_c::ServerType::E_SERVER_UDP, 
                                        atoi(argv[2]), 
-                                       argv[1]);
+                                       argv[1],
+                                       "/home/eunseok/project/project/workspace/vscode/common_communicator/config/desp_protocol.json");
     CAppTest sample_App(handler);
 
     handler->register_initialization_handler(std::bind(&CAppTest::cb_initialization, &sample_App, _1, _2));

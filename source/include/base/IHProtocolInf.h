@@ -6,13 +6,14 @@
 #include <cassert>
 #include <string>
 #include <memory>
-#include <iostream>
 
 #include <IAppInf.h>
 #include <CRawMessage.h>
 #include <Enum_common.h>
 #include <BaseDatatypes.h>
 #include <CPayload.h>
+#include <IProtocolInf.h>
+#include <json_manipulator.h>
 
 class IHProtocolInf {
 public:
@@ -21,19 +22,24 @@ public:
     using SegmentsType = dtype_b::SegmentsType;
     using AppCallerType = dtype_b::AppCallerType;
     using AppType = dtype_b::AppType;
+    using ProtocolType = std::shared_ptr<IProtocolInf>;
 
 public:
     template <typename SERVER> 
     IHProtocolInf(std::string client_addr, 
                   int socket_handler, 
                   std::shared_ptr<SERVER> &&server,
-                  AppCallerType &app) {
+                  AppCallerType &app,
+                  Json_DataType &json_manager) {
         assert(client_addr.empty()==false);
 
         this->t_id = client_addr;
         this->h_socket = socket_handler;
         this->s_app = app;
+        this->s_proto_desp = json_manager;
         this->client_id = client_addr;
+        
+        load_protocols();
         set_running_flag(false);
     }
 
@@ -50,6 +56,8 @@ public:
     std::string get_client_id(void);
 
 protected:
+    void load_protocols(void);
+    
     void set_running_flag(bool value);
 
     virtual bool set_app_call_back(void) = 0;
@@ -58,62 +66,11 @@ protected:
 
     virtual bool write_payload(std::string client_id, std::shared_ptr<CPayload>&& payload) = 0;
 
-    template <typename PROTOCOL> 
-    SegmentsType encapsulation(const void* msg_raw, size_t msg_size, enum_c::ServerType server_type) {
-        /****
-         * According to ServerType, fragment the message. & make segment-List.
-         *                        - segment-list will be RawMsgType-List.
-         * Segments : 1. combine with One-Head + payload + (One-Tail)
-         *          : 2. Encoding(payload)
-         */
-        std::shared_ptr<PROTOCOL> p_msg = std::make_shared<PROTOCOL>();
-        try{
-            return p_msg->pack_recursive(msg_raw, msg_size, server_type);
-        }catch(const std::exception &e) {
-            std::cout << "[Error] IHProtocolInf::encapsulation() : " << e.what() << std::endl;
-            throw std::exception(e);
-        }
-    }
+    SegmentsType encapsulation(const void* msg_raw, size_t msg_size, enum_c::ServerType server_type);
 
-    template <typename PROTOCOL> 
-    SegmentsType encapsulation(std::shared_ptr<PROTOCOL>& p_msg, enum_c::ServerType server_type) {
-        /****
-         * According to ServerType, fragment the message. & make segment-List.
-         *                        - segment-list will be RawMsgType-List.
-         * Segments : 1. combine with One-Head + payload + (One-Tail)
-         *          : 2. Encoding(payload)
-         */
-        // std::shared_ptr<PROTOCOL> p_msg = std::make_shared<PROTOCOL>();
-        size_t msg_size = 0;
-        const void* msg_raw = p_msg->get_payload()->get_msg_read_only(&msg_size);
+    SegmentsType encapsulation(ProtocolType& p_msg, enum_c::ServerType server_type);
 
-        try{
-            return p_msg->pack_recursive(msg_raw, msg_size, server_type);
-        }catch(const std::exception &e) {
-            std::cout << "[Error] IHProtocolInf::encapsulation() : " << e.what() << std::endl;
-            throw std::exception(e);
-        }
-    }
-
-    template <typename PROTOCOL> 
-    std::shared_ptr<PROTOCOL> decapsulation(RawMsgType msg_raw) {
-        /****
-         * Classify segments from the raw-message. & extract payload & It combine with payloads.
-         * Segments : 1. combine with One-Head + payload + (One-Tail)
-         *          : 2. Decoding(payload)
-         */
-        bool res = false;
-        std::shared_ptr<PROTOCOL> p_msg = std::make_shared<PROTOCOL>();
-        try{
-            res = p_msg->unpack_recurcive(msg_raw->get_msg_read_only(), msg_raw->get_msg_size());
-            assert(res==true);
-        }
-        catch(const std::exception &e) {
-            std::cout << "[Error] IHProtocolInf::decapsulation() : " << e.what() << std::endl;
-            throw std::exception(e);
-        }
-        return p_msg;
-    }
+    ProtocolType decapsulation(RawMsgType msg_raw);
 
     AppCallerType& get_app_instance(void);
 
@@ -121,7 +78,9 @@ protected:
 
 private:
     AppCallerType s_app;
-    
+
+    Json_DataType s_proto_desp;
+
     int h_socket;
 
     std::string t_id;
