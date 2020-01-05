@@ -71,9 +71,10 @@ $ bash ./build.sh release
 ## History
 Date | Commit-ID | Version | Description
 :---|:---:|:---:|:---
-2019-12-4 | e5d31e09073be75c884eca4bd207b6e2c2be6895 | Ver 0.1.0 | First commit for Common-Communicator.
-2019-12-5 | d37fd441949617a92e0fd583a703f56db21cfacf | Ver 0.1.1 | Change folder-tree and API-design change.
-2019-12-7 | ad863961333ca7c4e7bca054b04f39dfefa7fdb7 | Ver 0.1.1 | 1. Add Logger.<br> 2. UDP connected-call-back op enable.<br> 3. Remove 'using namespace std'.
+`2019-12-4` | `e5d31e09073be75c884eca4bd207b6e2c2be6895` | Ver 0.1.0 | First commit for Common-Communicator.
+`2019-12-5` | `d37fd441949617a92e0fd583a703f56db21cfacf` | Ver 0.1.1 | Change folder-tree and API-design change.
+`2019-12-7` | `ad863961333ca7c4e7bca054b04f39dfefa7fdb7` | Ver 0.1.1 | 1. Add Logger.<br> 2. UDP connected-call-back op enable.<br> 3. Remove 'using namespace std'.
+`2020-01-5` | '' | Ver 0.1.1 | 1. Decomposition of Protocol-library.<br> 2. Decomposition common-library.<br> 3. Create CConfigProtocol.
 
 ### TBD-list
 - It will support SOME/IP protocol by common-API.
