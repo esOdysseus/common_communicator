@@ -12,7 +12,7 @@
  * Static Function.
  */ 
 // static Json_DataType json_manager = std::make_shared<json_mng::CMjson>();
-static std::shared_ptr<CConfigProtocols> protocol_mng = std::make_shared<CConfigProtocols>();
+static std::shared_ptr<cf_proto::CConfigProtocols> protocol_mng = std::make_shared<cf_proto::CConfigProtocols>();
 std::shared_ptr<ICommunicator> create_communicator(std::string app_id, 
                                                    std::string server_id, 
                                                    enum_c::ServerType server_type, 
@@ -23,7 +23,7 @@ std::shared_ptr<ICommunicator> create_communicator(std::string app_id,
     try {
         if (protocol_desp_path != NULL) {
             protocol_mng.reset();
-            protocol_mng = std::make_shared<CConfigProtocols>(protocol_desp_path);
+            protocol_mng = std::make_shared<cf_proto::CConfigProtocols>(protocol_desp_path);
         }
     }
     catch (const std::exception &e) {

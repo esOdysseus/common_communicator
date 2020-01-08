@@ -15,7 +15,7 @@ public:
 public:
     CHProtoBaseLan(std::string client_addr, int socket_handler, 
                    ServerType &&server, AppCallerType &app, 
-                   std::shared_ptr<CConfigProtocols> &proto_manager);
+                   std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager);
 
     ~CHProtoBaseLan(void);
 

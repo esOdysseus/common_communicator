@@ -6,6 +6,8 @@
 #include <json_manipulator.h>
 #include <CConfigProtocols.h>
 
+namespace cf_proto {
+
 /***********************************
  * Public Function Definition.
  */
@@ -75,8 +77,8 @@ static bool biuld_protocol_struct(std::string &name,
         // set meta-members of protocol struct.
         pt_dest.name = name;
         pt_dest.meta.index = (*index.get());
-        pt_dest.properties = std::make_shared<IProtocolInf::PropertyMap>();
-        IProtocolInf::PropertyMap* property_map = pt_dest.properties.get();
+        pt_dest.properties = std::make_shared<PropertyMap>();
+        PropertyMap* property_map = pt_dest.properties.get();
         assert(property_map != NULL);
         assert(pt_dest.meta.index == proto_index);
         LOGD("name=%s", pt_dest.name.c_str());
@@ -218,3 +220,5 @@ std::shared_ptr<IProtocolInf> CConfigProtocols::create_inst(int index_num) {
         throw e;
     }
 }
+
+}   // namespace cf_proto

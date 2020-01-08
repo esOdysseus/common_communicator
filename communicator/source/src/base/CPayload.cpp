@@ -2,6 +2,7 @@
 
 #include <logger.h>
 #include <CPayload.h>
+#include <IProtocolInf.h>
 
 namespace payload
 {
@@ -21,6 +22,9 @@ static const char* exception_switch(E_ERROR err_num) {
 #include <CException.h>
 
 
+/************************************
+ * Public Function Definition
+ */
 CPayload::CPayload(std::string name) 
 : next(NULL), _name_(name) {
     _payload_ = std::make_shared<DataType>();
@@ -32,7 +36,7 @@ CPayload::~CPayload(void) {
     next.reset();
 }
 
-std::shared_ptr<CPayload> CPayload::get(std::string proto_name) {
+std::shared_ptr<IProtocolInf> CPayload::get(std::string proto_name) {
     try{
         assert(proto_name.empty() == false);
         assert(proto_name.length() > 0);
@@ -49,39 +53,13 @@ std::shared_ptr<CPayload> CPayload::get(std::string proto_name) {
             }
         }
 
-        return target;
+        return std::dynamic_pointer_cast<IProtocolInf>( target );
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
         throw e;
     }
 }
-
-// template <typename PROTOCOL>
-// std::shared_ptr<PROTOCOL> CPayload::get(void) {
-//     try{
-//         PayloadType target = SharedThisType::shared_from_this();
-//         std::shared_ptr<PROTOCOL> sample = std::make_shared<PROTOCOL>(); 
-
-//         while (target->get_name() != sample->get_name()) {
-//             if (target->get_next().get() != NULL) {
-//                 auto next_target = target->get_next();
-//                 target.reset();
-//                 target = next_target;
-//             }
-//             else{
-//                 target.reset();
-//                 break;
-//             }
-//         }
-
-//         return std::dynamic_pointer_cast<PROTOCOL>(target);
-//     }
-//     catch(const std::exception &e) {
-//         LOGERR("%s", e.what());
-//         throw e;
-//     }
-// }
 
 const std::string CPayload::get_name(void) {
     return this->_name_;
@@ -119,15 +97,14 @@ bool CPayload::set_payload(std::shared_ptr<CPayload::DataType>&& msg_raw) {
     return true;
 }
 
-bool CPayload::is_there_data(void) {
+bool CPayload::is_empty(void) {
     LOGD("It's called.");
-    return (_payload_->get_msg_size() > 0) ? true : false;
+    return (_payload_->get_msg_size() > 0) ? false : true;
 }
 
-CPayload::PayloadType CPayload::get_next(void) {
-    return next;
-}
-
+/************************************
+ * Protected Function Definition
+ */
 void CPayload::insert_next(CPayload::PayloadType&& payload) {
     try{
         if (next.get() != NULL) {
@@ -139,6 +116,10 @@ void CPayload::insert_next(CPayload::PayloadType&& payload) {
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
     }
+}
+
+CPayload::PayloadType CPayload::get_next(void) {
+    return next;
 }
 
 

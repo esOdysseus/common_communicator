@@ -30,7 +30,7 @@ public:
                   int socket_handler, 
                   std::shared_ptr<SERVER> &&server,
                   AppCallerType &app,
-                  std::shared_ptr<CConfigProtocols> &proto_manager) {
+                  std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
         assert(client_addr.empty()==false);
 
         this->t_id = client_addr;
@@ -79,7 +79,7 @@ protected:
 private:
     AppCallerType s_app;
 
-    std::shared_ptr<CConfigProtocols> s_proto_desp;
+    std::shared_ptr<cf_proto::CConfigProtocols> s_proto_desp;
 
     int h_socket;
 

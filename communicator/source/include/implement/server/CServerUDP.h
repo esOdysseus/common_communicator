@@ -21,7 +21,7 @@ public:
 
     bool start(void) override;
 
-    bool accept(AppCallerType &app, std::shared_ptr<CConfigProtocols> &proto_manager) override;
+    bool accept(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) override;
 
     MessageType read_msg(int u_sockfd, bool &is_new) override;
 

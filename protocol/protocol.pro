@@ -18,7 +18,6 @@ include ($$_PRO_FILE_PWD_/pre_proc.pri)
 
 CONFIG += shared
 QMAKE_CXXFLAGS += -fPIC
-LIBS += -ldl
 
 DEFINES += LOGGER_TAG=\\\"PROTO\\\"
 equals(BUILD_MODE, "debug") {
@@ -30,16 +29,13 @@ INCLUDEPATH += \
     $$_PRO_FILE_PWD_/include/base    \
     $$_PRO_FILE_PWD_/include        \
     $$ROOT_PATH/lib/logger  \
-    $$ROOT_PATH/lib/json    \
     $$ROOT_PATH/lib/exception   \
     $$ROOT_PATH/lib
 
 SOURCES += \
     $$files($$_PRO_FILE_PWD_/src/*.cpp)  \
     $$files($$_PRO_FILE_PWD_/src/base/*.cpp)  \
-    $$files($$_PRO_FILE_PWD_/src/protocol/*.cpp)  \
-    $$files($$ROOT_PATH/lib/json/*.cpp)     \
-    $$files($$ROOT_PATH/lib/pal/*.c)
+    $$files($$_PRO_FILE_PWD_/src/protocol/*.cpp)
 
 # for installation.
 EXTRA_BINFILES = \

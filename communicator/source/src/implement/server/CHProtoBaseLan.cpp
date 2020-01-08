@@ -7,7 +7,7 @@
 using namespace std::placeholders;
 
 CHProtoBaseLan::CHProtoBaseLan(std::string client_addr, int socket_handler, 
-                   ServerType &&server, AppCallerType& app, std::shared_ptr<CConfigProtocols> &proto_manager)
+                   ServerType &&server, AppCallerType& app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager)
 : IHProtocolInf(client_addr, socket_handler, std::forward<ServerType>(server), app, proto_manager) {
     this->s_server = std::forward<ServerType>(server);
 }
@@ -97,7 +97,7 @@ void CHProtoBaseLan::run(void) {
 
             // message parsing with regard to PROTOCOL.
             ProtocolType p_msg = decapsulation(msg_raw);
-            if(p_msg->is_there_data() == true) {
+            if(p_msg->is_empty() == false) {
                 app->get_cb_handlers().cb_message_payload_handle(msg_raw->get_source_alias(),
                                                                  p_msg);  // trig app-function.
             }

@@ -2,32 +2,57 @@
 #include <logger.h>
 #include <IProtocolInf.h>
 
+template bool IProtocolInf::set_property<int>(const std::string key, int value);
+template bool IProtocolInf::set_property<long>(const std::string key, long value);
+template bool IProtocolInf::set_property<float>(const std::string key, float value);
+template bool IProtocolInf::set_property<double>(const std::string key, double value);
 
+
+/******************************
+ * Public Function Definition
+ */ 
 IProtocolInf::IProtocolInf(void): payload::CPayload() {
     segments.clear();
-    properties.reset();
 }
 
 IProtocolInf::IProtocolInf(std::string name): payload::CPayload(name) {
     segments.clear();
-    properties.reset();
-    properties = std::make_shared<PropertyMap>();
 }
 
 IProtocolInf::~IProtocolInf(void) {
     segments.clear();
-    properties.reset();
 }
 
-std::shared_ptr<IProtocolInf::PropertyMap> IProtocolInf::get_property(void) {
-    return properties;
-}
-
-bool IProtocolInf::set_property(const std::shared_ptr<PropertyMap> &properties) {
+std::shared_ptr<std::list<std::string>> IProtocolInf::get_keys(void) {
+    std::shared_ptr<std::list<std::string>> ret;
     LOGERR("undefined function.");
-    return false;
+    return ret;
 }
 
+std::string IProtocolInf::get_property(const std::string key) {
+    std::string ret;
+    LOGERR("undefined function.");
+    return ret;
+}
+
+template <typename T>
+bool IProtocolInf::set_property(const std::string key, T value) {
+    return set_property_raw(key, std::to_string(value) );
+}
+
+template <>
+bool IProtocolInf::set_property(const std::string key, const char* value) {
+    return set_property_raw(key, value);
+}
+
+template <>
+bool IProtocolInf::set_property(const std::string key, std::string value) {
+    return set_property_raw(key, value);
+}
+
+/*******************************
+ * Protected Function Definition
+ */
 IProtocolInf::SegmentsType& IProtocolInf::pack_recursive(const void* msg, size_t msg_size, enum_c::ServerType server_type) {
     bool res = false;
     
@@ -65,7 +90,7 @@ bool IProtocolInf::unpack_recurcive(const void* msg_raw, size_t msg_size) {
 
     try{
         // assert( (res = unpack(msg_raw, msg_size)) == true );
-        // assert( (res = is_there_data()) == true );
+        // assert( (res = !is_empty()) == true );
 
         // MsgType payload = get_payload();
         // if (std::is_same<NEXT_PROTOCOL, CNoneProtocol>::value == false) {
@@ -97,6 +122,11 @@ bool IProtocolInf::pack(const void* msg_raw, size_t msg_size, enum_c::ServerType
 
 // classify segment. & extract payloads. & combine payloads. => make One-payload.
 bool IProtocolInf::unpack(const void* msg_raw, size_t msg_size) {
+    LOGERR("undefined function.");
+    return false;
+}
+
+bool IProtocolInf::set_property_raw(const std::string key, const std::string value) {
     LOGERR("undefined function.");
     return false;
 }

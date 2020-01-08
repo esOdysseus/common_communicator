@@ -9,6 +9,9 @@
 #define MAKE_PROTOCOL(dest, src, seq)	(dest).big_endian.raw_##seq = ((const uint8_t*)(src))[(seq)]
 
 
+/********************************
+ * Public Function Definition
+ */
 CPBigEndian::CPBigEndian(void) 
 : IProtocolInf(Protocol_NAME) {
     clear();
@@ -23,36 +26,35 @@ void CPBigEndian::clear(void) {
     protocol.header.length = NULL;
 }
 
-CPBigEndian::MsgID_Type CPBigEndian::get_msg_id(void) {
-    return protocol.header.msg_id;
+std::shared_ptr<std::list<std::string>> CPBigEndian::get_keys(void) {
+    using KeysType = std::list<std::string>;
+    std::shared_ptr<KeysType> ret = std::make_shared<KeysType>();
+
+    ret->push_back(MSG_ID);
+    ret->push_back(LENGTH);
+    return ret;
 }
 
-CPBigEndian::Length_Type CPBigEndian::get_length(void) {
-    return protocol.header.length;
+std::string CPBigEndian::get_property(const std::string key) {
+    std::string ret;
+
+    if (key.c_str() == MSG_ID) {
+        ret = std::to_string(get_msg_id());
+    }
+    else if(key.c_str() == LENGTH) {
+        ret = std::to_string(get_length());
+    }
+    else {
+        LOGERR("Not supported key(%s).", key.c_str());
+    }
+
+    return ret;
 }
 
-void CPBigEndian::set_msg_id(CPBigEndian::MsgID_Type value) {
-    protocol.header.msg_id = value;
-}
 
-void CPBigEndian::set_length(CPBigEndian::Length_Type value) {
-    protocol.header.length = value;
-}
-
-bool CPBigEndian::set_property(const std::shared_ptr<PropertyMap> &properties) {
-    // assert(json_property != NULL);
-    // bool result = false;
-    // std::shared_ptr<json_mng::CMjson> json_manager = std::make_shared<json_mng::CMjson>();
-
-    // if( json_manager->parse(json_property) == true) {
-    //     (*properties.get())[ MSG_ID ] = json_manager->get_member( MSG_ID )->c_str();
-    //     (*properties.get())[ LENGTH ] = json_manager->get_member( LENGTH )->c_str();
-    //     result = true;
-    // }
-
-    // return result;
-}
-
+/**********************************
+ * Protected Function Definition
+ */
 bool CPBigEndian::pack(const void* msg_raw, size_t msg_size, enum_c::ServerType server_type) {
     LOGD("It's called.");
 
@@ -92,7 +94,7 @@ bool CPBigEndian::pack(const void* msg_raw, size_t msg_size, enum_c::ServerType 
             // Make one-segment & regist the segment to segment-list.
             std::shared_ptr<SegmentType> one_segment = std::make_shared<SegmentType>();
             one_segment->set_new_msg(raw_data, raw_size);
-            segments.push_back(one_segment);
+            get_segments().push_back(one_segment);
         }
     }
     catch(const std::exception &e) {
@@ -112,14 +114,50 @@ bool CPBigEndian::unpack(const void* msg_raw, size_t msg_size) {
 
         // Set classified_data of msg_raw to payload.
         get_payload()->set_new_msg(classified_data, protocol.header.length);
-        (*properties.get())[ MSG_ID ] = std::to_string(protocol.header.msg_id);
-        (*properties.get())[ LENGTH ] = std::to_string(protocol.header.length);
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
         return false;
     }
     return true;
+}
+
+bool CPBigEndian::set_property_raw(const std::string key, const std::string value) {
+    bool ret = false;
+
+    if (key.c_str() == MSG_ID) {
+        set_msg_id( (MsgID_Type)(atoi(value.c_str())) );
+        ret = true;
+    }
+    else if(key.c_str() == LENGTH) {
+        set_length( (Length_Type)(atoi(value.c_str())) );
+        ret = true;
+    }
+    else {
+        LOGERR("Not supported key(%s).", key.c_str());
+    }
+
+    return ret;
+}
+
+
+/**********************************
+ * Private Function Definition
+ */ 
+CPBigEndian::MsgID_Type CPBigEndian::get_msg_id(void) {
+    return protocol.header.msg_id;
+}
+
+CPBigEndian::Length_Type CPBigEndian::get_length(void) {
+    return protocol.header.length;
+}
+
+void CPBigEndian::set_msg_id(CPBigEndian::MsgID_Type value) {
+    protocol.header.msg_id = value;
+}
+
+void CPBigEndian::set_length(CPBigEndian::Length_Type value) {
+    protocol.header.length = value;
 }
 
 bool CPBigEndian::pack_raw_data(const void* msg_raw, size_t msg_size, UnitData_Type* raw_data, size_t raw_size) {

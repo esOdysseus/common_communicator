@@ -113,7 +113,7 @@ bool CServerTCP::start(void) {
     return started;
 }
 
-bool CServerTCP::accept(AppCallerType &app, std::shared_ptr<CConfigProtocols> &proto_manager) {
+bool CServerTCP::accept(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
     if(started) {
         struct sockaddr_in cliaddr;
         socklen_t clilen = sizeof(cliaddr);

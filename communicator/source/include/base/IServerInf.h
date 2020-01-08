@@ -37,7 +37,7 @@ public:
 
     virtual bool start(void) = 0;
 
-    virtual bool accept(AppCallerType &app, std::shared_ptr<CConfigProtocols> &proto_manager) = 0;
+    virtual bool accept(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) = 0;
 
     virtual MessageType read_msg(int u_sockfd, bool &is_new) = 0;
 
@@ -54,9 +54,9 @@ protected:
 
     void clear(void);
 
-    bool thread_create(std::string& client_addr, int socketfd, AppCallerType& app, std::shared_ptr<CConfigProtocols> &proto_manager);
+    bool thread_create(std::string& client_addr, int socketfd, AppCallerType& app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager);
 
-    bool thread_this_migrate(std::string& client_addr, int socketfd, AppCallerType& app, std::shared_ptr<CConfigProtocols> &proto_manager);
+    bool thread_this_migrate(std::string& client_addr, int socketfd, AppCallerType& app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager);
 
     void set_id(std::string& value) { id = value; }
 

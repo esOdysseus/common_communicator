@@ -104,7 +104,7 @@ bool CServerUDP::start(void) {
     return started;
 }
 
-bool CServerUDP::accept(AppCallerType &app, std::shared_ptr<CConfigProtocols> &proto_manager) {
+bool CServerUDP::accept(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
     if(started) {
         std::string client_addr;
         // sockfd is not client-socket-fd so, We will insert value-Zero(0) to parameter-2.

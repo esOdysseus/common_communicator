@@ -34,18 +34,16 @@ void CAppTest::cb_connected(std::string client_id, bool flag_connect) {
 void CAppTest::cb_receive_msg_handle(std::string client_id, std::shared_ptr<payload::CPayload> payload) {
     cout << "[Debug] CAppTest::cb_receive_msg_handle() is called." << endl;
 
-    auto data = payload->get_payload();
-    std::shared_ptr<IProtocolInf> protocol = GET_PROTOCOL(PBigEdian, payload);
-    std::shared_ptr<IProtocolInf::PropertyMap> properties = protocol->get_property();
+    size_t data_size = 0;
+    const void* data = payload->get_payload(data_size);
+    std::shared_ptr<IProtocolInf> protocol = payload->get(PBigEdian);
     cout << "************************************" << endl;
     cout << "* 1. Client-ID : " << client_id << endl;
     cout << "* 2. CPayload-Name : " << payload->get_name() << endl;
-    cout << "* 3. payload-size : " << data->get_msg_size() << endl;
-    cout << "* 4. payload : " << (const char*)data->get_msg_read_only() << endl;
-    // cout << "* 5. message-ID : " << protocol->get_msg_id() << endl;
-    // cout << "* 6. payload-length : " << protocol->get_length() << endl;
-    cout << "* 5. message-ID : " << properties->find("msg_id")->second << endl;
-    cout << "* 6. payload-length : " << properties->find("length")->second << endl;
+    cout << "* 3. payload-size : " << data_size << endl;
+    cout << "* 4. payload : " << (const char*)data << endl;
+    cout << "* 5. message-ID : " << protocol->get_property("msg_id") << endl;
+    cout << "* 6. payload-length : " << protocol->get_property("length") << endl;
     cout << "************************************" << endl;
 
     // std::shared_ptr<CPBigEndian> send_msg = std::make_shared<CPBigEndian>();

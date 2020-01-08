@@ -8,7 +8,6 @@
 
 #include <Enum_common.h>
 #include <CReceiver.h>
-// #include <CAppInternalCaller.h>
 
 class ICommunicator;
 
@@ -193,44 +192,6 @@ public:
     /******************************
      * Discovery API
      ******************************/
-
-protected:
-    // Regist function-point for "send" member-function.
-    void set_send_payload_fp(SendPayloadType &&fp);
-
-    // Regist function-point for "send" member-function.
-    void set_sendto_fp(SendToType &&fp);
-
-    // Get group-point for Call-back functions.
-    CReceiver& get_cb_handlers(void);
-
-private:
-    // Get continue-flag of server for Communicator.
-    bool is_running_continue(void);
-
-    // Thread-routin of server for Communicator.
-    int run(void);
-
-private:
-    CReceiver cb_handlers;  // It contains many kinds of Call-back functions for Application.
-
-    std::string app_id;     // Identical-Name for Application.
-
-    std::string server_id;  // Identical-Name for Server.
-
-    enum_c::ServerType server_type; // Type for Server.
-
-    unsigned short port;    // Port-number for Server.
-
-    std::string ip;         // IP-address for Server.
-
-    SendToType m_sendto;    // function-pointer for Send-Transaction.
-
-    SendPayloadType m_send_payload; // function-pointer for Send-Transaction with payload.
-
-    std::thread runner;     // Thread-instance of server for Communicator.
-
-    bool runner_continue;   // Continue-flag of server for Communicator.
 
 };
 

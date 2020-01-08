@@ -1,11 +1,13 @@
 #ifndef _CPAYLOAD_H_
 #define _CPAYLOAD_H_
 
+#include <list>
 #include <string>
 #include <memory>
 
 #include <CRawMessage.h>
 
+class IProtocolInf;
 
 namespace payload
 {
@@ -15,14 +17,13 @@ namespace payload
         E_INVALID_VALUE = 4
     }E_ERROR;
 
-    #define GET_PROTOCOL(PROTOCOL, payload) std::dynamic_pointer_cast<IProtocolInf>( (payload)->get(PROTOCOL) )
 
     class CPayload : public std::enable_shared_from_this<CPayload> {
-    public:
+    protected:
         using DataType = CRawMessage;
-        using PayloadType = std::shared_ptr<CPayload>;
 
     private:
+        using PayloadType = std::shared_ptr<CPayload>;
         using SharedThisType = std::enable_shared_from_this<CPayload>;
         static constexpr char* Default_Name = "none";
 
@@ -31,23 +32,30 @@ namespace payload
 
         virtual ~CPayload(void);
 
-        std::shared_ptr<CPayload> get(std::string proto_name);
-
+        /** Get Protocol-Name */
         const std::string get_name(void);
 
-        std::shared_ptr<DataType> get_payload(void);
+        /** Get Protocol Instance */
+        std::shared_ptr<IProtocolInf> get(std::string proto_name);
 
+        /** Get Payload */
         const void* get_payload(size_t& payload_length);
 
+        /** Set Payload */
         bool set_payload(const void* msg, size_t msg_size);
 
-        bool set_payload(std::shared_ptr<DataType>&& msg_raw);
+        /** is payload empty? */
+        bool is_empty(void);
 
-        bool is_there_data(void);
+    protected:
+        /** Get Payload */
+        std::shared_ptr<DataType> get_payload(void);
+
+        /** Set Payload */
+        bool set_payload(std::shared_ptr<DataType>&& msg_raw);
 
         void insert_next(PayloadType&& payload);
 
-    protected:
         PayloadType get_next(void);
 
     private:
@@ -56,6 +64,8 @@ namespace payload
         std::shared_ptr<DataType> _payload_;
 
         PayloadType next;
+
+        std::shared_ptr<std::list<CPayload>> proto_chain;   // link to external list-object.
 
     };
 

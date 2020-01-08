@@ -105,7 +105,7 @@ void IServerInf<PROTOCOL_H>::clear(void) {
 template <typename PROTOCOL_H> 
 bool IServerInf<PROTOCOL_H>::thread_create(std::string& client_id, int socketfd, 
                                            AppCallerType& app, 
-                                           std::shared_ptr<CConfigProtocols> &proto_manager) {
+                                           std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
     try {
         HProtocolType h_protocol = std::make_shared<PROTOCOL_H>(client_id, socketfd, 
                                                       SharedThisType::shared_from_this(), 
@@ -127,7 +127,7 @@ bool IServerInf<PROTOCOL_H>::thread_create(std::string& client_id, int socketfd,
 template <typename PROTOCOL_H> 
 bool IServerInf<PROTOCOL_H>::thread_this_migrate(std::string& client_id, int socketfd, 
                                                  AppCallerType& app, 
-                                                 std::shared_ptr<CConfigProtocols> &proto_manager) {
+                                                 std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
     try {
         if (client_id.empty()) {
             client_id = "ALL_CLIENT";

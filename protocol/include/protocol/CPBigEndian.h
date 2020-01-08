@@ -37,6 +37,18 @@ public:
 
     void clear(void);
 
+    std::shared_ptr<std::list<std::string>> get_keys(void) override;
+
+    std::string get_property(const std::string key) override;
+
+protected:
+    bool pack(const void* msg_raw, size_t msg_size, enum_c::ServerType server_type) override;
+
+    bool unpack(const void* msg_raw, size_t msg_size) override;
+
+    bool set_property_raw(const std::string key, const std::string value) override;
+
+private:
     MsgID_Type get_msg_id(void);
 
     Length_Type get_length(void);
@@ -45,13 +57,6 @@ public:
 
     void set_length(Length_Type value);
 
-    bool set_property(const std::shared_ptr<PropertyMap> &properties) override;
-
-    bool pack(const void* msg_raw, size_t msg_size, enum_c::ServerType server_type) override;
-
-    bool unpack(const void* msg_raw, size_t msg_size) override;
-
-private:
     const void* unpack_raw_data(const void* msg_raw, size_t msg_size);
 
     bool pack_raw_data(const void* msg_raw, size_t msg_size, 
