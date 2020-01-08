@@ -45,12 +45,29 @@ bool CConfigProtocols::is_ready(void) {
     return f_ready;
 }
 
-std::shared_ptr<IProtocolInf> CConfigProtocols::create_protocols_chain(void) {
+std::shared_ptr<payload::CPayload> CConfigProtocols::create_protocols_chain(void) {
     if( available_protocols()->size() == 0 ) {
-        return std::make_shared<IProtocolInf>();
+        return std::make_shared<payload::CPayload>();
     }
 
-    // TODO
+    try {
+        // make protocol-chain instance.
+        auto proto_chain = std::make_shared<IProtocolInf::ProtoChainType>();
+        for (auto itr = available_protocols()->begin(); itr != available_protocols()->end(); itr++) {
+            // append protocol to protocol-chain.
+            std::shared_ptr<IProtocolInf> protocol = create_inst(*itr);
+            proto_chain->push_back(protocol);
+            protocol->set_proto_chain(proto_chain);     // register chain to protocol.
+        }
+
+        return (*proto_chain->begin());
+    }
+    catch ( const std::exception &e) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+
+    return std::make_shared<payload::CPayload>();
 }
 
 std::shared_ptr<CConfigProtocols::ProtoList> CConfigProtocols::available_protocols(void) {

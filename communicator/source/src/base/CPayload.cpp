@@ -11,6 +11,8 @@ static const char* exception_switch(E_ERROR err_num) {
     switch(err_num) {
     case E_ERROR::E_NO_ERROR:
         return "E_NO_ERROR in payload pkg.";
+    case E_ERROR::E_INVALID_MEMBER_VARIABLES:
+        return "E_INVALID_MEMBER_VARIABLES in payload pkg.";
     case E_ERROR::E_ITS_NOT_SUPPORTED_TYPE:
         return "E_ITS_NOT_SUPPORTED_TYPE in payload pkg.";
     case E_ERROR::E_INVALID_VALUE:
@@ -26,31 +28,56 @@ static const char* exception_switch(E_ERROR err_num) {
  * Public Function Definition
  */
 CPayload::CPayload(std::string name) 
-: next(NULL), _name_(name) {
+: _name_(name) {
     _payload_ = std::make_shared<DataType>();
+    _protocol_chain_.reset();
 }
 
 CPayload::~CPayload(void) {
+    if (_protocol_chain_.get() != NULL) {
+        // Delete a element in list that is myself CPayload.
+        auto itr = _protocol_chain_->begin();
+        for (; itr != _protocol_chain_->end(); itr++) {
+            if ( (*itr)->get_name() == _name_ ) {
+                break;
+            }
+        }
+
+        if ( itr != _protocol_chain_->end() ) {
+            _protocol_chain_->erase(itr);
+        }
+    }
+    _protocol_chain_.reset();
     _name_.clear();
     _payload_.reset();
-    next.reset();
+}
+
+const std::string CPayload::get_name(void) {
+    return this->_name_;
 }
 
 std::shared_ptr<IProtocolInf> CPayload::get(std::string proto_name) {
     try{
         assert(proto_name.empty() == false);
         assert(proto_name.length() > 0);
-        PayloadType target = SharedThisType::shared_from_this();
+        PayloadType target;
+        ProtoChainType::iterator itr = _protocol_chain_->begin();
 
-        while (target->get_name() != proto_name) {
-            if (target->get_next().get() != NULL) {
-                auto next_target = target->get_next();
-                target.reset();
-                target = next_target;
+        if ( _protocol_chain_->size() <= 0 ) {
+            throw CException(E_ERROR::E_INVALID_MEMBER_VARIABLES);
+        }
+
+        // Search to find protocol-name that is equal with input proto_name.
+        for (; itr != _protocol_chain_->end(); itr++) {
+            target.reset();
+            target = (*itr);
+            if ( target->get_name() == proto_name ) {
+                break;
             }
-            else{
-                throw CException(E_ERROR::E_ITS_NOT_SUPPORTED_TYPE);
-            }
+        }
+
+        if ( itr == _protocol_chain_->end() ) {
+            throw CException(E_ERROR::E_ITS_NOT_SUPPORTED_TYPE);
         }
 
         return std::dynamic_pointer_cast<IProtocolInf>( target );
@@ -59,14 +86,6 @@ std::shared_ptr<IProtocolInf> CPayload::get(std::string proto_name) {
         LOGERR("%s", e.what());
         throw e;
     }
-}
-
-const std::string CPayload::get_name(void) {
-    return this->_name_;
-}
-
-std::shared_ptr<CPayload::DataType> CPayload::get_payload(void) { 
-    return _payload_; 
 }
 
 const void* CPayload::get_payload(size_t& payload_length) {
@@ -85,6 +104,18 @@ bool CPayload::set_payload(const void* msg, size_t msg_size) {
     return true;
 }
 
+bool CPayload::is_empty(void) {
+    LOGD("It's called.");
+    return (_payload_->get_msg_size() > 0) ? false : true;
+}
+
+/************************************
+ * Protected Function Definition
+ */
+std::shared_ptr<CPayload::DataType> CPayload::get_payload(void) { 
+    return _payload_; 
+}
+
 bool CPayload::set_payload(std::shared_ptr<CPayload::DataType>&& msg_raw) {
     try{
         _payload_.reset();
@@ -97,29 +128,9 @@ bool CPayload::set_payload(std::shared_ptr<CPayload::DataType>&& msg_raw) {
     return true;
 }
 
-bool CPayload::is_empty(void) {
-    LOGD("It's called.");
-    return (_payload_->get_msg_size() > 0) ? false : true;
-}
-
-/************************************
- * Protected Function Definition
- */
-void CPayload::insert_next(CPayload::PayloadType&& payload) {
-    try{
-        if (next.get() != NULL) {
-            payload->insert_next( std::forward<PayloadType>(next) );
-        }
-        
-        next = std::forward<PayloadType>(payload);
-    }
-    catch(const std::exception &e) {
-        LOGERR("%s", e.what());
-    }
-}
-
-CPayload::PayloadType CPayload::get_next(void) {
-    return next;
+void CPayload::set_proto_chain(std::shared_ptr<ProtoChainType>& proto_chain) {
+    assert(proto_chain.get() != NULL);
+    _protocol_chain_ = proto_chain;
 }
 
 

@@ -36,10 +36,9 @@ public:
         this->t_id = client_addr;
         this->h_socket = socket_handler;
         this->s_app = app;
-        this->s_proto_desp = proto_manager;
+        this->s_proto_config = proto_manager;
         this->client_id = client_addr;
         
-        load_protocols();
         set_running_flag(false);
     }
 
@@ -56,8 +55,6 @@ public:
     std::string get_client_id(void);
 
 protected:
-    void load_protocols(void);
-    
     void set_running_flag(bool value);
 
     virtual bool set_app_call_back(void) = 0;
@@ -79,7 +76,7 @@ protected:
 private:
     AppCallerType s_app;
 
-    std::shared_ptr<cf_proto::CConfigProtocols> s_proto_desp;
+    std::shared_ptr<cf_proto::CConfigProtocols> s_proto_config;
 
     int h_socket;
 

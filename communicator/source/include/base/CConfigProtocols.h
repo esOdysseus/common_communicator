@@ -36,8 +36,8 @@ namespace cf_proto {
      * PAL structure for c++
      */
     typedef struct cpp_protocol_lib_t {
-    // protocol-context API
-    struct pt_standard_t common;
+        // protocol-context API
+        struct pt_standard_t common;
 
         /** Get available protocol_contexts */
         std::shared_ptr<std::list<std::string>> (*get_available_protocols)(void);
@@ -60,7 +60,7 @@ namespace cf_proto {
 
         bool is_ready(void);
 
-        std::shared_ptr<IProtocolInf> create_protocols_chain(void);
+        std::shared_ptr<payload::CPayload> create_protocols_chain(void);
 
         std::shared_ptr<ProtoList> available_protocols(void);
 

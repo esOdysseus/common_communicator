@@ -15,6 +15,7 @@ public:
     using RawMsgType = std::shared_ptr<CRawMessage>;
     using SegmentType = CRawMessage;
     using SegmentsType = std::list<std::shared_ptr<SegmentType>>;
+    using ProtoChainType = payload::CPayload::ProtoChainType;
 
 protected:
     using MsgType = std::shared_ptr<payload::CPayload::DataType>;

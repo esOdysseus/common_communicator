@@ -7,12 +7,17 @@
 
 #include <CRawMessage.h>
 
+
 class IProtocolInf;
+namespace cf_proto {
+    class CConfigProtocols;
+}
 
 namespace payload
 {
     typedef enum E_ERROR {
         E_NO_ERROR = 0,
+        E_INVALID_MEMBER_VARIABLES = 2,
         E_ITS_NOT_SUPPORTED_TYPE = 3,
         E_INVALID_VALUE = 4
     }E_ERROR;
@@ -21,9 +26,10 @@ namespace payload
     class CPayload : public std::enable_shared_from_this<CPayload> {
     protected:
         using DataType = CRawMessage;
+        using PayloadType = std::shared_ptr<CPayload>;
+        using ProtoChainType = std::list<PayloadType>;
 
     private:
-        using PayloadType = std::shared_ptr<CPayload>;
         using SharedThisType = std::enable_shared_from_this<CPayload>;
         static constexpr char* Default_Name = "none";
 
@@ -54,18 +60,17 @@ namespace payload
         /** Set Payload */
         bool set_payload(std::shared_ptr<DataType>&& msg_raw);
 
-        void insert_next(PayloadType&& payload);
+        /** Set Protocol-Chain instance. */
+        void set_proto_chain(std::shared_ptr<ProtoChainType>& proto_chain);
 
-        PayloadType get_next(void);
+        friend class cf_proto::CConfigProtocols;
 
     private:
         std::string _name_;
 
         std::shared_ptr<DataType> _payload_;
 
-        PayloadType next;
-
-        std::shared_ptr<std::list<CPayload>> proto_chain;   // link to external list-object.
+        std::shared_ptr<ProtoChainType> _protocol_chain_;   // link to external list-object.
 
     };
 

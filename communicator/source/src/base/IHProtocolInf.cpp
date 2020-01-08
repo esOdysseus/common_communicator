@@ -17,7 +17,7 @@ IHProtocolInf::~IHProtocolInf(void) {
     h_socket = 0;
     set_running_flag(false);
     s_app.reset();
-    s_proto_desp.reset();
+    s_proto_config.reset();
     client_id = "";
 }
 
@@ -36,22 +36,6 @@ std::string IHProtocolInf::get_client_id(void) {
 /***********************************
  * Protected Function definition.
  */ 
-void IHProtocolInf::load_protocols(void) {
-    if ( s_proto_desp->is_ready() == false ) {
-        LOGD("enable Protocol-Handler as Empty-protocol mode.");
-        // TODO
-        return;
-    }
-
-    try {
-        LOGD("Load protocols-instance & assign these.");
-        // TODO
-    }
-    catch( const std::exception &e) {
-        LOGERR("%s", e.what());
-    }
-}
-
 void IHProtocolInf::set_running_flag(bool value) {
     f_is_run = value;
 }
