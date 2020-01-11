@@ -88,7 +88,6 @@ IProtocolInf::SegmentsType& IProtocolInf::pack_recursive(const void* msg, size_t
         get_segments().clear();
     }
 
-    LOGD("Quit");
     return get_segments();
 }
 
@@ -123,7 +122,6 @@ bool IProtocolInf::unpack_recurcive(const void* msg_raw, size_t msg_size) {
         res = false;
     }
 
-    LOGD("Quit");
     return res;
 }
 

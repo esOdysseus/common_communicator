@@ -31,13 +31,17 @@ public:
     ICommunicator(std::string app_id, 
                   std::string server_id, 
                   enum_c::ServerType server_type, 
-                  unsigned short port, 
+                  std::shared_ptr<void> &proto_config,
+                  unsigned short port,
                   const char* ip=NULL);
 
     ~ICommunicator(void);
 
     // Get Application-ID which contain this Communicator.
     std::string get_app_id(void);
+
+    // Get Version-infomation of Common-API.
+    std::string get_version(void);
 
     /******************************
      * Communicator-Base API
@@ -67,7 +71,7 @@ public:
     void register_quit_handler(QuitCB_Type &&handler);
 
     // >> Server/Client-side
-    //   - Precondition : Handler registered by cb_register_initialization_handler() was called.
+    //   - Precondition : None
     //   - Practice : Create CPayload with protocol-chain instance in internal.
     //   - Postcondition : you can get CPayload instance with protocol-chain.
     std::shared_ptr<payload::CPayload> create_payload(void);

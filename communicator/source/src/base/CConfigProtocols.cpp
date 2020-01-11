@@ -23,24 +23,32 @@ static const char* exception_switch(E_ERROR err_num) {
 /***********************************
  * Public Function Definition.
  */
-CConfigProtocols::CConfigProtocols(void)
-: f_ready(false), proto_h(NULL) {
-    this->config_full_path.clear();
-    this->lib_path.clear();
-    this->lib_id.clear();
-    this->proto_st.clear();
-    // Set dumy-protocol for Empty-protocol config-case.
-    this->proto_list = std::make_shared<ProtoList>();
-    this->proto_list->push_back(payload::CPayload::Default_Name);
-    this->proto_chains_map.clear();
-}
-
 CConfigProtocols::CConfigProtocols(std::string config_path)
 : f_ready(false), proto_h(NULL) {
-    assert( init(config_path) == true );
-    assert( dynamic_lib_load(this->lib_id, this->lib_path) == true );
-    assert( check_available(this->proto_h, this->proto_list) == true );
-    f_ready = true;
+    try {
+        if ( config_path.empty() == true ) {
+            LOGD("Enable NULL ConfigProtocols.");
+            this->config_full_path.clear();
+            this->lib_path.clear();
+            this->lib_id.clear();
+            this->proto_st.clear();
+            // Set dumy-protocol for Empty-protocol config-case.
+            this->proto_list = std::make_shared<ProtoList>();
+            this->proto_list->push_back(payload::CPayload::Default_Name);
+            this->proto_chains_map.clear();
+        }
+        else {
+            LOGD("Enable json-file ConfigProtocols.");
+            assert( init(config_path) == true );
+            assert( dynamic_lib_load(this->lib_id, this->lib_path) == true );
+            assert( check_available(this->proto_h, this->proto_list) == true );
+        }
+        f_ready = true;
+    }
+    catch ( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
 }
 
 CConfigProtocols::~CConfigProtocols(void) {
@@ -261,7 +269,6 @@ bool CConfigProtocols::check_available(CConfigProtocols::ProtoModule *proto_lib,
 std::shared_ptr<IProtocolInf> CConfigProtocols::create_inst(std::string protocol_name) {
     assert( is_ready() == true );
     std::shared_ptr<IProtocolInf> ret;
-    LOGD("Called");
 
     try{
         if (protocol_name == payload::CPayload::Default_Name) {
@@ -276,7 +283,6 @@ std::shared_ptr<IProtocolInf> CConfigProtocols::create_inst(std::string protocol
         throw e;
     }
     
-    LOGD("Quit");
     return ret;
 }
 

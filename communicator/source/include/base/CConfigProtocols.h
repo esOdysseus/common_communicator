@@ -57,8 +57,6 @@ namespace cf_proto {
         using ProtoList = std::list<std::string>;
 
     public:
-        CConfigProtocols(void);
-
         CConfigProtocols(std::string config_path);
 
         ~CConfigProtocols(void);
@@ -72,6 +70,8 @@ namespace cf_proto {
         std::shared_ptr<ProtoList> available_protocols(void);
 
     private:
+        CConfigProtocols(void) = delete;
+
         bool init(std::string &config_file_path);
 
         bool dynamic_lib_load(std::string id, std::string path);

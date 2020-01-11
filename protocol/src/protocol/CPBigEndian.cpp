@@ -126,11 +126,11 @@ bool CPBigEndian::unpack(const void* msg_raw, size_t msg_size) {
 bool CPBigEndian::set_property_raw(const std::string key, const std::string value) {
     bool ret = false;
 
-    if (key.c_str() == MSG_ID) {
+    if (key == MSG_ID) {
         set_msg_id( (MsgID_Type)(atoi(value.c_str())) );
         ret = true;
     }
-    else if(key.c_str() == LENGTH) {
+    else if(key == LENGTH) {
         set_length( (Length_Type)(atoi(value.c_str())) );
         ret = true;
     }

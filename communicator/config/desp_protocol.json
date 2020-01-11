@@ -5,19 +5,11 @@
     "protocol-libpath": "/home/eunseok/project/project/workspace/vscode/common_communicator/debug/lib/libproto.so",         // absolute-full-path
     "protocol-id": "SAMPLE_PROTOCOLS",
     "protocol-list": [
-        "CPBigEndian",
-        "CPLittleEndian"
+        "CPBigEndian"
     ],
     "protocol-desp": {
         "CPBigEndian": {
             "index": "0",
-            "properties": {
-                "msg_id": "0x00",   // manual manipulate property.
-                "length": "none"    // auto manipulate property.
-            }
-        },
-        "CPLittleEndian": {
-            "index": "1",
             "properties": {
                 "msg_id": "0x00",   // manual manipulate property.
                 "length": "none"    // auto manipulate property.

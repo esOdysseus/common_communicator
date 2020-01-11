@@ -1,9 +1,9 @@
 #include <cassert>
 #include <memory>
 
+#include <config.h>
 #include <logger.h>
 #include <CConfigProtocols.h>
-// #include <json_manipulator.h>
 #include <IAppInf.h>
 #include <server/CServerUDP.h>
 #include <server/CServerTCP.h>
@@ -11,26 +11,22 @@
 /*****
  * Static Function.
  */ 
-// static Json_DataType json_manager = std::make_shared<json_mng::CMjson>();
-static std::shared_ptr<cf_proto::CConfigProtocols> protocol_mng = std::make_shared<cf_proto::CConfigProtocols>();
 std::shared_ptr<ICommunicator> create_communicator(std::string app_id, 
                                                    std::string server_id, 
                                                    enum_c::ServerType server_type, 
                                                    unsigned short port, 
                                                    const char* ip,
                                                    const char* protocol_desp_path) {
-
+    std::shared_ptr<ICommunicator> ret;
     try {
-        if (protocol_desp_path != NULL) {
-            protocol_mng.reset();
-            protocol_mng = std::make_shared<cf_proto::CConfigProtocols>(protocol_desp_path);
-        }
+            std::shared_ptr<cf_proto::CConfigProtocols> proto_config = std::make_shared<cf_proto::CConfigProtocols>(protocol_desp_path);
+            ret = std::make_shared<ICommunicator>(app_id, server_id, server_type, proto_config, port, ip);
     }
     catch (const std::exception &e) {
         LOGERR("%s", e.what());
     }
 
-    return std::make_shared<ICommunicator>(app_id, server_id, server_type, port, ip);
+    return ret;
 }
 
 /*****
@@ -39,14 +35,17 @@ std::shared_ptr<ICommunicator> create_communicator(std::string app_id,
 ICommunicator::ICommunicator(std::string app_id, 
               std::string server_id, 
               enum_c::ServerType server_type, 
+              std::shared_ptr<cf_proto::CConfigProtocols> &proto_config,
               unsigned short port, 
-              const char* ip) : runner_continue(false) {
+              const char* ip) 
+: runner_continue(false) {
 
     this->app_id = app_id;
     this->server_id = server_id;
     this->server_type = server_type;
     this->port = port;
     this->ip = ip;
+    this->proto_config = proto_config;
 
     this->m_sendto = NULL;
     this->m_send_payload = NULL;
@@ -63,9 +62,18 @@ ICommunicator::~ICommunicator(void) {
     this->server_id = "destroyed";
     this->port = 0;
     this->ip.clear();
+    this->proto_config.reset();
 
     this->m_sendto = NULL;
     this->m_send_payload = NULL;
+}
+
+std::string ICommunicator::get_app_id(void) { 
+    return app_id; 
+}
+
+std::string ICommunicator::get_version(void) {
+    return STRING_OF_COMMON_API_VERSION;
 }
 
 void ICommunicator::init(void) {
@@ -94,14 +102,8 @@ void ICommunicator::register_quit_handler(QuitCB_Type &&handler) {
 }
 
 std::shared_ptr<payload::CPayload> ICommunicator::create_payload(void) {
-    std::shared_ptr<payload::CPayload> ret = std::make_shared<payload::CPayload>();
-    
-    // TODO
-    return ret;
-}
-
-std::string ICommunicator::get_app_id(void) { 
-    return app_id; 
+    assert( proto_config->is_ready() == true );
+    return proto_config->create_protocols_chain();
 }
 
 bool ICommunicator::send(std::string client_id, std::shared_ptr<payload::CPayload>&& payload) {
@@ -170,7 +172,7 @@ int ICommunicator::run(void) {
             auto server = std::make_shared<CServerTCP>();
             server->init(server_id, port, ip.c_str());
             server->start();
-            while(server->accept(app_caller, protocol_mng) && is_running_continue());
+            while(server->accept(app_caller, proto_config) && is_running_continue());
         }
         break;
     case enum_c::ServerType::E_SERVER_UDP:
@@ -178,7 +180,7 @@ int ICommunicator::run(void) {
             auto server = std::make_shared<CServerUDP>();
             server->init(server_id, port, ip.c_str());
             server->start();
-            while(server->accept(app_caller, protocol_mng) && is_running_continue());
+            while(server->accept(app_caller, proto_config) && is_running_continue());
         }
         break;
     default:

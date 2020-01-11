@@ -36,21 +36,6 @@ CPayload::CPayload(std::string name)
 
 CPayload::~CPayload(void) {
     LOGD("Called.");
-    // if (_protocol_chain_.get() != NULL) {
-    //     // Delete a element in list that is myself CPayload.
-    //     auto itr = _protocol_chain_->begin();
-    //     for (; itr != _protocol_chain_->end(); itr++) {
-    //         if ( (*itr)->get_name() == _name_ ) {
-    //             break;
-    //         }
-    //     }
-
-    //     if ( itr != _protocol_chain_->end() ) {
-    //         (*itr).reset();
-    //         _protocol_chain_->erase(itr);
-    //     }
-    // }
-    // _protocol_chain_->clear();
     _protocol_chain_.reset();
     _protocol_chain_name_.clear();
     _name_.clear();

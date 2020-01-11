@@ -16,13 +16,18 @@ int main(int argc, char *argv[])
 {
     std::cout << "Test-program for check operating of UDP/TCP server." << std::endl;
 
+    // Create Communicator instance.
     auto handler = create_communicator("TestApp01", 
-                                       "CServerUDP", enum_c::ServerType::E_SERVER_UDP, 
+                                       "CServerUDP", 
+                                       enum_c::ServerType::E_SERVER_UDP, 
                                        atoi(argv[2]), 
                                        argv[1],
                                        argv[3]);
-    CAppTest sample_App(handler);
 
+    std::cout << "Common-API Version = " << handler->get_version() << std::endl;
+
+    // Register Call-Back function pointer of CAppTest class.
+    CAppTest sample_App(handler);
     handler->register_initialization_handler(std::bind(&CAppTest::cb_initialization, &sample_App, _1, _2));
     handler->register_connection_handler(std::bind(&CAppTest::cb_connected, &sample_App, _1, _2));
     handler->register_message_handler(std::bind(&CAppTest::cb_receive_msg_handle, &sample_App, _1, _2));
