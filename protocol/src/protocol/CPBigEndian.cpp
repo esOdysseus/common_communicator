@@ -38,10 +38,10 @@ std::shared_ptr<std::list<std::string>> CPBigEndian::get_keys(void) {
 std::string CPBigEndian::get_property(const std::string key) {
     std::string ret;
 
-    if (key.c_str() == MSG_ID) {
+    if (key == MSG_ID) {
         ret = std::to_string(get_msg_id());
     }
-    else if(key.c_str() == LENGTH) {
+    else if(key == LENGTH) {
         ret = std::to_string(get_length());
     }
     else {
@@ -107,6 +107,7 @@ bool CPBigEndian::pack(const void* msg_raw, size_t msg_size, enum_c::ServerType 
 bool CPBigEndian::unpack(const void* msg_raw, size_t msg_size) {
     LOGD("It's called.");
 
+    // Assumption : segments is only has one-segment.
     try{
         // Make classified_data & protocol-data
         const void* classified_data = unpack_raw_data(msg_raw, msg_size);

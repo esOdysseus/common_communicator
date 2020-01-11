@@ -1,11 +1,9 @@
 #ifndef INTERFACE_PROTOCOL_H_
 #define INTERFACE_PROTOCOL_H_
 
-#include <iostream>
 #include <list>
 #include <map>
 #include <memory>
-#include <cassert>
 
 #include <CPayload.h>
 
@@ -18,8 +16,13 @@ public:
 
     ~IProtocolInf(void);
 
+    /** Get Keys for properties. */
+    virtual std::shared_ptr<std::list<std::string>> get_keys(void);
+
+    /** Get Value for property-key. */
     virtual std::string get_property(const std::string key);
 
+    /** Set Value for property-key. */
     template <typename T>
     bool set_property(const std::string key, T value);
 

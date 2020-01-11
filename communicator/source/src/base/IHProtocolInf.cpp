@@ -9,6 +9,21 @@
 /**********************************
  * Public Function definition.
  */
+IHProtocolInf::IHProtocolInf(std::string client_addr, 
+                             int socket_handler, 
+                             AppCallerType &app,
+                             std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
+    assert(client_addr.empty()==false);
+
+    this->t_id = client_addr;
+    this->h_socket = socket_handler;
+    this->s_app = app;
+    this->s_proto_config = proto_manager;
+    this->client_id = client_addr;
+    
+    set_running_flag(false);
+}
+
 IHProtocolInf::~IHProtocolInf(void) {
     if (h_socket != 0) {
         close(h_socket);
@@ -47,16 +62,19 @@ IHProtocolInf::SegmentsType IHProtocolInf::encapsulation(const void* msg_raw, si
      * Segments : 1. combine with One-Head + payload + (One-Tail)
      *          : 2. Encoding(payload)
      */
-    ProtocolType p_msg = std::make_shared<IProtocolInf>();
+    auto payload = s_proto_config->create_protocols_chain();
+    ProtocolType protocol = payload->get(payload::CPayload::Myself_Name);
     try{
-        return p_msg->pack_recursive(msg_raw, msg_size, server_type);
+        SegmentsType& ref_segs = protocol->pack_recursive(msg_raw, msg_size, server_type);
+        destroy_proto_chain(protocol);
+        return ref_segs;
     }catch(const std::exception &e) {
         LOGERR("%s", e.what());
-        throw std::exception(e);
+        throw e;
     }
 }
 
-IHProtocolInf::SegmentsType IHProtocolInf::encapsulation(IHProtocolInf::ProtocolType& p_msg, enum_c::ServerType server_type) {
+IHProtocolInf::SegmentsType IHProtocolInf::encapsulation(IHProtocolInf::ProtocolType& protocol, enum_c::ServerType server_type) {
     /****
      * According to ServerType, fragment the message. & make segment-List.
      *                        - segment-list will be RawMsgType-List.
@@ -64,13 +82,13 @@ IHProtocolInf::SegmentsType IHProtocolInf::encapsulation(IHProtocolInf::Protocol
      *          : 2. Encoding(payload)
      */
     size_t msg_size = 0;
-    const void* msg_raw = p_msg->get_payload()->get_msg_read_only(&msg_size);
+    const void* msg_raw = protocol->get_payload()->get_msg_read_only(&msg_size);
 
     try{
-        return p_msg->pack_recursive(msg_raw, msg_size, server_type);
+        return protocol->pack_recursive(msg_raw, msg_size, server_type);
     }catch(const std::exception &e) {
         LOGERR("%s", e.what());
-        throw std::exception(e);
+        throw e;
     }
 }
 
@@ -81,20 +99,28 @@ IHProtocolInf::ProtocolType IHProtocolInf::decapsulation(IHProtocolInf::RawMsgTy
      *          : 2. Decoding(payload)
      */
     bool res = false;
-    ProtocolType p_msg = std::make_shared<IProtocolInf>();
+    auto payload = s_proto_config->create_protocols_chain();
+    ProtocolType protocol = payload->get(payload::CPayload::Myself_Name);
     try{
-        res = p_msg->unpack_recurcive(msg_raw->get_msg_read_only(), msg_raw->get_msg_size());
+        size_t data_size = 0;
+        const void * data = msg_raw->get_msg_read_only( &data_size );
+        res = protocol->unpack_recurcive(data, data_size);
         assert(res==true);
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
-        throw std::exception(e);
+        throw e;
     }
-    return p_msg;
+
+    return protocol;
 }
 
 IHProtocolInf::AppCallerType& IHProtocolInf::get_app_instance(void) {
     return s_app;
+}
+
+bool IHProtocolInf::destroy_proto_chain(ProtocolType &chain) {
+    return s_proto_config->destroy_protocols_chain(chain);
 }
 
 int IHProtocolInf::get_sockfd(void) {

@@ -41,8 +41,8 @@ namespace pal {
     #include <CException.h>
 
     static int sample_close(pt_standard_t *handler) {
-        LOGD("Called");
         assert(handler != NULL);
+        LOGD("Called");
 
         handler->module = NULL;
         handler->close = NULL;
@@ -52,9 +52,9 @@ namespace pal {
     }
 
     static std::shared_ptr<std::list<std::string>> sample_get_available_protocols(void) {
-        LOGD("Called");
         using ProtocolList = std::list<std::string>;
         std::shared_ptr<ProtocolList> pt_list = std::make_shared<ProtocolList>();
+        LOGD("Called");
 
         try{
             pt_list->push_back(CPBigEndian::Protocol_NAME);
@@ -68,9 +68,9 @@ namespace pal {
     }
 
     static std::shared_ptr<IProtocolInf> sample_create_instance(std::string protocol_name) {
-        LOGD("Called");
         assert(protocol_name.empty() == false);
         assert(protocol_name.length() > 0);
+        LOGD("Called");
 
         try{
             if( protocol_name == CPBigEndian::Protocol_NAME) {
@@ -94,9 +94,9 @@ namespace pal {
     static int sample_open(const pt_module_t* module, const char __attribute__((unused)) *id,
                            pt_standard_t** handler)
     {
-        LOGD("Called");
         assert(module != NULL);
         assert(handler != NULL);
+        LOGD("Called");
 
         cpp_protocol_lib_t *pcontext = (cpp_protocol_lib_t *)malloc(sizeof(cpp_protocol_lib_t));
         memset(pcontext, 0, sizeof(cpp_protocol_lib_t));

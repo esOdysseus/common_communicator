@@ -24,14 +24,17 @@ namespace payload
 
 
     class CPayload : public std::enable_shared_from_this<CPayload> {
+    public:
+        static constexpr char* Myself_Name = "_myself_";
+
     protected:
         using DataType = CRawMessage;
         using PayloadType = std::shared_ptr<CPayload>;
         using ProtoChainType = std::list<PayloadType>;
+        static constexpr char* Default_Name = "none";
 
     private:
         using SharedThisType = std::enable_shared_from_this<CPayload>;
-        static constexpr char* Default_Name = "none";
 
     public:
         CPayload(std::string name = Default_Name);
@@ -54,14 +57,23 @@ namespace payload
         bool is_empty(void);
 
     protected:
+        /** Get Protocol that is contained by myself-payload. */
+        std::shared_ptr<IProtocolInf> get_protocol(void);
+
         /** Get Payload */
         std::shared_ptr<DataType> get_payload(void);
 
         /** Set Payload */
         bool set_payload(std::shared_ptr<DataType>&& msg_raw);
 
+        /** Get Protocol-Chain instance. */
+        std::shared_ptr<ProtoChainType> get_proto_chain(void);
+
         /** Set Protocol-Chain instance. */
-        void set_proto_chain(std::shared_ptr<ProtoChainType>& proto_chain);
+        void set_proto_chain(std::string chain_name, std::shared_ptr<ProtoChainType>& proto_chain);
+
+        /** Get Protocol-Chain name. */
+        std::string get_protocols_chain_name(void);
 
         friend class cf_proto::CConfigProtocols;
 
@@ -70,7 +82,9 @@ namespace payload
 
         std::shared_ptr<DataType> _payload_;
 
-        std::shared_ptr<ProtoChainType> _protocol_chain_;   // link to external list-object.
+        std::string _protocol_chain_name_;      // link to external list-object.
+
+        std::weak_ptr<ProtoChainType> _protocol_chain_;   // link to external list-object.
 
     };
 

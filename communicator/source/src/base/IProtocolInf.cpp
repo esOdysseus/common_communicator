@@ -1,3 +1,4 @@
+#include <cassert>
 
 #include <logger.h>
 #include <IProtocolInf.h>
@@ -20,6 +21,7 @@ IProtocolInf::IProtocolInf(std::string name): payload::CPayload(name) {
 }
 
 IProtocolInf::~IProtocolInf(void) {
+    LOGD("Called.");
     segments.clear();
 }
 
@@ -54,59 +56,74 @@ bool IProtocolInf::set_property(const std::string key, std::string value) {
  * Protected Function Definition
  */
 IProtocolInf::SegmentsType& IProtocolInf::pack_recursive(const void* msg, size_t msg_size, enum_c::ServerType server_type) {
+    LOGD("Called");
+    auto proto_chain = get_proto_chain();
+    assert(proto_chain->end() != proto_chain->begin());
     bool res = false;
-    
-    try {
-        // if (std::is_same<NEXT_PROTOCOL, CNoneProtocol>::value == false) {
-        //     assert( this->get_next().get() != NULL );
+    #define GET_PROTOCOL(iterator)  (*(iterator))->get(payload::CPayload::Myself_Name)
 
-        //     // Get next-protocol from Linked-list of This-protocol.
-        //     std::shared_ptr<NEXT_PROTOCOL> next_protocol = std::dynamic_pointer_cast<NEXT_PROTOCOL>(this->get_next());
-        //     // Recursive packing processing is start.
-        //     SegmentsType& u_segments = next_protocol->pack_recursive(msg, msg_size, server_type);
-            
-        //     // Current-protocol packing processing is start.
-        //     SegmentsType::iterator itor;
-        //     for( itor=u_segments.begin(); itor != u_segments.end(); itor++ ) {
-        //         RawMsgType& segment = *itor;
-        //         res = pack(segment->get_msg_read_only(), segment->get_msg_size(), server_type);
-        //         assert(res == true);
-        //     }
-        // }
-        // else {
-        //     assert( (res = pack(msg, msg_size, server_type)) == true );
-        // }
+    try {
+        auto itr = proto_chain->begin();
+        auto pre_protocol = GET_PROTOCOL(itr);
+        assert( (res = pre_protocol->pack(msg, msg_size, server_type)) == true );
+
+        if ( (*itr)->get_name() !=  payload::CPayload::Default_Name ) {
+            for (itr++; itr != proto_chain->end(); itr++) {
+                // Current-protocol packing processing is start.
+                SegmentsType& u_segments = pre_protocol->get_segments();
+                SegmentsType::iterator itor;
+
+                for( itor=u_segments.begin(); itor != u_segments.end(); itor++ ) {
+                    RawMsgType& segment = *itor;
+                    res = GET_PROTOCOL(itr)->pack(segment->get_msg_read_only(), segment->get_msg_size(), server_type);
+                    assert(res == true);
+                }
+                pre_protocol.reset();
+                pre_protocol = GET_PROTOCOL(itr);
+            }
+        }
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
         get_segments().clear();
     }
 
+    LOGD("Quit");
     return get_segments();
 }
 
 bool IProtocolInf::unpack_recurcive(const void* msg_raw, size_t msg_size) {
+    LOGD("Called");
+    auto proto_chain = get_proto_chain();
+    assert(proto_chain->end() != proto_chain->begin());
     bool res = false;
+    #define GET_PROTOCOL(iterator)  (*(iterator))->get(payload::CPayload::Myself_Name)
 
     try{
-        // assert( (res = unpack(msg_raw, msg_size)) == true );
-        // assert( (res = !is_empty()) == true );
-
-        // MsgType payload = get_payload();
-        // if (std::is_same<NEXT_PROTOCOL, CNoneProtocol>::value == false) {
-        //     std::shared_ptr<NEXT_PROTOCOL> next_protocol = std::make_shared<NEXT_PROTOCOL>();
-        //     res = next_protocol->unpack_recurcive(payload->get_msg_read_only(), 
-        //                                           payload->get_msg_size());
-        //     assert(res == true);
-        //     payload.reset();
-        //     payload = move(next_protocol->get_payload());
-        // }
+        auto itr = proto_chain->end();
+        itr--;
+        auto pre_protocol = GET_PROTOCOL(itr);
+        assert( (res = pre_protocol->unpack(msg_raw, msg_size)) == true );
+        assert( (res = !pre_protocol->is_empty()) == true );
+        
+        MsgType payload = pre_protocol->get_payload();
+        if ( (*itr)->get_name() !=  payload::CPayload::Default_Name ) {
+            for (; itr != proto_chain->begin();) {
+                itr--;
+                res = GET_PROTOCOL(itr)->unpack(payload->get_msg_read_only(), 
+                                                payload->get_msg_size());
+                assert(res == true);
+                pre_protocol.reset();
+                pre_protocol = GET_PROTOCOL(itr);
+            }
+        }
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
         res = false;
     }
 
+    LOGD("Quit");
     return res;
 }
 
@@ -116,14 +133,44 @@ IProtocolInf::SegmentsType& IProtocolInf::get_segments(void) {
 
 // fragment message. & make some segments.
 bool IProtocolInf::pack(const void* msg_raw, size_t msg_size, enum_c::ServerType server_type) {
-    LOGERR("undefined function.");
-    return false;
+    LOGI("Dumy protocol for Empty or NULL desp_protocol.json file.");
+    assert(msg_raw != NULL);
+    assert(msg_size > 0);
+    bool res = false;
+    
+    try {
+        // Make one-segment & regist the segment to segment-list.
+        std::shared_ptr<SegmentType> one_segment = std::make_shared<SegmentType>();
+        one_segment->set_new_msg(msg_raw, msg_size);
+        get_segments().push_back(one_segment);
+        res = true;
+    }
+    catch( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+    
+    return res;
 }
 
 // classify segment. & extract payloads. & combine payloads. => make One-payload.
 bool IProtocolInf::unpack(const void* msg_raw, size_t msg_size) {
-    LOGERR("undefined function.");
-    return false;
+    LOGI("Dumy protocol for Empty or NULL desp_protocol.json file.");
+    assert(msg_raw != NULL);
+    assert(msg_size > 0);
+    bool res = false;
+    
+    try {
+        // Set classified_data of msg_raw to payload.
+        get_payload()->set_new_msg(msg_raw, msg_size);
+        res = true;
+    }
+    catch ( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+
+    return res;
 }
 
 bool IProtocolInf::set_property_raw(const std::string key, const std::string value) {

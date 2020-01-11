@@ -66,6 +66,13 @@ public:
     //   - Postcondition : When the system was forced-quit abnormally in run-time, the handler will be called.
     void register_quit_handler(QuitCB_Type &&handler);
 
+    // >> Server/Client-side
+    //   - Precondition : Handler registered by cb_register_initialization_handler() was called.
+    //   - Practice : Create CPayload with protocol-chain instance in internal.
+    //   - Postcondition : you can get CPayload instance with protocol-chain.
+    std::shared_ptr<payload::CPayload> create_payload(void);
+
+
     /******************************
      * Transaction API
      ******************************/
@@ -138,6 +145,9 @@ public:
     //   - Postcondition : If Server reply with response-message,
     //                     then Handler registered by cb_register_message_handler() will be called.
     bool send(std::string client_id, std::shared_ptr<payload::CPayload>&& payload);      // Mandatory
+
+    // [REQ/RESP] Send response-message to Client.
+    bool send(std::string client_id, std::shared_ptr<payload::CPayload>& payload);      // Mandatory
 
     // [REQ/RESP] Send response-message to Client.
     bool send(std::string client_id, const void* msg, size_t msg_size);

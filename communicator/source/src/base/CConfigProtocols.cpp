@@ -8,6 +8,18 @@
 
 namespace cf_proto {
 
+static const char* exception_switch(E_ERROR err_num) {
+    switch(err_num) {
+    case E_ERROR::E_NO_ERROR:
+        return "E_NO_ERROR in cf_proto pkg.";
+    case E_ERROR::E_OVERFLOW_MAX_ELEMENTS_COUNT:
+        return "E_OVERFLOW_MAX_ELEMENTS_COUNT in cf_proto pkg.";
+    default:
+        return "\'not support error_type\' in payload pkg.";
+    }
+}
+#include <CException.h>
+
 /***********************************
  * Public Function Definition.
  */
@@ -17,7 +29,10 @@ CConfigProtocols::CConfigProtocols(void)
     this->lib_path.clear();
     this->lib_id.clear();
     this->proto_st.clear();
+    // Set dumy-protocol for Empty-protocol config-case.
     this->proto_list = std::make_shared<ProtoList>();
+    this->proto_list->push_back(payload::CPayload::Default_Name);
+    this->proto_chains_map.clear();
 }
 
 CConfigProtocols::CConfigProtocols(std::string config_path)
@@ -38,7 +53,9 @@ CConfigProtocols::~CConfigProtocols(void) {
     this->lib_path.clear();
     this->lib_id.clear();
     this->proto_st.clear();
+    this->proto_list->clear();
     this->proto_list.reset();
+    this->proto_chains_map.clear();
 }
 
 bool CConfigProtocols::is_ready(void) {
@@ -46,18 +63,25 @@ bool CConfigProtocols::is_ready(void) {
 }
 
 std::shared_ptr<payload::CPayload> CConfigProtocols::create_protocols_chain(void) {
-    if( available_protocols()->size() == 0 ) {
-        return std::make_shared<payload::CPayload>();
-    }
+    assert( available_protocols()->size() > 0 );
+    LOGD("Called");
 
     try {
+        if( proto_chains_map.size() >= MAX_PROTOCOL_CHAIN_INSTANCES ) {
+            throw CException(E_ERROR::E_OVERFLOW_MAX_ELEMENTS_COUNT);
+        }
+        LOGI("Protocol-Chain instance is filled like [%d/%d].", proto_chains_map.size(), MAX_PROTOCOL_CHAIN_INSTANCES);
+
         // make protocol-chain instance.
         auto proto_chain = std::make_shared<IProtocolInf::ProtoChainType>();
-        for (auto itr = available_protocols()->begin(); itr != available_protocols()->end(); itr++) {
+        std::string chain_name = std::to_string( (unsigned long)(proto_chain.get()) );
+        proto_chains_map[chain_name] = proto_chain;
+
+        for (auto itr=available_protocols()->begin(); itr!=available_protocols()->end(); itr++) {
             // append protocol to protocol-chain.
             std::shared_ptr<IProtocolInf> protocol = create_inst(*itr);
             proto_chain->push_back(protocol);
-            protocol->set_proto_chain(proto_chain);     // register chain to protocol.
+            protocol->set_proto_chain(chain_name, proto_chain);     // register chain to protocol.
         }
 
         return (*proto_chain->begin());
@@ -68,6 +92,29 @@ std::shared_ptr<payload::CPayload> CConfigProtocols::create_protocols_chain(void
     }
 
     return std::make_shared<payload::CPayload>();
+}
+
+bool CConfigProtocols::destroy_protocols_chain(std::shared_ptr<payload::CPayload> payload) {
+    bool res = false;
+    std::string chain_name = payload->get_protocols_chain_name();
+    assert(chain_name.empty() == false);
+    LOGD("Called");
+
+    try{
+        auto itr = proto_chains_map.find(chain_name);
+        if (itr != proto_chains_map.end()) {
+            // itr->second->clear();   // Clear elements in List.
+            itr->second.reset();    // Delete shared_ptr of List.
+            proto_chains_map.erase(itr);    // Delete protocol-chain instance.
+            res = true;
+        }
+    }
+    catch( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+
+    return res;    
 }
 
 std::shared_ptr<CConfigProtocols::ProtoList> CConfigProtocols::available_protocols(void) {
@@ -214,14 +261,22 @@ bool CConfigProtocols::check_available(CConfigProtocols::ProtoModule *proto_lib,
 std::shared_ptr<IProtocolInf> CConfigProtocols::create_inst(std::string protocol_name) {
     assert( is_ready() == true );
     std::shared_ptr<IProtocolInf> ret;
+    LOGD("Called");
 
     try{
-        ret = proto_h->create_instance(protocol_name);
+        if (protocol_name == payload::CPayload::Default_Name) {
+            ret = std::make_shared<IProtocolInf>();
+        }
+        else {
+            ret = proto_h->create_instance(protocol_name);
+        }
     }
     catch( const std::exception &e) {
         LOGERR("%s", e.what());
         throw e;
     }
+    
+    LOGD("Quit");
     return ret;
 }
 

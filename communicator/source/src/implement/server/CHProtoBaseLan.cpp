@@ -8,7 +8,7 @@ using namespace std::placeholders;
 
 CHProtoBaseLan::CHProtoBaseLan(std::string client_addr, int socket_handler, 
                    ServerType &&server, AppCallerType& app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager)
-: IHProtocolInf(client_addr, socket_handler, std::forward<ServerType>(server), app, proto_manager) {
+: IHProtocolInf(client_addr, socket_handler, app, proto_manager) {
     this->s_server = std::forward<ServerType>(server);
 }
 
@@ -59,6 +59,8 @@ bool CHProtoBaseLan::write_payload(std::string client_id, std::shared_ptr<payloa
         for(SegmentsType::iterator itor = segments.begin(); itor != segments.end(); itor++) {
             assert(s_server->write_msg(client_id, *itor) == true);
         }
+
+        destroy_proto_chain(pro_payload);
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
@@ -101,6 +103,7 @@ void CHProtoBaseLan::run(void) {
                 app->get_cb_handlers().cb_message_payload_handle(msg_raw->get_source_alias(),
                                                                  p_msg);  // trig app-function.
             }
+            destroy_proto_chain(p_msg);
         }
         app->get_cb_handlers().cb_initialization_handle(s_server->get_server_type(), false);
     }

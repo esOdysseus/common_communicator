@@ -93,12 +93,18 @@ void ICommunicator::register_quit_handler(QuitCB_Type &&handler) {
     cb_handlers.cb_quit_handle = handler;
 }
 
+std::shared_ptr<payload::CPayload> ICommunicator::create_payload(void) {
+    std::shared_ptr<payload::CPayload> ret = std::make_shared<payload::CPayload>();
+    
+    // TODO
+    return ret;
+}
+
 std::string ICommunicator::get_app_id(void) { 
     return app_id; 
 }
 
-bool ICommunicator::send(std::string client_id, std::shared_ptr<payload::CPayload>&& payload, 
-                         const std::map<std::string, ProtocolProperties> *protocol_context) {
+bool ICommunicator::send(std::string client_id, std::shared_ptr<payload::CPayload>&& payload) {
     if (m_send_payload == NULL) {
         return false;
     }
@@ -107,8 +113,16 @@ bool ICommunicator::send(std::string client_id, std::shared_ptr<payload::CPayloa
     return true;
 }
 
-bool ICommunicator::send(std::string client_id, const void* msg, size_t msg_size, 
-                         const std::map<std::string, ProtocolProperties> *protocol_context) {
+bool ICommunicator::send(std::string client_id, std::shared_ptr<payload::CPayload>& payload) {
+    if (m_send_payload == NULL) {
+        return false;
+    }
+
+    m_send_payload(client_id, std::move(payload));
+    return true;
+}
+
+bool ICommunicator::send(std::string client_id, const void* msg, size_t msg_size) {
     if (m_sendto == NULL) {
         return false;
     }

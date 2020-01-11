@@ -25,22 +25,11 @@ public:
     using ProtocolType = std::shared_ptr<IProtocolInf>;
 
 public:
-    template <typename SERVER> 
-    IHProtocolInf(std::string client_addr, 
-                  int socket_handler, 
-                  std::shared_ptr<SERVER> &&server,
-                  AppCallerType &app,
-                  std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
-        assert(client_addr.empty()==false);
 
-        this->t_id = client_addr;
-        this->h_socket = socket_handler;
-        this->s_app = app;
-        this->s_proto_config = proto_manager;
-        this->client_id = client_addr;
-        
-        set_running_flag(false);
-    }
+    IHProtocolInf(std::string client_addr,
+                  int socket_handler,
+                  AppCallerType &app,
+                  std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager);
 
     ~IHProtocolInf(void);
 
@@ -65,11 +54,13 @@ protected:
 
     SegmentsType encapsulation(const void* msg_raw, size_t msg_size, enum_c::ServerType server_type);
 
-    SegmentsType encapsulation(ProtocolType& p_msg, enum_c::ServerType server_type);
+    SegmentsType encapsulation(ProtocolType& protocol, enum_c::ServerType server_type);
 
     ProtocolType decapsulation(RawMsgType msg_raw);
 
     AppCallerType& get_app_instance(void);
+
+    bool destroy_proto_chain(ProtocolType &chain);
 
     int get_sockfd(void);
 

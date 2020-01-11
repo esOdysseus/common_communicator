@@ -46,8 +46,10 @@ void CAppTest::cb_receive_msg_handle(std::string client_id, std::shared_ptr<payl
     cout << "* 6. payload-length : " << protocol->get_property("length") << endl;
     cout << "************************************" << endl;
 
-    // std::shared_ptr<CPBigEndian> send_msg = std::make_shared<CPBigEndian>();
-    // send_msg->set_msg_id(32);
-    // send_msg->set_payload("Hellow World!", 14);
-    // assert(h_server->send(client_id, send_msg) == true);
+    // // Send Message
+    // std::shared_ptr<payload::CPayload> new_payload = h_server->create_payload();
+    // std::shared_ptr<IProtocolInf> new_protocol = new_payload->get(PBigEdian);
+    // assert( new_protocol->set_property("msg_id", 1234) == true );
+    // new_protocol->set_payload("Hello World!", 13);
+    // assert(h_server->send(client_id, new_payload) == true);
 }

@@ -18,6 +18,11 @@
 
 namespace cf_proto {
 
+    typedef enum E_ERROR {
+        E_NO_ERROR = 0,
+        E_OVERFLOW_MAX_ELEMENTS_COUNT = 1
+    }E_ERROR;
+
     using PropertyMap = std::map<std::string, std::string>;
 
     typedef struct protocol_meta_t {
@@ -62,6 +67,8 @@ namespace cf_proto {
 
         std::shared_ptr<payload::CPayload> create_protocols_chain(void);
 
+        bool destroy_protocols_chain(std::shared_ptr<payload::CPayload> payload);
+
         std::shared_ptr<ProtoList> available_protocols(void);
 
     private:
@@ -78,6 +85,7 @@ namespace cf_proto {
     private:
         bool f_ready;
 
+        /** It's Full-Path of config/desp_protocol.json file. */
         std::string config_full_path;
 
         /** It indicate library-full-path for member-variable 'proto_h'. */
@@ -86,7 +94,7 @@ namespace cf_proto {
         /** It indicate library-ID for member-variable 'proto_h'. */
         std::string lib_id;
 
-        /** It indicate handler for manipulating of protocol-instance. */
+        /** It indicate library-handler for manipulating of protocol-instance. */
         ProtoModule *proto_h;
 
         /** It's loaded from config/desp_protocol.json file. */
@@ -95,6 +103,10 @@ namespace cf_proto {
         /** It's indicate available protocol-name list. */
         std::shared_ptr<ProtoList> proto_list;
 
+        /** It's mapper for management of available instances as protocols-chain. */
+        std::map<std::string, std::shared_ptr<IProtocolInf::ProtoChainType>> proto_chains_map;
+
+        static constexpr unsigned int MAX_PROTOCOL_CHAIN_INSTANCES = 2048;
     };
 
 }

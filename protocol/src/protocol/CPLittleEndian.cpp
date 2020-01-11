@@ -35,10 +35,10 @@ std::shared_ptr<std::list<std::string>> CPLittleEndian::get_keys(void) {
 std::string CPLittleEndian::get_property(const std::string key) {
     std::string ret;
 
-    if (key.c_str() == MSG_ID) {
+    if (key == MSG_ID) {
         ret = std::to_string(get_msg_id());
     }
-    else if(key.c_str() == LENGTH) {
+    else if(key == LENGTH) {
         ret = std::to_string(get_length());
     }
     else {
