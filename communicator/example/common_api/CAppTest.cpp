@@ -6,8 +6,8 @@
 
 using namespace std;
 
-CAppTest::CAppTest(CAppTest::ServerHandler handler){
-    h_server = std::forward<ServerHandler>(handler);
+CAppTest::CAppTest(CAppTest::CommHandler handler){
+    h_communicator = std::forward<CommHandler>(handler);
     cout << "[Debug] CAppTest::constructor() is called." << endl;
 }
 
@@ -16,7 +16,7 @@ CAppTest::~CAppTest(void) {
 }
 
 // This-APP was normal-ready/quit to communicate between VMs.
-void CAppTest::cb_initialization(enum_c::ServerType server_type, bool flag_init) {
+void CAppTest::cb_initialization(enum_c::ProviderType provider_type, bool flag_init) {
     cout << "[Debug] CAppTest::cb_initialization() is called.(" << flag_init << ")" << endl;
 }
 
@@ -47,9 +47,15 @@ void CAppTest::cb_receive_msg_handle(std::string client_id, std::shared_ptr<payl
     cout << "************************************" << endl;
 
     // Send Message
-    std::shared_ptr<payload::CPayload> new_payload = h_server->create_payload();
+    std::shared_ptr<payload::CPayload> new_payload = h_communicator->create_payload();
+    new_payload->set_op_flag(payload::E_PAYLOAD_FLAG::E_KEEP_PAYLOAD_AFTER_TX, true);
+
     std::shared_ptr<IProtocolInf> new_protocol = new_payload->get(PBigEdian);
     assert( new_protocol->set_property("msg_id", 1234) == true );
     new_protocol->set_payload("Hello World!", 13);
-    assert(h_server->send(client_id, new_payload) == true);
+    assert(h_communicator->send(client_id, new_payload) == true);
+
+    // Send Message
+    const std::string message = "Congraturation!! Test Successful.";
+    assert( h_communicator->send(client_id, message.c_str(), message.length()) == true );
 }

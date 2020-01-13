@@ -13,16 +13,16 @@ template bool CRawMessage::set_source(std::shared_ptr<int> addr, const char* add
  * Definition member-function of CSource Class.
  * */
 CRawMessage::CSource::CSource(void) {
-    addr_type = EADDR_TYPE::E_SERVER_NOT_DEF;
+    addr_type = EADDR_TYPE::E_PVDT_NOT_DEFINE;
     alias.clear();
 }
 
 CRawMessage::CSource::~CSource(void){
     try{
-        if(addr_type != EADDR_TYPE::E_SERVER_NOT_DEF) {
+        if(addr_type != EADDR_TYPE::E_PVDT_NOT_DEFINE) {
             address.reset();
         }
-        addr_type = EADDR_TYPE::E_SERVER_NOT_DEF;
+        addr_type = EADDR_TYPE::E_PVDT_NOT_DEFINE;
         alias.clear();
     }
     catch(const std::exception &e) {
@@ -33,11 +33,11 @@ CRawMessage::CSource::~CSource(void){
 template <typename ADDR_TYPE> 
 void CRawMessage::CSource::init(std::shared_ptr<ADDR_TYPE> addr, 
                                 const char* alias, 
-                                enum_c::ServerType server_type) {
+                                enum_c::ProviderType provider_type) {
     try {
         std::shared_ptr<void> dumy = std::static_pointer_cast<void>(addr);
         this->address = move(dumy);
-        this->addr_type = server_type;
+        this->addr_type = provider_type;
         this->alias = alias;
     }
     catch(const std::exception &e) {
@@ -198,8 +198,8 @@ bool CRawMessage::append_msg(void* buf, size_t msize) {
 template <typename ADDR_TYPE>
 bool CRawMessage::set_source(std::shared_ptr<ADDR_TYPE> addr, const char* addr_str) {
     try{
-        enum_c::ServerType server_type = policy_addr<ADDR_TYPE>();
-        source.init(addr,addr_str, server_type);
+        enum_c::ProviderType provider_type = policy_addr<ADDR_TYPE>();
+        source.init(addr,addr_str, provider_type);
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
@@ -208,10 +208,10 @@ bool CRawMessage::set_source(std::shared_ptr<ADDR_TYPE> addr, const char* addr_s
     return true;
 }
 
-CRawMessage::LanAddrType CRawMessage::get_source_addr(std::string& alias, enum_c::ServerType server_type) {
+CRawMessage::LanAddrType CRawMessage::get_source_addr(std::string& alias, enum_c::ProviderType provider_type) {
     try {
-        assert( source.get_addr_type() == enum_c::ServerType::E_SERVER_NOT_DEF || 
-                source.get_addr_type() == server_type );
+        assert( source.get_addr_type() == enum_c::ProviderType::E_PVDT_NOT_DEFINE || 
+                source.get_addr_type() == provider_type );
         alias = source.get_alias();
         return source.get_address<struct sockaddr_in>();
     }
@@ -220,10 +220,10 @@ CRawMessage::LanAddrType CRawMessage::get_source_addr(std::string& alias, enum_c
     }
 }
 
-CRawMessage::LanSockType CRawMessage::get_source_sock(std::string& alias, enum_c::ServerType server_type) {
+CRawMessage::LanSockType CRawMessage::get_source_sock(std::string& alias, enum_c::ProviderType provider_type) {
     try {
-        assert( source.get_addr_type() == enum_c::ServerType::E_SERVER_NOT_DEF || 
-                source.get_addr_type() == server_type );
+        assert( source.get_addr_type() == enum_c::ProviderType::E_PVDT_NOT_DEFINE || 
+                source.get_addr_type() == provider_type );
         alias = source.get_alias();
         return source.get_address<int>();
     }
@@ -232,9 +232,9 @@ CRawMessage::LanSockType CRawMessage::get_source_sock(std::string& alias, enum_c
     }
 }
 
-const struct sockaddr_in* CRawMessage::get_source_addr_read_only(enum_c::ServerType server_type) {
+const struct sockaddr_in* CRawMessage::get_source_addr_read_only(enum_c::ProviderType provider_type) {
     std::string src_name;
-    LanAddrType src = get_source_addr(src_name, server_type);
+    LanAddrType src = get_source_addr(src_name, provider_type);
     LOGD("source-Name=%s", src_name.c_str());
     return (const struct sockaddr_in*)src.get();
 }
@@ -244,13 +244,13 @@ std::string CRawMessage::get_source_alias(void) {
 }
 
 template <typename ADDR_TYPE>
-enum_c::ServerType CRawMessage::policy_addr(void) {
+enum_c::ProviderType CRawMessage::policy_addr(void) {
     try{
         if( std::is_same<ADDR_TYPE, struct sockaddr_in>::value == true ) {
-            return enum_c::ServerType::E_SERVER_UDP;
+            return enum_c::ProviderType::E_PVDT_TRANS_UDP;
         }
         else if( std::is_same<ADDR_TYPE, int>::value == true ) {            // int Socket
-            return enum_c::ServerType::E_SERVER_TCP;
+            return enum_c::ProviderType::E_PVDT_TRANS_TCP;
         }
         else {
             throw std::invalid_argument("Not Supported Address-Type.");
@@ -260,7 +260,7 @@ enum_c::ServerType CRawMessage::policy_addr(void) {
         LOGERR("%s", e.what());
     }
 
-    return enum_c::ServerType::E_SERVER_NOT_DEF;
+    return enum_c::ProviderType::E_PVDT_NOT_DEFINE;
 }
 
 bool CRawMessage::extend_capacity(size_t append_capacity) {

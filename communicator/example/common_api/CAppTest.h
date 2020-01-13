@@ -6,16 +6,16 @@
 
 class CAppTest {
 public:
-    using ServerHandler = std::shared_ptr<ICommunicator>;
+    using CommHandler = std::shared_ptr<ICommunicator>;
     static constexpr char* PBigEdian = "CPBigEndian";
     static constexpr char* PLittleEndian = "CPLittleEndian";
 
 public:
-    CAppTest(ServerHandler handler);
+    CAppTest(CommHandler handler);
 
     ~CAppTest(void);
 
-    void cb_initialization(enum_c::ServerType server_type, bool flag_init);
+    void cb_initialization(enum_c::ProviderType provider_type, bool flag_init);
 
     void cb_connected(std::string client_id, bool flag_connect);
 
@@ -24,7 +24,7 @@ public:
     void cb_abnormally_quit(const std::exception &e);
 
 private:
-    ServerHandler h_server;
+    CommHandler h_communicator;
 
 };
 

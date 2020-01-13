@@ -12,16 +12,14 @@
 class ICommunicator;
 
 std::shared_ptr<ICommunicator> create_communicator(std::string app_id, 
-                                                   std::string server_id, 
-                                                   enum_c::ServerType server_type, 
+                                                   std::string provider_id, 
+                                                   enum_c::ProviderType provider_type, 
                                                    unsigned short port, 
                                                    const char* ip=NULL,
                                                    const char* protocol_desp_path=NULL);
 
 class ICommunicator {
 public:
-    using SendToType = std::function<bool(std::string client_id, const void* msg, size_t msg_size)>;
-    using SendPayloadType = std::function<bool(std::string client_id, std::shared_ptr<payload::CPayload>&& payload)>;
     using InitialCB_Type = CReceiver::InitialCB_Type;
     using ConnectionCB_Type = CReceiver::ConnectionCB_Type;
     using MessagePayloadCB_Type = CReceiver::MessagePayloadCB_Type;
@@ -29,8 +27,8 @@ public:
 
 public:
     ICommunicator(std::string app_id, 
-                  std::string server_id, 
-                  enum_c::ServerType server_type, 
+                  std::string provider_id, 
+                  enum_c::ProviderType provider_type, 
                   std::shared_ptr<void> &proto_config,
                   unsigned short port,
                   const char* ip=NULL);

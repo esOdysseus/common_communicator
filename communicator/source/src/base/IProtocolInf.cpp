@@ -55,7 +55,8 @@ bool IProtocolInf::set_property(const std::string key, std::string value) {
 /*******************************
  * Protected Function Definition
  */
-IProtocolInf::SegmentsType& IProtocolInf::pack_recursive(const void* msg, size_t msg_size, enum_c::ServerType server_type) {
+IProtocolInf::SegmentsType& IProtocolInf::pack_recursive(const void* msg, size_t msg_size, 
+                                                         enum_c::ProviderType provider_type) {
     LOGD("Called");
     auto proto_chain = get_proto_chain();
     assert(proto_chain->end() != proto_chain->begin());
@@ -65,7 +66,7 @@ IProtocolInf::SegmentsType& IProtocolInf::pack_recursive(const void* msg, size_t
     try {
         auto itr = proto_chain->begin();
         auto pre_protocol = GET_PROTOCOL(itr);
-        assert( (res = pre_protocol->pack(msg, msg_size, server_type)) == true );
+        assert( (res = pre_protocol->pack(msg, msg_size, provider_type)) == true );
 
         if ( (*itr)->get_name() !=  payload::CPayload::Default_Name ) {
             for (itr++; itr != proto_chain->end(); itr++) {
@@ -75,7 +76,7 @@ IProtocolInf::SegmentsType& IProtocolInf::pack_recursive(const void* msg, size_t
 
                 for( itor=u_segments.begin(); itor != u_segments.end(); itor++ ) {
                     RawMsgType& segment = *itor;
-                    res = GET_PROTOCOL(itr)->pack(segment->get_msg_read_only(), segment->get_msg_size(), server_type);
+                    res = GET_PROTOCOL(itr)->pack(segment->get_msg_read_only(), segment->get_msg_size(), provider_type);
                     assert(res == true);
                 }
                 pre_protocol.reset();
@@ -130,7 +131,7 @@ IProtocolInf::SegmentsType& IProtocolInf::get_segments(void) {
 }
 
 // fragment message. & make some segments.
-bool IProtocolInf::pack(const void* msg_raw, size_t msg_size, enum_c::ServerType server_type) {
+bool IProtocolInf::pack(const void* msg_raw, size_t msg_size, enum_c::ProviderType provider_type) {
     LOGI("Dumy protocol for Empty or NULL desp_protocol.json file.");
     assert(msg_raw != NULL);
     assert(msg_size > 0);

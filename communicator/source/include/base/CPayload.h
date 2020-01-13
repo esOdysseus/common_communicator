@@ -22,10 +22,18 @@ namespace payload
         E_INVALID_VALUE = 4
     }E_ERROR;
 
+    typedef enum E_PAYLOAD_FLAG {   // We will use it as Bit-Masking type flag.
+        E_NONE = 0,
+        E_KEEP_PAYLOAD_AFTER_TX = 1
+    } E_PAYLOAD_FLAG;
 
+    /******************************
+     * Class of Payload.
+     */
     class CPayload : public std::enable_shared_from_this<CPayload> {
     public:
         static constexpr char* Myself_Name = "_myself_";
+        using FlagDataType = uint32_t;
 
     protected:
         using DataType = CRawMessage;
@@ -56,6 +64,12 @@ namespace payload
         /** is payload empty? */
         bool is_empty(void);
 
+        /** Get Flag with regard to Payload-Operating. */
+        FlagDataType get_op_flag(E_PAYLOAD_FLAG target=E_PAYLOAD_FLAG::E_NONE);
+
+        /** Set Flag with regard to Payload-Operating. */
+        void set_op_flag(E_PAYLOAD_FLAG target, bool value);
+
     protected:
         /** Get Protocol that is contained by myself-payload. */
         std::shared_ptr<IProtocolInf> get_protocol(void);
@@ -85,6 +99,8 @@ namespace payload
         std::string _protocol_chain_name_;      // link to external list-object.
 
         std::weak_ptr<ProtoChainType> _protocol_chain_;   // link to external list-object.
+
+        FlagDataType flag_op;    // it describe about Payload-Operating.
 
     };
 

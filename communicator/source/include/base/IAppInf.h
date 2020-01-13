@@ -15,15 +15,14 @@
 class ICommunicator;
 
 std::shared_ptr<ICommunicator> create_communicator(std::string app_id, 
-                                                   std::string server_id, 
-                                                   enum_c::ServerType server_type, 
+                                                   std::string provider_id, 
+                                                   enum_c::ProviderType provider_type, 
                                                    unsigned short port, 
                                                    const char* ip=NULL,
                                                    const char* protocol_desp_path=NULL);
 
 class ICommunicator {
 public:
-    using SendToType = CAppInternalCaller::SendToType;
     using SendPayloadType = CAppInternalCaller::SendPayloadType;
     using SharedThisType = std::enable_shared_from_this<ICommunicator>;
     using InitialCB_Type = CReceiver::InitialCB_Type;
@@ -34,8 +33,8 @@ public:
 
 public:
     ICommunicator(std::string app_id, 
-                  std::string server_id, 
-                  enum_c::ServerType server_type, 
+                  std::string provider_id, 
+                  enum_c::ProviderType provider_type, 
                   std::shared_ptr<cf_proto::CConfigProtocols> &proto_config,
                   unsigned short port,
                   const char* ip=NULL);
@@ -153,13 +152,13 @@ public:
     //   - Practice : [REQ/RESP] Send request-message to Server.
     //   - Postcondition : If Server reply with response-message,
     //                     then Handler registered by cb_register_message_handler() will be called.
-    bool send(std::string client_id, std::shared_ptr<payload::CPayload>&& payload);      // Mandatory
+    bool send(std::string alias, std::shared_ptr<payload::CPayload>&& payload);      // Mandatory
 
     // [REQ/RESP] Send response-message to Client.
-    bool send(std::string client_id, std::shared_ptr<payload::CPayload>& payload);      // Mandatory
+    bool send(std::string alias, std::shared_ptr<payload::CPayload>& payload);      // Mandatory
 
     // [REQ/RESP] Send response-message to Client.
-    bool send(std::string client_id, const void* msg, size_t msg_size);
+    bool send(std::string alias, const void* msg, size_t msg_size);                 // Mandatory
 
     /**
      * Client-Side
@@ -216,17 +215,14 @@ protected:
     // Regist function-point for "send" member-function.
     void set_send_payload_fp(SendPayloadType &&fp);
 
-    // Regist function-point for "send" member-function.
-    void set_sendto_fp(SendToType &&fp);
-
     // Get group-point for Call-back functions.
     CReceiver& get_cb_handlers(void);
 
 private:
-    // Get continue-flag of server for Communicator.
+    // Get continue-flag of provider for Communicator.
     bool is_running_continue(void);
 
-    // Thread-routin of server for Communicator.
+    // Thread-routin of provider for Communicator.
     int run(void);
 
 private:
@@ -234,21 +230,19 @@ private:
 
     std::string app_id;     // Identical-Name for Application.
 
-    std::string server_id;  // Identical-Name for Server.
+    std::string provider_id;  // Identical-Name for Provider.
 
-    enum_c::ServerType server_type; // Type for Server.
+    enum_c::ProviderType provider_type; // Type for Provider.
 
-    unsigned short port;    // Port-number for Server.
+    unsigned short port;    // Port-number for Provider.
 
-    std::string ip;         // IP-address for Server.
-
-    SendToType m_sendto;    // function-pointer for Send-Transaction.
+    std::string ip;         // IP-address for Provider.
 
     SendPayloadType m_send_payload; // function-pointer for Send-Transaction with payload.
 
-    std::thread runner;     // Thread-instance of server for Communicator.
+    std::thread runner;     // Thread-instance of provider for Communicator.
 
-    bool runner_continue;   // Continue-flag of server for Communicator.
+    bool runner_continue;   // Continue-flag of provider for Communicator.
 
     std::shared_ptr<cf_proto::CConfigProtocols> proto_config;   // protocol-configration.
 

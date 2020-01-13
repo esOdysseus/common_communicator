@@ -96,7 +96,7 @@ void IServerInf<PROTOCOL_H>::clear(void) {
     inited = false;
     started = false;
     sockfd = 0;
-    server_type = enum_c::ServerType::E_SERVER_NOT_DEF;
+    provider_type = enum_c::ProviderType::E_PVDT_NOT_DEFINE;
     bzero(&servaddr, sizeof(servaddr));
     listeningPort = 0;
     mLooperPool.clear();
@@ -149,8 +149,8 @@ std::string IServerInf<PROTOCOL_H>::make_client_id(const int addr_type, const st
     std::string client_id;
 
     // Only support TCP/UDP M2M communication.
-    assert( get_server_type() == enum_c::ServerType::E_SERVER_TCP || 
-            get_server_type() == enum_c::ServerType::E_SERVER_UDP );
+    assert( get_provider_type() == enum_c::ProviderType::E_PVDT_TRANS_TCP || 
+            get_provider_type() == enum_c::ProviderType::E_PVDT_TRANS_UDP );
 
     try{
         char client_addr[client_bufsize] = {0,};

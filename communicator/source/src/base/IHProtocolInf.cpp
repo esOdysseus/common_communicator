@@ -55,26 +55,8 @@ void IHProtocolInf::set_running_flag(bool value) {
     f_is_run = value;
 }
 
-IHProtocolInf::SegmentsType IHProtocolInf::encapsulation(const void* msg_raw, size_t msg_size, enum_c::ServerType server_type) {
-    /****
-     * According to ServerType, fragment the message. & make segment-List.
-     *                        - segment-list will be RawMsgType-List.
-     * Segments : 1. combine with One-Head + payload + (One-Tail)
-     *          : 2. Encoding(payload)
-     */
-    auto payload = s_proto_config->create_protocols_chain();
-    ProtocolType protocol = payload->get(payload::CPayload::Myself_Name);
-    try{
-        SegmentsType& ref_segs = protocol->pack_recursive(msg_raw, msg_size, server_type);
-        destroy_proto_chain(protocol);
-        return ref_segs;
-    }catch(const std::exception &e) {
-        LOGERR("%s", e.what());
-        throw e;
-    }
-}
-
-IHProtocolInf::SegmentsType IHProtocolInf::encapsulation(IHProtocolInf::ProtocolType& protocol, enum_c::ServerType server_type) {
+IHProtocolInf::SegmentsType IHProtocolInf::encapsulation(IHProtocolInf::ProtocolType& protocol, 
+                                                         enum_c::ProviderType provider_type) {
     /****
      * According to ServerType, fragment the message. & make segment-List.
      *                        - segment-list will be RawMsgType-List.
@@ -85,7 +67,7 @@ IHProtocolInf::SegmentsType IHProtocolInf::encapsulation(IHProtocolInf::Protocol
     const void* msg_raw = protocol->get_payload()->get_msg_read_only(&msg_size);
 
     try{
-        return protocol->pack_recursive(msg_raw, msg_size, server_type);
+        return protocol->pack_recursive(msg_raw, msg_size, provider_type);
     }catch(const std::exception &e) {
         LOGERR("%s", e.what());
         throw e;
@@ -101,6 +83,7 @@ IHProtocolInf::ProtocolType IHProtocolInf::decapsulation(IHProtocolInf::RawMsgTy
     bool res = false;
     auto payload = s_proto_config->create_protocols_chain();
     ProtocolType protocol = payload->get(payload::CPayload::Myself_Name);
+
     try{
         size_t data_size = 0;
         const void * data = msg_raw->get_msg_read_only( &data_size );

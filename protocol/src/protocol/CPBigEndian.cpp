@@ -55,14 +55,14 @@ std::string CPBigEndian::get_property(const std::string key) {
 /**********************************
  * Protected Function Definition
  */
-bool CPBigEndian::pack(const void* msg_raw, size_t msg_size, enum_c::ServerType server_type) {
+bool CPBigEndian::pack(const void* msg_raw, size_t msg_size, enum_c::ProviderType provider_type) {
     LOGD("It's called.");
 
     size_t msg_length = 0;
     auto lamda_get_length = [&](void) -> size_t {
         size_t length = 0;
 
-        if (server_type == enum_c::ServerType::E_SERVER_UDP) {
+        if (provider_type == enum_c::ProviderType::E_PVDT_TRANS_UDP) {
             // We only support single-segment.
             assert(msg_size < Segment_ByteSize);
             length = msg_size;

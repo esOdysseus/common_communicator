@@ -12,15 +12,15 @@
  * Static Function.
  */ 
 std::shared_ptr<ICommunicator> create_communicator(std::string app_id, 
-                                                   std::string server_id, 
-                                                   enum_c::ServerType server_type, 
+                                                   std::string provider_id, 
+                                                   enum_c::ProviderType provider_type, 
                                                    unsigned short port, 
                                                    const char* ip,
                                                    const char* protocol_desp_path) {
     std::shared_ptr<ICommunicator> ret;
     try {
             std::shared_ptr<cf_proto::CConfigProtocols> proto_config = std::make_shared<cf_proto::CConfigProtocols>(protocol_desp_path);
-            ret = std::make_shared<ICommunicator>(app_id, server_id, server_type, proto_config, port, ip);
+            ret = std::make_shared<ICommunicator>(app_id, provider_id, provider_type, proto_config, port, ip);
     }
     catch (const std::exception &e) {
         LOGERR("%s", e.what());
@@ -33,21 +33,20 @@ std::shared_ptr<ICommunicator> create_communicator(std::string app_id,
  * Public Member Function.
  */ 
 ICommunicator::ICommunicator(std::string app_id, 
-              std::string server_id, 
-              enum_c::ServerType server_type, 
+              std::string provider_id, 
+              enum_c::ProviderType provider_type, 
               std::shared_ptr<cf_proto::CConfigProtocols> &proto_config,
               unsigned short port, 
               const char* ip) 
 : runner_continue(false) {
 
     this->app_id = app_id;
-    this->server_id = server_id;
-    this->server_type = server_type;
+    this->provider_id = provider_id;
+    this->provider_type = provider_type;
     this->port = port;
     this->ip = ip;
     this->proto_config = proto_config;
 
-    this->m_sendto = NULL;
     this->m_send_payload = NULL;
 }
 
@@ -57,14 +56,13 @@ ICommunicator::~ICommunicator(void) {
         this->runner.join();
     }
 
-    this->server_type = enum_c::ServerType::E_SERVER_NOT_DEF;
+    this->provider_type = enum_c::ProviderType::E_PVDT_NOT_DEFINE;
     this->app_id = "destroyed";
-    this->server_id = "destroyed";
+    this->provider_id = "destroyed";
     this->port = 0;
     this->ip.clear();
     this->proto_config.reset();
 
-    this->m_sendto = NULL;
     this->m_send_payload = NULL;
 }
 
@@ -106,32 +104,38 @@ std::shared_ptr<payload::CPayload> ICommunicator::create_payload(void) {
     return proto_config->create_protocols_chain();
 }
 
-bool ICommunicator::send(std::string client_id, std::shared_ptr<payload::CPayload>&& payload) {
+bool ICommunicator::send(std::string alias, std::shared_ptr<payload::CPayload>&& payload) {
     if (m_send_payload == NULL) {
         return false;
     }
 
-    m_send_payload(client_id, std::forward<std::shared_ptr<payload::CPayload>>(payload));
+    m_send_payload(alias, std::forward<std::shared_ptr<payload::CPayload>>(payload));
     return true;
 }
 
-bool ICommunicator::send(std::string client_id, std::shared_ptr<payload::CPayload>& payload) {
+bool ICommunicator::send(std::string alias, std::shared_ptr<payload::CPayload>& payload) {
     if (m_send_payload == NULL) {
         return false;
     }
 
-    m_send_payload(client_id, std::move(payload));
+    m_send_payload(alias, std::move(payload));
     return true;
 }
 
-bool ICommunicator::send(std::string client_id, const void* msg, size_t msg_size) {
-    if (m_sendto == NULL) {
-        return false;
+bool ICommunicator::send(std::string alias, const void* msg, size_t msg_size) {
+    try {
+        auto payload = create_payload();
+        assert( payload->set_payload(msg, msg_size) == true );
+        return send(alias, payload);
+    }
+    catch( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        throw e;
     }
 
-    this->m_sendto(client_id, msg, msg_size);
-    return true;
+    return false;
 }
+
 
 /*****
  * Protected Member Function.
@@ -141,14 +145,10 @@ void ICommunicator::set_send_payload_fp(SendPayloadType &&fp) {
     this->m_send_payload = fp;
 }
 
-void ICommunicator::set_sendto_fp(SendToType &&fp) {
-    assert(fp!=NULL);
-    this->m_sendto = fp;
-}
-
 CReceiver& ICommunicator::get_cb_handlers(void) {
     return cb_handlers;
 }
+
 
 /*****
  * Private Member Function.
@@ -160,27 +160,26 @@ bool ICommunicator::is_running_continue(void) {
 int ICommunicator::run(void) {
 
     std::shared_ptr<CAppInternalCaller> app_caller = std::make_shared<CAppInternalCaller>();
-    app_caller->set_sendto_of_app = std::bind(&ICommunicator::set_sendto_fp, this, std::placeholders::_1);
     app_caller->set_send_payload_of_app = std::bind(&ICommunicator::set_send_payload_fp, this, std::placeholders::_1);
     app_caller->get_cb_handlers = std::bind(&ICommunicator::get_cb_handlers, this);
     app_caller->get_app_id = std::bind(&ICommunicator::get_app_id, this);
 
-    switch(this->server_type)
+    switch(this->provider_type)
     {
-    case enum_c::ServerType::E_SERVER_TCP:
+    case enum_c::ProviderType::E_PVDT_TRANS_TCP:
         {
-            auto server = std::make_shared<CServerTCP>();
-            server->init(server_id, port, ip.c_str());
-            server->start();
-            while(server->accept(app_caller, proto_config) && is_running_continue());
+            auto pvd = std::make_shared<CServerTCP>();
+            pvd->init(provider_id, port, ip.c_str());
+            pvd->start();
+            while(pvd->accept(app_caller, proto_config) && is_running_continue());
         }
         break;
-    case enum_c::ServerType::E_SERVER_UDP:
+    case enum_c::ProviderType::E_PVDT_TRANS_UDP:
         {
-            auto server = std::make_shared<CServerUDP>();
-            server->init(server_id, port, ip.c_str());
-            server->start();
-            while(server->accept(app_caller, proto_config) && is_running_continue());
+            auto pvd = std::make_shared<CServerUDP>();
+            pvd->init(provider_id, port, ip.c_str());
+            pvd->start();
+            while(pvd->accept(app_caller, proto_config) && is_running_continue());
         }
         break;
     default:

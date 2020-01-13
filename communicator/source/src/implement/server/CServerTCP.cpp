@@ -35,11 +35,11 @@
 
 CServerTCP::CServerTCP(void)
 : IServerInf() {
-    set_server_type(enum_c::ServerType::E_SERVER_TCP);
+    set_provider_type(enum_c::ProviderType::E_PVDT_TRANS_TCP);
 }
 
 CServerTCP::~CServerTCP(void) {
-    set_server_type(enum_c::ServerType::E_SERVER_NOT_DEF);
+    set_provider_type(enum_c::ProviderType::E_PVDT_NOT_DEFINE);
 }
 
 bool CServerTCP::init(std::string id, unsigned int port, const char* ip) {
@@ -176,7 +176,7 @@ CServerTCP::MessageType CServerTCP::read_msg(int u_sockfd, bool &is_new) {
     return msg;
 }
 
-bool CServerTCP::write_msg(std::string client_id, MessageType msg) {
+bool CServerTCP::write_msg(std::string alias, MessageType msg) {
     assert( msg.get() != NULL );
     using RawDataType = CRawMessage::MsgDataType;
 

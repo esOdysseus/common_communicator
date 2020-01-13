@@ -25,7 +25,7 @@ public:
 
     MessageType read_msg(int u_sockfd, bool &is_new) override;
 
-    bool write_msg(std::string client_id, MessageType msg) override;
+    bool write_msg(std::string alias, MessageType msg) override;
 
 protected:
     int enable_keepalive(int sock) override;

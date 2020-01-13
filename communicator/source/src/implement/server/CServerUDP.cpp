@@ -36,12 +36,12 @@
 
 CServerUDP::CServerUDP(void)
 : IServerInf() {
-    set_server_type(enum_c::ServerType::E_SERVER_UDP);
+    set_provider_type(enum_c::ProviderType::E_PVDT_TRANS_UDP);
     clear_addr();
 }
 
 CServerUDP::~CServerUDP(void) {
-    set_server_type(enum_c::ServerType::E_SERVER_NOT_DEF);
+    set_provider_type(enum_c::ProviderType::E_PVDT_NOT_DEFINE);
     clear_addr();
 }
 
@@ -172,20 +172,25 @@ CServerUDP::MessageType CServerUDP::read_msg(int u_sockfd, bool &is_new) {
     return msg;
 }
 
-bool CServerUDP::write_msg(std::string client_id, MessageType msg) {
+bool CServerUDP::write_msg(std::string alias, MessageType msg) {
     assert( msg.get() != NULL );
-    assert( isthere_addr(client_id) == true );
     using RawDataType = CRawMessage::MsgDataType;
 
     int u_sockfd = msg->get_socket_fd();
     size_t msg_size = msg->get_msg_size();
     RawDataType* buffer = (RawDataType*)msg->get_msg_read_only();
-    const struct sockaddr_in* p_cliaddr = msg->get_source_addr_read_only(get_server_type());
+    const struct sockaddr_in* p_cliaddr = msg->get_source_addr_read_only(get_provider_type());
     socklen_t clilen = sizeof( *p_cliaddr );
 
-    // If client_alias_name == null, then find address corresfond client-id.
+    // If client_alias_name in message == null, then find address correspond with alias.
     if (msg->get_source_alias().empty() == true) {
-        p_cliaddr = get_addr(client_id).get();
+        if ( isthere_addr(alias) == true ) {
+            p_cliaddr = get_addr(alias).get();
+        }
+        else {
+            // TODO insert new-address to mapper.
+            LOGERR("Not Support yet. insert new address.");
+        }
     }
 
     if (u_sockfd == 0) {

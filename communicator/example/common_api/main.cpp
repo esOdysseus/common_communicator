@@ -14,12 +14,12 @@ using namespace std::placeholders;
 
 int main(int argc, char *argv[])
 {
-    std::cout << "Test-program for check operating of UDP/TCP server." << std::endl;
+    std::cout << "Test-program for check operating of UDP/TCP provider." << std::endl;
 
     // Create Communicator instance.
     auto handler = create_communicator("TestApp01", 
-                                       "CServerUDP", 
-                                       enum_c::ServerType::E_SERVER_UDP, 
+                                       "UDP_provider", 
+                                       enum_c::ProviderType::E_PVDT_TRANS_UDP, 
                                        atoi(argv[2]), 
                                        argv[1],
                                        argv[3]);

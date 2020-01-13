@@ -41,13 +41,13 @@ public:
 
     virtual MessageType read_msg(int u_sockfd, bool &is_new) = 0;
 
-    virtual bool write_msg(std::string client_id, MessageType msg) = 0;
+    virtual bool write_msg(std::string alias, MessageType msg) = 0;
 
     bool stop(void);
 
     std::string get_id(void) { return id; }
 
-    enum_c::ServerType get_server_type(void) { return server_type; }
+    enum_c::ProviderType get_provider_type(void) { return provider_type; }
 
 protected:
     virtual int enable_keepalive(int sock) = 0;
@@ -60,7 +60,7 @@ protected:
 
     void set_id(std::string& value) { id = value; }
 
-    void set_server_type(enum_c::ServerType type) { server_type = type; }
+    void set_provider_type(enum_c::ProviderType type) { provider_type = type; }
 
     virtual std::string make_client_id(const int addr_type, const struct sockaddr_in& cliaddr);
 
@@ -88,7 +88,7 @@ protected:
 private:
     std::string id;
 
-    enum_c::ServerType server_type;
+    enum_c::ProviderType provider_type;
     
 };
 

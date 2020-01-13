@@ -20,47 +20,30 @@ CHProtoBaseLan::~CHProtoBaseLan(void) {
 bool CHProtoBaseLan::set_app_call_back(void) {
     AppCallerType& app = get_app_instance();
 
-    app->set_sendto_of_app(bind(&CHProtoBaseLan::write, this, _1, _2, _3));
     app->set_send_payload_of_app(bind(&CHProtoBaseLan::write_payload, this, _1, _2));
-    app->get_cb_handlers().cb_initialization_handle(s_server->get_server_type(), true);
-    return true;
-}
-
-/************************
- * This API not support that setting Specific-property of 3th-party Protocol.
- */ 
-bool CHProtoBaseLan::write(std::string client_id, const void* msg, size_t msg_size) {
-    LOGD("It's called.");
-    try {
-        SegmentsType segments = encapsulation(msg, msg_size, s_server->get_server_type());
-
-        // message write.
-        for(SegmentsType::iterator itor = segments.begin(); itor != segments.end(); itor++) {
-            assert(s_server->write_msg(client_id, *itor) == true);
-        }
-    }
-    catch(const std::exception &e) {
-        LOGERR("%s", e.what());
-        return false;
-    }
+    app->get_cb_handlers().cb_initialization_handle(s_server->get_provider_type(), true);
     return true;
 }
 
 /************************
  * This API support that setting Specific-property of 3th-party Protocol.
  */ 
-bool CHProtoBaseLan::write_payload(std::string client_id, std::shared_ptr<payload::CPayload>&& payload) {
+bool CHProtoBaseLan::write_payload(std::string alias, std::shared_ptr<payload::CPayload>&& payload) {
     LOGD("It's called.");
+    assert( get_running_flag() == true );
+
     try {
         ProtocolType pro_payload = std::dynamic_pointer_cast<IProtocolInf>(payload);
-        SegmentsType segments = encapsulation(pro_payload, s_server->get_server_type());
+        SegmentsType segments = encapsulation(pro_payload, s_server->get_provider_type());
 
         // message write.
         for(SegmentsType::iterator itor = segments.begin(); itor != segments.end(); itor++) {
-            assert(s_server->write_msg(client_id, *itor) == true);
+            assert(s_server->write_msg(alias, *itor) == true);
         }
 
-        destroy_proto_chain(pro_payload);
+        if ( payload->get_op_flag(payload::E_PAYLOAD_FLAG::E_KEEP_PAYLOAD_AFTER_TX) == false ) {
+            destroy_proto_chain(pro_payload);
+        }
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
@@ -79,10 +62,10 @@ void CHProtoBaseLan::run(void) {
     LOGD("Thread_ID   : %s", get_thread_id().c_str());
     LOGD("App_ID      : %s", app->get_app_id().c_str());
     LOGD("Server_ID   : %s", s_server->get_id().c_str());
-    LOGD("Server_Type : %d", s_server->get_server_type());
+    LOGD("Server_Type : %d", s_server->get_provider_type());
 
     // trig initial-call-back to application.
-    if( s_server->get_server_type() == enum_c::ServerType::E_SERVER_TCP ) {
+    if( s_server->get_provider_type() == enum_c::ProviderType::E_PVDT_TRANS_TCP ) {
         app->get_cb_handlers().cb_connection_handle( get_client_id(), true );
     }
 
@@ -105,7 +88,7 @@ void CHProtoBaseLan::run(void) {
             }
             destroy_proto_chain(p_msg);
         }
-        app->get_cb_handlers().cb_initialization_handle(s_server->get_server_type(), false);
+        app->get_cb_handlers().cb_initialization_handle(s_server->get_provider_type(), false);
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());

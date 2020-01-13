@@ -36,17 +36,17 @@ public:
     template <typename ADDR_TYPE>
     bool set_source(std::shared_ptr<ADDR_TYPE> addr, const char* alias);
 
-    LanAddrType get_source_addr(std::string& alias, enum_c::ServerType server_type);
+    LanAddrType get_source_addr(std::string& alias, enum_c::ProviderType provider_type);
 
-    LanSockType get_source_sock(std::string& alias, enum_c::ServerType server_type);
+    LanSockType get_source_sock(std::string& alias, enum_c::ProviderType provider_type);
 
-    const struct sockaddr_in* get_source_addr_read_only(enum_c::ServerType server_type);
+    const struct sockaddr_in* get_source_addr_read_only(enum_c::ProviderType provider_type);
 
     std::string get_source_alias(void);
 
 private:
     template <typename ADDR_TYPE>
-    enum_c::ServerType policy_addr(void);
+    enum_c::ProviderType policy_addr(void);
 
     bool extend_capacity(size_t append_capacity);
 
@@ -57,7 +57,7 @@ private:
 private:
     class CSource {
     public:
-        using EADDR_TYPE = enum_c::ServerType;
+        using EADDR_TYPE = enum_c::ProviderType;
 
     public:
         CSource(void);
@@ -67,7 +67,7 @@ private:
         template <typename ADDR_TYPE> 
         void init(std::shared_ptr<ADDR_TYPE> addr, 
                   const char* alias, 
-                  enum_c::ServerType server_type);
+                  enum_c::ProviderType provider_type);
 
         template <typename ADDR_TYPE> 
         std::shared_ptr<ADDR_TYPE> get_address(void);

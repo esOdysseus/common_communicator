@@ -48,13 +48,9 @@ protected:
 
     virtual bool set_app_call_back(void) = 0;
 
-    virtual bool write(std::string client_id, const void* msg, size_t msg_size) = 0;
+    virtual bool write_payload(std::string alias, std::shared_ptr<payload::CPayload>&& payload) = 0;
 
-    virtual bool write_payload(std::string client_id, std::shared_ptr<payload::CPayload>&& payload) = 0;
-
-    SegmentsType encapsulation(const void* msg_raw, size_t msg_size, enum_c::ServerType server_type);
-
-    SegmentsType encapsulation(ProtocolType& protocol, enum_c::ServerType server_type);
+    SegmentsType encapsulation(ProtocolType& protocol, enum_c::ProviderType provider_type);
 
     ProtocolType decapsulation(RawMsgType msg_raw);
 

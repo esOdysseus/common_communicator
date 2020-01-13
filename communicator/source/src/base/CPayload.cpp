@@ -105,6 +105,27 @@ bool CPayload::is_empty(void) {
     return (_payload_->get_msg_size() > 0) ? false : true;
 }
 
+/** Get Flag with regard to Payload-Operating. */
+CPayload::FlagDataType CPayload::get_op_flag(E_PAYLOAD_FLAG target) {
+    if ( target == E_PAYLOAD_FLAG::E_NONE ) {
+        return flag_op;
+    }
+    return (flag_op & target);
+}
+
+/** Set Flag with regard to Payload-Operating. */
+void CPayload::set_op_flag(E_PAYLOAD_FLAG target, bool value) {
+    assert( target != E_PAYLOAD_FLAG::E_NONE );
+
+    if ( value == false ) {
+        flag_op = flag_op & (~target);
+    }
+    else {
+        flag_op = flag_op | target;
+    }
+}
+
+
 /************************************
  * Protected Function Definition
  */

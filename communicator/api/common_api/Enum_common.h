@@ -3,11 +3,14 @@
 
 namespace enum_c
 {
-    typedef enum ServerType {
-        E_SERVER_NOT_DEF = 0,
-        E_SERVER_TCP = 1,
-        E_SERVER_UDP = 2
-    } ServerType;
+    typedef enum ProviderType {
+        E_PVDT_NOT_DEFINE = 0,
+        E_PVDT_TRANS_TCP = 1,
+        E_PVDT_TRANS_UDP = 2,
+        E_PVDT_TRANS_UDS = 3,
+        E_PVDT_SERVICE_VSOMEIP = 4,
+        E_PVDT_RSC_IOTIVITY = 5
+    } ProviderType;
 }
 
 
