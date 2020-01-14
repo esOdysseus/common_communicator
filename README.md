@@ -79,7 +79,7 @@ Date | Commit-ID | Version | Description
 `2019-12-7` | `ad863961333ca7c4e7bca054b04f39dfefa7fdb7` | Ver 0.1.1 | 1. Add Logger.<br> 2. UDP connected-call-back op enable.<br> 3. Remove 'using namespace std'.
 `2020-01-5` | `63c626078a5a3631e467c5dfeef98ec90a13d426` | Ver 0.1.1 | 1. Decomposition of Protocol-library.<br> 2. Decomposition common-library.<br> 3. Create CConfigProtocol.
 `2020-01-11` | `0ea787e9f1be03c0073dec341d131ef4c1d9c373` | Ver 0.1.2 | 1. Protocol-Chain Impled. <br> 2. Isolate Protocol-Lib & Communicator Lib. <br> 3. Apply PAL-concept for Dynamic-load Protocol-Library.
-`2020-01-14` | `` | Ver 0.1.2 | Support ARMv7 Build.
+`2020-01-14` | `1ed4cff327dfd6b3b543ae1f65acaafc4596e1e6` | Ver 0.1.2 | Support ARMv7 Build.
 
 ### TBD-list
 - It will support SOME/IP protocol by common-API.
