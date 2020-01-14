@@ -2,52 +2,139 @@
 ROOT_PATH=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 export ROOT_PATH=${ROOT_PATH}
 
-BUILD_MODE=${1}
-if [ -z "${1}" ]
-then
-    BUILD_MODE=release
-fi
-BUILD_DIR=${ROOT_PATH}/build
-INSTALL_DIR=${ROOT_PATH}/${BUILD_MODE}
+# Setting default-value.
+BUILD_MODE=release
+BUILD_TARGET="none"
+CPU_ARCH="x86"          # Available Values : x86 , armv7
+BOARD_TARGET="none"     # Available Values : none , arndale5250 , orangepi-i96
 
-echo
-echo "BUILD_MODE=${BUILD_MODE}"
-echo "BUILD_DIR=${BUILD_DIR}"
-echo "INSTALL_DIR=${INSTALL_DIR}"
-echo
 
-# enter build-situation
-if [ "${2}" == "clean" ];then
-    if [ ! -d "${BUILD_DIR}" ]; then
-        echo -e "\e[1;31m Can't clean. because Not exist BUILD_DIR. \e[0m"
-        exit 0
+#######################################
+# Entry Pointer of Script.
+#######################################
+function main() {
+    # Get & Parse input-parameter.
+    get_input_parameter $*
+
+    # Make default-Environment variables for Build.
+    BUILD_DIR=${ROOT_PATH}/build
+    INSTALL_DIR=${ROOT_PATH}/${BUILD_MODE}
+    echo
+    echo "--------- Default Environment ---------"
+    echo "BUILD_MODE=${BUILD_MODE}"
+    echo "BUILD_DIR=${BUILD_DIR}"
+    echo "INSTALL_DIR=${INSTALL_DIR}"
+    echo "BUILD_TARGET=${BUILD_TARGET}"
+    echo "CPU_ARCH=${CPU_ARCH}"
+    echo "BOARD_TARGET=${BOARD_TARGET}"
+    echo
+
+    # Set enviroment for CROSS-COMPILE.
+    if [ "${CPU_ARCH}" != "x86" ]; then
+        echo "Set environment for CROSS-COMPILE of ${CPU_ARCH}."
+        source env_for_cross_compile.sh  ${CPU_ARCH}  ${BOARD_TARGET}
     fi
 
-    echo ">>>> Clear all-data of installation & objects. <<<<"
-    rm -rf ${BUILD_DIR}
-    rm -rf ${INSTALL_DIR}
-else
+    # RUN task.
+    case ${BUILD_TARGET} in
+        "clean")    # build clean
+            if [ ! -d "${BUILD_DIR}" ]; then
+                echo -e "\e[1;31m Can't clean. because Not exist BUILD_DIR folder. \e[0m"
+                exit 0
+            fi
+
+            echo ">>>> Clear all-data of installation & objects. <<<<"
+            rm -rf ${BUILD_DIR}
+            rm -rf ${INSTALL_DIR}
+            ;;
+        "comm")     # build communicator
+            run_build_task  communicator  ${INSTALL_DIR}/lib
+            ;;
+        "protocol") # build protocol
+            run_build_task  protocol  ${INSTALL_DIR}/lib
+            ;;
+        "example")  # build example
+            run_build_task  example  ${INSTALL_DIR}/bin
+            ;;
+        "none")
+            echo -e "\e[1;31m [ERROR] We need BUILD_TARGET. Please, insert -t option. \e[0m"
+            exit 0
+            ;;
+        *) 
+            echo -e "\e[1;31m [ERROR] Not Supported BUILD_TARGET.(${BUILD_TARGET}) \e[0m"
+            exit 0
+            ;;
+    esac
+
+    # Exit build-situation.
+    cd ${ROOT_PATH}
+}
+
+
+##################################
+# Internal-Function definition.
+##################################
+function run_build_task() {
+    BUILD_TARGET=${1}
+    DESTDIR=${2}
+    echo
+    echo "------ Build Environment ------"
+    echo "BUILD_DIR=${BUILD_DIR}"
+    echo "BUILD_TARGET=${BUILD_TARGET}"
+    echo "BUILD_MODE=${BUILD_MODE}"
+    echo "DESTDIR=${DESTDIR}"
+    echo "CPU_ARCH=${CPU_ARCH}"
+    echo "BOARD_TARGET=${BOARD_TARGET}"
+    echo
+
     if [ ! -d "${BUILD_DIR}" ]; then
         mkdir -p ${BUILD_DIR}
     fi
     cd ${BUILD_DIR}
 
-    if [ "${2}" == "example" ];then
-        echo ">>>> Build example & install"
-        qmake ${ROOT_PATH} TARGET=example BUILD_MODE=${BUILD_MODE} DESTDIR=${INSTALL_DIR}/bin
-    elif [ "${2}" == "protocol" ];then
-        echo ">>>> Build protocols-lib & install"
-        rm -rf ${INSTALL_DIR}/lib/libproto*
-        qmake ${ROOT_PATH} TARGET=protocol BUILD_MODE=${BUILD_MODE} DESTDIR=${INSTALL_DIR}/lib
-    else
-        echo ">>>> Build communicator-sdk & install"
-        qmake ${ROOT_PATH} TARGET=communicator BUILD_MODE=${BUILD_MODE} DESTDIR=${INSTALL_DIR}/lib
-    fi
-    
+    # Build Target
+    echo ">>>> Build ${BUILD_TARGET} & install"
+    qmake ${ROOT_PATH} TARGET=${BUILD_TARGET} BUILD_MODE=${BUILD_MODE} DESTDIR=${DESTDIR} CPU_ARCH=${CPU_ARCH}
     make
     make install
-fi
+}
 
+function get_input_parameter()
+{
+    echo "Get input parameters = $*"
 
-# exit build-situation.
-cd ${ROOT_PATH}
+    NONE_TYPE="none"
+    IN_HEAD=${NONE_TYPE}
+    for input in $*
+    do
+        case ${input} in
+            "-m" )      IN_HEAD=${input};;
+            "-t" )      IN_HEAD=${input};;
+            "-arch" )   IN_HEAD=${input};;
+            "-board" )  IN_HEAD=${input};;
+            * )
+                case ${IN_HEAD} in 
+                    "-m" )  # for BUILD_MODE
+                        BUILD_MODE=${input}
+                        IN_HEAD=${NONE_TYPE};;
+                    "-t" )  # for BUILD_TARGET
+                        BUILD_TARGET=${input}
+                        IN_HEAD=${NONE_TYPE};;
+                    "-arch" ) # for CPU_ARCH
+                        CPU_ARCH=${input}
+                        IN_HEAD=${NONE_TYPE};;
+                    "-board" ) # for BOARD_TARGET
+                        BOARD_TARGET=${input}
+                        IN_HEAD=${NONE_TYPE};;
+                    ${NONE_TYPE} )
+                        ;;
+                    * )
+                        echo -e "\e[1;31m [ERROR] Invalid input-head. (${IN_HEAD}) \e[0m"
+                        exit 0
+                esac
+                ;;
+        esac
+    done
+}
+
+main $*

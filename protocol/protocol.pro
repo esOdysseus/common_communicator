@@ -18,6 +18,7 @@ include ($$_PRO_FILE_PWD_/pre_proc.pri)
 
 CONFIG += shared
 QMAKE_CXXFLAGS += -fPIC
+QMAKE_CFLAGS += -fPIC
 
 DEFINES += LOGGER_TAG=\\\"PROTO\\\"
 equals(BUILD_MODE, "debug") {

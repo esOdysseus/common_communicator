@@ -14,7 +14,8 @@ VERSION = $$VER_MAJ"."$$VER_MIN"."$$VER_PAT
 # for building
 CONFIG += shared
 QMAKE_CXXFLAGS += -fPIC
-LIBS += -ldl
+QMAKE_CFLAGS += -fPIC
+LIBS += -ldl -lpthread
 
 DEFINES += LOGGER_TAG=\\\"COMM\\\"
 DEFINES += VER_MAJ=$$VER_MAJ
