@@ -12,13 +12,14 @@ case ${CPU_ARCH} in
 
         # Set variables according to BOARD_TARGET.
         case ${BOARD_TARGET} in
-            "arndale5250" )
+            "arndale5250" )     # checking ...
+                TOOLCHAIN_PATH="/usr/local/gcc-linaro/arm-linux-gnueabi/4.9.4_x86_64"
+                # TOOLCHAIN_PATH="/usr/local/gcc-linaro/arm-linux-gnueabihf/4.7-2013.03_x86_32"
+                CROSS_COMPILER_PREFIX="arm-linux-gnueabi-"
+                ;;
+            "orangepi-i96" )    # valid tool-chain path !!
                 TOOLCHAIN_PATH="/usr/local/gcc-linaro/arm-linux-gnueabihf/4.9.4_x86_64"
                 CROSS_COMPILER_PREFIX="arm-linux-gnueabihf-"
-                ;;
-            "orangepi-i96" )
-                TOOLCHAIN_PATH="none"
-                CROSS_COMPILER_PREFIX="arm-linux-gnueabi-"
                 ;;
             * ) 
                 echo -e "\e[1;31m [ERROR] Not Supported BOARD_TARGET.(${BOARD_TARGET}) \e[0m"
