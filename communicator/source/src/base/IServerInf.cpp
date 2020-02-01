@@ -1,3 +1,4 @@
+#include <random>
 
 #include <unistd.h>
 #include <string.h> 
@@ -88,6 +89,25 @@ bool IServerInf<PROTOCOL_H>::stop(void) {
     // clear variables.
     clear();
     return true;
+}
+
+template <typename PROTOCOL_H> 
+int IServerInf<PROTOCOL_H>::gen_random_portnum(void) {
+    int port = -1;
+    int port_min = 10000;
+    int port_max = 60000;
+    std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    std::mt19937 gen( rd() ); 
+    std::uniform_int_distribution<> dist(port_min, port_max); 
+    
+    LOGD("Random Port-Min : %d", dist.min());
+    LOGD("Random Port-Max : %d", dist.max());
+
+    port = dist( gen );
+    assert(port_min <= port && port <= port_max);
+    LOGI("Generated Port-Number=%d", port);
+
+    return port;
 }
 
 template <typename PROTOCOL_H> 

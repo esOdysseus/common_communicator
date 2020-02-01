@@ -33,7 +33,7 @@ public:
 
     ~IServerInf(void);
 
-    virtual bool init(std::string id, unsigned int port, const char* ip=NULL) = 0;
+    virtual bool init(std::string id, unsigned int port=0, const char* ip=NULL) = 0;
 
     virtual bool start(void) = 0;
 
@@ -48,6 +48,8 @@ public:
     std::string get_id(void) { return id; }
 
     enum_c::ProviderType get_provider_type(void) { return provider_type; }
+
+    int gen_random_portnum(void);
 
 protected:
     virtual int enable_keepalive(int sock) = 0;

@@ -23,10 +23,10 @@ static const char* exception_switch(E_ERROR err_num) {
 /***********************************
  * Public Function Definition.
  */
-CConfigProtocols::CConfigProtocols(std::string config_path)
+CConfigProtocols::CConfigProtocols(const char* config_path)
 : f_ready(false), proto_h(NULL) {
     try {
-        if ( config_path.empty() == true ) {
+        if ( config_path == NULL ) {
             LOGD("Enable NULL ConfigProtocols.");
             this->config_full_path.clear();
             this->lib_path.clear();
@@ -173,7 +173,7 @@ static bool biuld_protocol_struct(std::string &name,
     return res;
 }
 
-bool CConfigProtocols::init(std::string &config_file_path) {
+bool CConfigProtocols::init(const std::string config_file_path) {
     bool res = false;
 
     try{

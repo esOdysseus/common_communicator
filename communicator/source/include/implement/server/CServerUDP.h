@@ -17,7 +17,7 @@ public:
 
     ~CServerUDP(void);
 
-    bool init(std::string id, unsigned int port, const char* ip=NULL) override;
+    bool init(std::string id, unsigned int port=0, const char* ip=NULL) override;
 
     bool start(void) override;
 

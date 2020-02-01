@@ -4,7 +4,7 @@ QT -= gui core
 
 VER_MAJ = 0
 VER_MIN = 1
-VER_PAT = 2
+VER_PAT = 3
 VERSION = $$VER_MAJ"."$$VER_MIN"."$$VER_PAT
 
 !include ($$_PRO_FILE_PWD_/../common_config.pri) {
@@ -25,6 +25,10 @@ DEFINES += VER_PAT=$$VER_PAT
 equals(BUILD_MODE, "debug") {
     DEFINES += LOG_DEBUG_MODE
     DEFINES += LOG_LEVEL=$$LOG_LEVEL_DEBUG
+}
+
+equals(BUILD_MODE, "release") {
+    DEFINES += LOG_LEVEL=$$LOG_LEVEL_INFO
 }
 
 INCLUDEPATH += \

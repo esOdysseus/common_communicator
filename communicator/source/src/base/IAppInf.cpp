@@ -44,7 +44,9 @@ ICommunicator::ICommunicator(std::string app_id,
     this->provider_id = provider_id;
     this->provider_type = provider_type;
     this->port = port;
-    this->ip = ip;
+    if ( ip != NULL ) {
+        this->ip = ip;
+    }
     this->proto_config = proto_config;
 
     this->m_send_payload = NULL;
@@ -169,7 +171,8 @@ int ICommunicator::run(void) {
     case enum_c::ProviderType::E_PVDT_TRANS_TCP:
         {
             auto pvd = std::make_shared<CServerTCP>();
-            pvd->init(provider_id, port, ip.c_str());
+            const char* ip_str = ip.empty() == true ? NULL : ip.c_str();
+            pvd->init(provider_id, port, ip_str);
             pvd->start();
             while(pvd->accept(app_caller, proto_config) && is_running_continue());
         }
@@ -177,7 +180,8 @@ int ICommunicator::run(void) {
     case enum_c::ProviderType::E_PVDT_TRANS_UDP:
         {
             auto pvd = std::make_shared<CServerUDP>();
-            pvd->init(provider_id, port, ip.c_str());
+            const char* ip_str = ip.empty() == true ? NULL : ip.c_str();
+            pvd->init(provider_id, port, ip_str);
             pvd->start();
             while(pvd->accept(app_caller, proto_config) && is_running_continue());
         }

@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     // Create Communicator instance.
     auto handler = create_communicator("TestApp01", 
                                        "UDP_provider", 
-                                       enum_c::ProviderType::E_PVDT_TRANS_UDP, 
+                                       enum_c::ProviderType::E_PVDT_TRANS_UDP,
                                        atoi(argv[2]), 
                                        argv[1],
                                        argv[3]);

@@ -37,14 +37,17 @@ limitations under the License.
 - esOdysseus (email: es.odysseus@gmail.com)
 
 ### Latest Release
-- version 0.1.2 (Date: 2020-01-11)
+- version 0.1.3 (Date: 2020-02-01)
 ---
 ## Installation
 > Please refer following commands.
 > So, you can see the SDK library(libcommunicator.so) in api folder.
 ```shell
 $ cd ${work}
-$ bash ./build.sh release
+$ bash ./build.sh -m release -t clean -arch x86
+$ bash ./build.sh -m release -t comm -arch x86
+$ bash ./build.sh -m release -t protocol -arch x86
+$ bash ./build.sh -m release -t example -arch x86
 ```
 ### Library Dependency
 - glibc     : for socket communication.
@@ -67,7 +70,7 @@ $ bash ./build.sh release
    ```shell
    $ cd ${work}
    $ bash ./build.sh release example
-   $ ./release/bin/example_common_api ${IP} ${Port}
+   $ ./release/bin/example_common_api ${IP} ${Port} ${Path-of-desp-Protocol.json}
    ```
    - Attention : You have to set "LD_LIBRARY_PATH" with "${work}/release/lib".
 ---
@@ -80,7 +83,12 @@ Date | Commit-ID | Version | Description
 `2020-01-5` | `63c626078a5a3631e467c5dfeef98ec90a13d426` | Ver 0.1.1 | 1. Decomposition of Protocol-library.<br> 2. Decomposition common-library.<br> 3. Create CConfigProtocol.
 `2020-01-11` | `0ea787e9f1be03c0073dec341d131ef4c1d9c373` | Ver 0.1.2 | 1. Protocol-Chain Impled. <br> 2. Isolate Protocol-Lib & Communicator Lib. <br> 3. Apply PAL-concept for Dynamic-load Protocol-Library.
 `2020-01-14` | `1ed4cff327dfd6b3b543ae1f65acaafc4596e1e6` | Ver 0.1.2 | Support ARMv7 Build.
+`2020-02-01` | `` | Ver 0.1.3 | 1. Support ARMv7 & Aarch64 Build.<br> 2. Done processing of default-argument.
 
 ### TBD-list
-- It will support SOME/IP protocol by common-API.
+- Alias json processing.
+- Support Client.
+- Build Routing-Manager.
+- Support vSOME/IP.
+- Support IoTivity of OCF.
 - Common-API will be improved through review-processing & consideration variety of situation.

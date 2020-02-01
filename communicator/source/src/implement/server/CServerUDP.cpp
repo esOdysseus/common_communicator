@@ -54,7 +54,7 @@ bool CServerUDP::init(std::string id, unsigned int port, const char* ip) {
     }
 
     // Input data checking.
-    if(port == 0 || port >= 65535) {
+    if(port < 0 || port >= 65535) {
         LOGERR("No port defined to listen to");
         return false;
     }
@@ -71,6 +71,10 @@ bool CServerUDP::init(std::string id, unsigned int port, const char* ip) {
 
     // make serveraddr struct
     listeningPort = port;
+    if (listeningPort == 0) {
+        listeningPort = gen_random_portnum();
+    }
+
     servaddr.sin_family = ADDR_TYPE;
     if ( ip == NULL ) {
         servaddr.sin_addr.s_addr = htonl(INADDR_ANY);

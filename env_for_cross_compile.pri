@@ -47,6 +47,13 @@ equals(CPU_ARCH,"x86") {
         QMAKE_CXXFLAGS -= -m64 -m32
         QMAKE_LFLAGS -= -m64 -m32
     } else {
-        error("Not supported CPU_ARCH.($${CPU_ARCH})")
+        equals(CPU_ARCH, "aarch64") {
+            message( "Set CFLAG or CXXFLAG for aarch64." )
+            QMAKE_CFLAGS -= -m64 -m32
+            QMAKE_CXXFLAGS -= -m64 -m32
+            QMAKE_LFLAGS -= -m64 -m32
+        } else {
+            error("Not supported CPU_ARCH.($${CPU_ARCH})")
+        }
     }
 }

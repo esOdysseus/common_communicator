@@ -5,8 +5,8 @@ export ROOT_PATH=${ROOT_PATH}
 # Setting default-value.
 BUILD_MODE=release
 BUILD_TARGET="none"
-CPU_ARCH="x86"          # Available Values : x86 , armv7
-BOARD_TARGET="none"     # Available Values : none , arndale5250 , orangepi-i96
+CPU_ARCH="x86"          # Available Values : x86 , armv7 , aarch64
+BOARD_TARGET="none"     # Available Values : none , orangepi-i96 , orangepi-pc+ , orangepi-zero+2H5
 
 
 #######################################
