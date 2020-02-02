@@ -15,7 +15,7 @@ static const char* exception_switch(E_ERROR err_num) {
     case E_ERROR::E_OVERFLOW_MAX_ELEMENTS_COUNT:
         return "E_OVERFLOW_MAX_ELEMENTS_COUNT in cf_proto pkg.";
     default:
-        return "\'not support error_type\' in payload pkg.";
+        return "\'not support error_type\' in cf_proto pkg.";
     }
 }
 #include <CException.h>

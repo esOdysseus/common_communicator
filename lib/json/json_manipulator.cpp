@@ -26,6 +26,7 @@ template std::shared_ptr<long> CMjson::get<long>(std::string &key);
 template std::shared_ptr<bool> CMjson::get<bool>(std::string &key);
 template std::shared_ptr<double> CMjson::get<double>(std::string &key);
 template std::shared_ptr<float> CMjson::get<float>(std::string &key);
+template std::shared_ptr<CMjson> CMjson::get<CMjson>(std::string &key);
 
 static const char* exception_switch(E_ERROR err_num) {
     switch(err_num) {
@@ -258,11 +259,14 @@ std::shared_ptr<T> CMjson::get_second(MemberIterator itor) {
     return ret;
 }
 
+template <>
+std::shared_ptr<CMjson> CMjson::get_second<CMjson>(MemberIterator itor) {
+    return std::make_shared<CMjson>(itor->value.GetObject());
+}
+
 template <typename T>
 std::shared_ptr<T> CMjson::get(std::string &key) {
     assert(is_there() == true);
-    const char* value = NULL;
-    std::shared_ptr<T> ret = std::make_shared<T>();
     rapidjson::Value::MemberIterator target = object->FindMember(key.c_str());
 
     if ( target == object->MemberEnd() ) {
@@ -272,17 +276,6 @@ std::shared_ptr<T> CMjson::get(std::string &key) {
     return get_second<T>(target);
 }
 
-template <>
-std::shared_ptr<CMjson> CMjson::get<CMjson>(std::string &key) {
-    assert(is_there() == true);
-    rapidjson::Value::MemberIterator target = object->FindMember(key.c_str());
-
-    if ( target == object->MemberEnd() ) {
-        throw CException(E_ERROR::E_INVALID_VALUE);
-    }
-    
-    return std::make_shared<CMjson>(target->value.GetObject());
-}
 
 inline MemberIterator CMjson::get_begin_member(void) {
     assert(is_there() == true);

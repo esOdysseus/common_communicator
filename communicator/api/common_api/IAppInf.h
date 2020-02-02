@@ -16,7 +16,8 @@ std::shared_ptr<ICommunicator> create_communicator(std::string app_id,
                                                    enum_c::ProviderType provider_type, 
                                                    unsigned short port=0, 
                                                    const char* ip=NULL,
-                                                   const char* protocol_desp_path=NULL);
+                                                   const char* protocol_desp_path=NULL,
+                                                   const char* alias_desp_path=NULL);
 
 class ICommunicator {
 public:

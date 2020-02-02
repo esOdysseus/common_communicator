@@ -4,6 +4,7 @@
 #include <config.h>
 #include <logger.h>
 #include <CConfigProtocols.h>
+#include <CConfigAliases.h>
 #include <IAppInf.h>
 #include <server/CServerUDP.h>
 #include <server/CServerTCP.h>
@@ -16,10 +17,12 @@ std::shared_ptr<ICommunicator> create_communicator(std::string app_id,
                                                    enum_c::ProviderType provider_type, 
                                                    unsigned short port, 
                                                    const char* ip,
-                                                   const char* protocol_desp_path) {
+                                                   const char* protocol_desp_path,
+                                                   const char* alias_desp_path) {
     std::shared_ptr<ICommunicator> ret;
     try {
             std::shared_ptr<cf_proto::CConfigProtocols> proto_config = std::make_shared<cf_proto::CConfigProtocols>(protocol_desp_path);
+            std::shared_ptr<cf_alias::CConfigAliases> alias_config = std::make_shared<cf_alias::CConfigAliases>(alias_desp_path);
             ret = std::make_shared<ICommunicator>(app_id, provider_id, provider_type, proto_config, port, ip);
     }
     catch (const std::exception &e) {

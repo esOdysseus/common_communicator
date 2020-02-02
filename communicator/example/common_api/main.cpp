@@ -22,7 +22,8 @@ int main(int argc, char *argv[])
                                        enum_c::ProviderType::E_PVDT_TRANS_UDP,
                                        atoi(argv[2]), 
                                        argv[1],
-                                       argv[3]);
+                                       argv[3],
+                                       argv[4]);
 
     std::cout << "Common-API Version = " << handler->get_version() << std::endl;
 
