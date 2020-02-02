@@ -37,7 +37,7 @@ limitations under the License.
 - esOdysseus (email: es.odysseus@gmail.com)
 
 ### Latest Release
-- version 0.1.3 (Date: 2020-02-01)
+- version 0.1.3 (Date: 2020-02-02)
 ---
 ## Installation
 > Please refer following commands.
@@ -84,6 +84,7 @@ Date | Commit-ID | Version | Description
 `2020-01-11` | `0ea787e9f1be03c0073dec341d131ef4c1d9c373` | Ver 0.1.2 | 1. Protocol-Chain Impled. <br> 2. Isolate Protocol-Lib & Communicator Lib. <br> 3. Apply PAL-concept for Dynamic-load Protocol-Library.
 `2020-01-14` | `1ed4cff327dfd6b3b543ae1f65acaafc4596e1e6` | Ver 0.1.2 | Support ARMv7 Build.
 `2020-02-01` | `1615a31aa20f49d56ab6dfb0df07fb08ef7dcbe3` | Ver 0.1.3 | 1. Support ARMv7 & Aarch64 Build.<br> 2. Done processing of default-argument.
+`2020-02-02` | `` | Ver 0.1.3 | Add Converter that convert alias-name to essential-address.
 
 ### TBD-list
 - Alias json processing.

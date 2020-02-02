@@ -37,12 +37,10 @@
 CServerUDP::CServerUDP(void)
 : IServerInf() {
     set_provider_type(enum_c::ProviderType::E_PVDT_TRANS_UDP);
-    clear_addr();
 }
 
 CServerUDP::~CServerUDP(void) {
     set_provider_type(enum_c::ProviderType::E_PVDT_NOT_DEFINE);
-    clear_addr();
 }
 
 bool CServerUDP::init(std::string id, unsigned int port, const char* ip) {
@@ -125,12 +123,10 @@ bool CServerUDP::accept(AppCallerType &app, std::shared_ptr<cf_proto::CConfigPro
 CServerUDP::MessageType CServerUDP::read_msg(int u_sockfd, bool &is_new) {
     size_t msg_size = read_bufsize;
     
-    if (u_sockfd == 0) {
-        u_sockfd = this->sockfd;
-    }
+    u_sockfd = this->sockfd;
     assert(u_sockfd != 0 && read_buf != NULL && read_bufsize > 0);
 
-    MessageType msg = std::make_shared<CRawMessage>(u_sockfd);
+    MessageType msg = std::make_shared<CRawMessage>();
 
     try {
         auto cliaddr = std::make_shared<struct sockaddr_in>();
@@ -161,12 +157,12 @@ CServerUDP::MessageType CServerUDP::read_msg(int u_sockfd, bool &is_new) {
             assert( client_addr_str.empty() == true || client_addr_str.compare(client_id) == 0);
             client_addr_str = client_id;
 
-            if( msg_size > 0 ){
+            if( msg_size > 0 ) {
                 assert(msg->append_msg(read_buf, msg_size) == true);
             }
         }
 
-        assert( insert_addr(client_addr_str, *p_cliaddr, is_new) == true );
+        assert( mAddr.insert(client_addr_str, cliaddr, get_provider_type(), is_new) == true );
         msg->set_source(cliaddr, client_addr_str.c_str());
     }
     catch(const std::exception &e) {
@@ -180,27 +176,33 @@ bool CServerUDP::write_msg(std::string alias, MessageType msg) {
     assert( msg.get() != NULL );
     using RawDataType = CRawMessage::MsgDataType;
 
-    int u_sockfd = msg->get_socket_fd();
+    int u_sockfd = this->sockfd;
     size_t msg_size = msg->get_msg_size();
     RawDataType* buffer = (RawDataType*)msg->get_msg_read_only();
-    const struct sockaddr_in* p_cliaddr = msg->get_source_addr_read_only(get_provider_type());
-    socklen_t clilen = sizeof( *p_cliaddr );
+    struct sockaddr_in* p_cliaddr = NULL;
+    socklen_t clilen = sizeof( struct sockaddr_in );
 
-    // If client_alias_name in message == null, then find address correspond with alias.
-    if (msg->get_source_alias().empty() == true) {
-        if ( isthere_addr(alias) == true ) {
-            p_cliaddr = get_addr(alias).get();
+    // soket check. if socket == 0, then we will copy default socket-number.
+    assert(u_sockfd != 0 && buffer != NULL && msg_size > 0);
+
+    // alias is prepered. but, if alias is null, then we will use alias registed by msg.
+    if ( alias.empty() == false ) {
+        if ( mAddr.is_there(alias) == true ) {
+            p_cliaddr = mAddr.get<struct sockaddr_in>(alias).get();
         }
         else {
             // TODO insert new-address to mapper.
             LOGERR("Not Support yet. insert new address.");
         }
     }
-
-    if (u_sockfd == 0) {
-        u_sockfd = this->sockfd;
+    else {  // alias is NULL.
+        if (msg->get_source_alias().empty() == false) {
+            p_cliaddr = (struct sockaddr_in*)msg->get_source_addr_read_only(get_provider_type());
+        }
+        else {
+            LOGERR("alias is NULL & msg doesn't have alias. Please check it.");
+        }
     }
-    assert(u_sockfd != 0 && buffer != NULL && msg_size > 0);
 
     try {
         size_t written_size = 0;
@@ -237,52 +239,4 @@ bool CServerUDP::write_msg(std::string alias, MessageType msg) {
 
 int CServerUDP::enable_keepalive(int sock) {
     return 0;
-}
-
-bool CServerUDP::isthere_addr(std::string alias) {
-    return ( m_alias_addr.find(alias) != m_alias_addr.end() ? true : false );
-}
-
-CServerUDP::AddressType CServerUDP::get_addr(std::string alias) {
-    AddressType address;
-    
-    // Find Address correspond with Client-ID.
-    if ( m_alias_addr.find(alias) != m_alias_addr.end() ) {
-        address = m_alias_addr[alias];
-    }
-    return address;
-}
-
-bool CServerUDP::insert_addr(std::string alias, const struct sockaddr_in &address, bool & is_new) {
-    bool result = false;
-
-    try {
-        if( alias.empty() == true ) {
-            return result;
-        }
-
-        is_new = false;
-        if ( m_alias_addr.find(alias) == m_alias_addr.end() ) {
-            m_alias_addr[alias] = std::make_shared<struct sockaddr_in>();
-            struct sockaddr_in* p_addr = m_alias_addr[alias].get();
-            memcpy(p_addr, &address, sizeof(address));
-            is_new = true;
-        }
-        result = true;
-    }
-    catch(const std::exception &e) {
-        LOGERR("%s", e.what());
-    }
-    return result;
-}
-
-void CServerUDP::remove_addr(std::string alias) {
-    AddressMapType::iterator itor = m_alias_addr.find(alias);
-    if (itor != m_alias_addr.end()) {
-        m_alias_addr.erase(itor);
-    }
-}
-
-void CServerUDP::clear_addr(void) {
-    m_alias_addr.clear();
 }

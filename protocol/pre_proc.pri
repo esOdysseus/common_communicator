@@ -6,10 +6,12 @@ TO_COPY_HEADERS += \
     $$files($$COMM_ROOT/source/include/base/CPayload.h)    \
     $$files($$COMM_ROOT/source/include/base/CRawMessage.h)    \
     $$files($$COMM_ROOT/source/include/base/IProtocolInf.h)    \
-    $$files($$COMM_ROOT/source/include/base/Enum_common.h)
+    $$files($$COMM_ROOT/source/include/base/Enum_common.h)  \
+    $$files($$COMM_ROOT/source/include/base/CSource.h)
 TO_COPY_CPPS += \
     $$files($$COMM_ROOT/source/src/base/CPayload.cpp)      \
-    $$files($$COMM_ROOT/source/src/base/CRawMessage.cpp)
+    $$files($$COMM_ROOT/source/src/base/CRawMessage.cpp)    \
+    $$files($$COMM_ROOT/source/src/base/CSource.cpp)
 PROTOCOL_PATH=$${_PRO_FILE_PWD_}
 
 # make command & register to pre-linker

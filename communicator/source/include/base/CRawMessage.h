@@ -5,6 +5,7 @@
 #include <memory>
 
 #include <Enum_common.h>
+#include <CSource.h>
 
 class CRawMessage {
 public:
@@ -13,13 +14,11 @@ public:
     using LanSockType = std::shared_ptr<int>;
 
 public:
-    CRawMessage(int sockfd=0, size_t capacity=0);
+    CRawMessage(size_t capacity=0);
 
     ~CRawMessage(void);
 
     void destroy(void);
-
-    int get_socket_fd(void);
 
     // With Regard to Message
     bool set_new_msg(const void* buf, size_t msize);
@@ -42,6 +41,8 @@ public:
 
     const struct sockaddr_in* get_source_addr_read_only(enum_c::ProviderType provider_type);
 
+    int get_source_sock_read_only(enum_c::ProviderType provider_type);
+
     std::string get_source_alias(void);
 
 private:
@@ -50,40 +51,11 @@ private:
 
     bool extend_capacity(size_t append_capacity);
 
-    bool init(int sockfd, size_t capacity);
+    bool init(size_t capacity);
 
     void clear(void);
 
 private:
-    class CSource {
-    public:
-        using EADDR_TYPE = enum_c::ProviderType;
-
-    public:
-        CSource(void);
-
-        ~CSource(void);
-
-        template <typename ADDR_TYPE> 
-        void init(std::shared_ptr<ADDR_TYPE> addr, 
-                  const char* alias, 
-                  enum_c::ProviderType provider_type);
-
-        template <typename ADDR_TYPE> 
-        std::shared_ptr<ADDR_TYPE> get_address(void);
-
-        std::string get_alias(void);
-
-        EADDR_TYPE get_addr_type(void);
-
-    private:
-        std::shared_ptr<void> address;
-
-        std::string alias;
-
-        EADDR_TYPE addr_type;
-    };
-
     static const size_t capacity_bin = 1024U;
 
     size_t capacity;
@@ -91,8 +63,6 @@ private:
     size_t msg_size;
 
     MsgDataType* msg;
-
-    int socketfd;
 
     CSource source;
 

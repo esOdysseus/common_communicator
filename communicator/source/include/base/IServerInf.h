@@ -15,6 +15,7 @@
 #include <Enum_common.h>
 #include <BaseDatatypes.h>
 #include <CConfigProtocols.h>
+#include <CAliasAddr.h>
 
 class IHProtocolInf;
 
@@ -73,7 +74,7 @@ protected:
 
     bool inited;
 
-    int sockfd;   //start server to listen for clients to send them ids
+    int sockfd;   // start server to listen for clients to send them ids
 
     struct sockaddr_in servaddr;
 
@@ -83,6 +84,8 @@ protected:
 
     std::unordered_map<std::string /* ClientName */, std::shared_ptr<CLooper> > mLooperPool;
 
+    CAliasAddr mAddr;
+
     static const unsigned int read_bufsize = 2048;
 
     char read_buf[read_bufsize];
@@ -91,7 +94,7 @@ private:
     std::string id;
 
     enum_c::ProviderType provider_type;
-    
+
 };
 
 #endif // ISERVER_INTERFACE_H_

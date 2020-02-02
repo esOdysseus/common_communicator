@@ -10,71 +10,18 @@ template bool CRawMessage::set_source(std::shared_ptr<struct sockaddr_in> addr, 
 template bool CRawMessage::set_source(std::shared_ptr<int> addr, const char* addr_str);
 
 /***********************************************************
- * Definition member-function of CSource Class.
- * */
-CRawMessage::CSource::CSource(void) {
-    addr_type = EADDR_TYPE::E_PVDT_NOT_DEFINE;
-    alias.clear();
-}
-
-CRawMessage::CSource::~CSource(void){
-    try{
-        if(addr_type != EADDR_TYPE::E_PVDT_NOT_DEFINE) {
-            address.reset();
-        }
-        addr_type = EADDR_TYPE::E_PVDT_NOT_DEFINE;
-        alias.clear();
-    }
-    catch(const std::exception &e) {
-        LOGERR("%s", e.what());
-    }
-}
-
-template <typename ADDR_TYPE> 
-void CRawMessage::CSource::init(std::shared_ptr<ADDR_TYPE> addr, 
-                                const char* alias, 
-                                enum_c::ProviderType provider_type) {
-    try {
-        std::shared_ptr<void> dumy = std::static_pointer_cast<void>(addr);
-        this->address = move(dumy);
-        this->addr_type = provider_type;
-        this->alias = alias;
-    }
-    catch(const std::exception &e) {
-        LOGERR("%s", e.what());
-    }
-}
-
-template <typename ADDR_TYPE> 
-std::shared_ptr<ADDR_TYPE> CRawMessage::CSource::get_address(void) {
-    try{
-        return std::static_pointer_cast<ADDR_TYPE>(address);
-    }catch(const std::exception &e) {
-        LOGERR("%s", e.what());
-    }
-}
-
-std::string CRawMessage::CSource::get_alias(void) {
-    return alias;
-}
-
-CRawMessage::CSource::EADDR_TYPE CRawMessage::CSource::get_addr_type(void) {
-    return addr_type;
-}
-
-/***********************************************************
  * Definition member-function of CRawMessage Class.
  * */
-CRawMessage::CRawMessage(int sockfd, size_t capacity) { 
+CRawMessage::CRawMessage(size_t capacity) { 
     clear();
-    init(sockfd, capacity);
+    init(capacity);
 }
 
 CRawMessage::~CRawMessage(void) {
     destroy();
 }
 
-bool CRawMessage::init(int sockfd, size_t capacity) {
+bool CRawMessage::init(size_t capacity) {
     try {
         if (capacity == 0) {
             capacity = 2*capacity_bin;
@@ -83,7 +30,6 @@ bool CRawMessage::init(int sockfd, size_t capacity) {
         this->msg_size = 0;
         this->msg = new MsgDataType[capacity];
         assert( this->msg != NULL );
-        this->socketfd = sockfd;
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
@@ -96,7 +42,6 @@ void CRawMessage::clear(void) {
     msg = NULL;
     msg_size = 0;
     capacity = 0;
-    socketfd = 0;
 }
 
 void CRawMessage::destroy(void) {
@@ -106,11 +51,6 @@ void CRawMessage::destroy(void) {
     }
     msg_size = 0;
     capacity = 0;
-    socketfd = 0;
-}
-
-int CRawMessage::get_socket_fd(void) {
-    return socketfd;
 }
 
 size_t CRawMessage::get_msg_size(void) {
@@ -237,6 +177,13 @@ const struct sockaddr_in* CRawMessage::get_source_addr_read_only(enum_c::Provide
     LanAddrType src = get_source_addr(src_name, provider_type);
     LOGD("source-Name=%s", src_name.c_str());
     return (const struct sockaddr_in*)src.get();
+}
+
+int CRawMessage::get_source_sock_read_only(enum_c::ProviderType provider_type) {
+    std::string src_name;
+    LanSockType src = get_source_sock(src_name, provider_type);
+    LOGD("source-Name=%s", src_name.c_str());
+    return *(src.get());
 }
 
 std::string CRawMessage::get_source_alias(void) {

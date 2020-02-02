@@ -119,8 +119,11 @@ bool CServerTCP::start(void) {
 
 bool CServerTCP::accept(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
     if(started) {
+        bool is_new = false;
+        std::string client_id;
         struct sockaddr_in cliaddr;
         socklen_t clilen = sizeof(cliaddr);
+        std::shared_ptr<int> address = std::make_shared<int>();
 
         // start accept-blocking.
         int newsockfd = ::accept(sockfd, (struct sockaddr*) &cliaddr, &clilen); // Blocking Function.
@@ -130,8 +133,10 @@ bool CServerTCP::accept(AppCallerType &app, std::shared_ptr<cf_proto::CConfigPro
         }
 
         // Get client-ID
-        std::string client_id = make_client_id(ADDR_TYPE, cliaddr);
+        client_id = make_client_id(ADDR_TYPE, cliaddr);
         assert( insert_client(newsockfd, client_id) == true );
+        *(address.get()) = newsockfd;
+        assert( mAddr.insert(client_id, address, get_provider_type(), is_new) == true );
 
         if ( client_id.empty() == false ) {
             // create thread with PROTOCOL for new-sesseion by new-user.
@@ -156,8 +161,9 @@ CServerTCP::MessageType CServerTCP::read_msg(int u_sockfd, bool &is_new) {
     assert(u_sockfd != 0 && read_buf != NULL && read_bufsize > 0);
     assert(isthere_client_id(u_sockfd) == true);
 
-    std::shared_ptr<int> socket = std::make_shared<int>(u_sockfd);
-    MessageType msg = std::make_shared<CRawMessage>(u_sockfd);
+    std::shared_ptr<int> socket = std::make_shared<int>();
+    MessageType msg = std::make_shared<CRawMessage>();
+    *(socket.get()) = u_sockfd;
 
     try {
         while(msg_size == read_bufsize) {
@@ -184,13 +190,29 @@ bool CServerTCP::write_msg(std::string alias, MessageType msg) {
     assert( msg.get() != NULL );
     using RawDataType = CRawMessage::MsgDataType;
 
-    int u_sockfd = msg->get_socket_fd();
+    int u_sockfd = 0;
     size_t msg_size = msg->get_msg_size();
     RawDataType* buffer = (RawDataType*)msg->get_msg_read_only();
 
-    if (u_sockfd == 0) {
-        u_sockfd = this->sockfd;
+    // alias is prepered. but, if alias is null, then we will use alias registed by msg.
+    if ( alias.empty() == false ) {
+        if ( mAddr.is_there(alias) == true ) {
+            u_sockfd = *(mAddr.get<int>(alias).get());
+        }
+        else {
+            // TODO insert new-address to mapper.
+            LOGERR("Not Support yet. insert new address.");
+        }
     }
+    else {  // alias is NULL.
+        if (msg->get_source_alias().empty() == false) {
+            u_sockfd = msg->get_source_sock_read_only(get_provider_type());
+        }
+        else {
+            LOGERR("alias is NULL & msg doesn't have alias. Please check it.");
+        }
+    }
+
     assert(u_sockfd != 0 && buffer != NULL && msg_size > 0);
 
     try {
