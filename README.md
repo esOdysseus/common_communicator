@@ -85,7 +85,7 @@ Date | Commit-ID | Version | Description
 `2020-01-14` | `1ed4cff327dfd6b3b543ae1f65acaafc4596e1e6` | Ver 0.1.2 | Support ARMv7 Build.
 `2020-02-01` | `1615a31aa20f49d56ab6dfb0df07fb08ef7dcbe3` | Ver 0.1.3 | 1. Support ARMv7 & Aarch64 Build.<br> 2. Done processing of default-argument.
 `2020-02-02` | `7d763ab057b0532388a787f7ffd5edd8c9995cb9` | Ver 0.1.3 | Add Converter that convert alias-name to essential-address.
-`2020-02-03` | `` | Ver 0.1.3 | Add CConfigAliases class that load desp-alias.json file.
+`2020-02-03` | `be28532ec0b07dfc337f0b9785216d22db5c6552` | Ver 0.1.3 | Add CConfigAliases class that load desp-alias.json file.
 
 ### TBD-list
 - Alias json processing.
