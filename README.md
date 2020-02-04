@@ -37,7 +37,7 @@ limitations under the License.
 - esOdysseus (email: es.odysseus@gmail.com)
 
 ### Latest Release
-- version 0.1.3 (Date: 2020-02-03)
+- version 0.1.3 (Date: 2020-02-04)
 ---
 ## Installation
 > Please refer following commands.
@@ -66,11 +66,12 @@ $ bash ./build.sh -m release -t example -arch x86
 
 ### Example
 - You can test the communicator SDK library by using following guide-line.
-   > If you want to make a application with common-API, then reference following guide.
+   > If you want to make a application with common-API, then reference following guide-line.
    ```shell
    $ cd ${work}
    $ bash ./build.sh release example
    $ ./release/bin/example_common_api ${IP} ${Port} ${Path-of-desp-Protocol.json} ${Path-of-desp-Alias.json}
+   $ ./release/bin/sample_client ${Path-of-desp-Protocol.json} ${Path-of-desp-Alias.json}
    ```
    - Attention : You have to set "LD_LIBRARY_PATH" with "${work}/release/lib".
 ---
@@ -86,9 +87,9 @@ Date | Commit-ID | Version | Description
 `2020-02-01` | `1615a31aa20f49d56ab6dfb0df07fb08ef7dcbe3` | Ver 0.1.3 | 1. Support ARMv7 & Aarch64 Build.<br> 2. Done processing of default-argument.
 `2020-02-02` | `7d763ab057b0532388a787f7ffd5edd8c9995cb9` | Ver 0.1.3 | Add Converter that convert alias-name to essential-address.
 `2020-02-03` | `be28532ec0b07dfc337f0b9785216d22db5c6552` | Ver 0.1.3 | Add CConfigAliases class that load desp-alias.json file.
+`2020-02-04` | `` | Ver 0.1.3 | 1. Support Client of UDP.<br> 2. Fix bug of _flag_op_ in CPayload class.
 
 ### TBD-list
-- Alias json processing.
 - Support Client.
 - Build Routing-Manager.
 - Support vSOME/IP.

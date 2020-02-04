@@ -2,6 +2,8 @@
 #define C_APP_TEST_H_
 
 #include <string>
+#include <thread>
+
 #include <IAppInf.h>
 
 class CAppTest {
@@ -24,9 +26,16 @@ public:
     void cb_abnormally_quit(const std::exception &e);
 
 private:
+    int run_period_send(void);
+
+private:
     CommHandler h_communicator;
 
     int rcv_count;
+
+    bool is_continue;
+    
+    std::thread runner;
 
 };
 

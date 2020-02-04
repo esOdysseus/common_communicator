@@ -31,6 +31,7 @@ public:
                   std::string provider_id, 
                   enum_c::ProviderType provider_type, 
                   std::shared_ptr<void> &proto_config,
+                  std::shared_ptr<void> &alias_config,
                   unsigned short port=0,
                   const char* ip=NULL);
 

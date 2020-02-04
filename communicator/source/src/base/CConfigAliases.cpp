@@ -11,7 +11,9 @@ const char* CConfigAliases::pvd_types[] = { CConfigAliases::UDP,
                                             CConfigAliases::VSOMEIP, 
                                             NULL};
 
-static std::shared_ptr<IAlias> make_alias(std::string alias, std::shared_ptr<json_mng::CMjson> obj_value);
+static std::shared_ptr<IAlias> make_alias(std::string alias, 
+                                          std::shared_ptr<json_mng::CMjson> obj_value, 
+                                          std::string &pvd_type_str);
 static std::shared_ptr<CAliasTrans> make_alias_trans(std::string alias, std::string pvd_type, 
                                                      std::shared_ptr<json_mng::CMjson> &obj_addr);
 static std::shared_ptr<CAliasService> make_alias_service(std::string alias, std::string pvd_type, 
@@ -92,13 +94,14 @@ bool CConfigAliases::init(const std::string config_path) {
         // build alias-struct.
         auto objects = json_manager->get_member<json_mng::CMjson>(CONFIG_ALIAS_LIST);
         for ( auto itr = objects->begin(); itr != objects->end(); itr++ ) {
+            std::string pvd_type_str;
             std::string alias = json_mng::CMjson::get_first(itr);
             auto obj_value = json_mng::CMjson::get_second<json_mng::CMjson>(itr);
             
             LOGD("===");
             LOGD("= alias-name=%s", alias.c_str());
-            std::shared_ptr<IAlias> new_alias = make_alias(alias, obj_value);
-            aliases[new_alias->pvd_type].push_back(new_alias);
+            std::shared_ptr<IAlias> new_alias = make_alias(alias, obj_value, pvd_type_str);
+            aliases[pvd_type_str].push_back(new_alias);
         }
         res = true;
     }
@@ -115,13 +118,15 @@ bool CConfigAliases::init(const std::string config_path) {
 /***************************************************
  * Private Function Definition.
  ***************************************************/
-static std::shared_ptr<IAlias> make_alias(std::string alias, std::shared_ptr<json_mng::CMjson> obj_value) {
+static std::shared_ptr<IAlias> make_alias(std::string alias, 
+                                          std::shared_ptr<json_mng::CMjson> obj_value, 
+                                          std::string &pvd_type) {
     std::shared_ptr<IAlias> res;
     assert(alias.empty() == false);
     assert(obj_value.get() != NULL);
 
     try {
-        std::string pvd_type = obj_value->get_member(CONFIG_ALIAS_PVD_TYPE)->c_str();
+        pvd_type = obj_value->get_member(CONFIG_ALIAS_PVD_TYPE)->c_str();
         auto addr = obj_value->get_member<json_mng::CMjson>(CONFIG_ALIAS_ADDR);
 
         LOGD("= pvd_type=%s", pvd_type.c_str());
@@ -220,6 +225,42 @@ static std::shared_ptr<CAliasService> make_alias_service(std::string alias,
     return res;
 }
 
+/*************************
+ * IAlias Class Definition
+ */
+IAlias::IAlias(const char* alias_, const char* pvd_type_) {
+    assert(alias_ != NULL && pvd_type_ != NULL);
+    
+    try{
+        this->alias = alias_;
+        this->pvd_type = cvt_str2pvdtype(pvd_type_);
+    }
+    catch( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+}
 
+IAlias::~IAlias(void) {
+    alias.clear();
+    pvd_type = enum_c::ProviderType::E_PVDT_NOT_DEFINE;
+}
+
+enum_c::ProviderType IAlias::cvt_str2pvdtype(std::string pvd_type_str) {
+    assert(pvd_type_str.empty() == false);
+
+    if(pvd_type_str == CConfigAliases::UDP) {
+        return enum_c::ProviderType::E_PVDT_TRANS_UDP;
+    }
+    else if(pvd_type_str == CConfigAliases::TCP) {
+        return enum_c::ProviderType::E_PVDT_TRANS_TCP;
+    }
+    else if(pvd_type_str == CConfigAliases::VSOMEIP) {
+        return enum_c::ProviderType::E_PVDT_SERVICE_VSOMEIP;
+    }
+    else {
+        throw CException(E_ERROR::E_NOT_SUPPORTED_PVD_TYPE);
+    }
+}
 
 }   // namespace cf_alias

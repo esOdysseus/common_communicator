@@ -3,20 +3,13 @@
  */
 {
     "aliases": {
-        "alias_udp_01": {                  // name of alias.
+        "alias_udp_01": {               // name of alias.
             "provider-type": "udp",     // available-type : udp, tcp, uds, vsomeip, iotivity
             "address": {                // describe address of alias.
-                "ip": "10.230.194.161", // ip of alias that is destination.
+                "ip": "192.168.1.2",    // ip of alias that is destination.
                 "mask": "24",           // Network mask.
                 "port": "12346"         // port of alias.
             }
-        },
-        "alias_vsomeip_01": {
-            "provider-type": "vsomeip", // available-type : udp, tcp, uds, vsomeip, iotivity
-            "address": {
-                "service-id": "0x1234",
-                "instance-id": "0x5678"
-            } // atention : event-id, event-grp is described by protocol for service-oriented COMM.
         }
     }
 }

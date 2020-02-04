@@ -13,7 +13,7 @@ public:
     using SocketMapType = std::map<int, std::string>;  // socket, client-id
 
 public:
-    CServerTCP(void);
+    CServerTCP(AliasType& alias_list);
 
     ~CServerTCP(void);
 
@@ -29,6 +29,8 @@ public:
 
 protected:
     int enable_keepalive(int sock) override;
+
+    bool update_alias_mapper(AliasType& alias_list) override;
 
 private:
     bool isthere_client_id(const int socket_num);

@@ -34,9 +34,16 @@
 #define ADDR_TYPE       AF_INET
 
 
-CServerUDP::CServerUDP(void)
-: IServerInf() {
-    set_provider_type(enum_c::ProviderType::E_PVDT_TRANS_UDP);
+CServerUDP::CServerUDP(AliasType& alias_list)
+: IServerInf(alias_list) {
+    try{
+        set_provider_type(enum_c::ProviderType::E_PVDT_TRANS_UDP);
+        assert( update_alias_mapper(alias_list) == true );
+    }
+    catch (const std::exception &e) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
 }
 
 CServerUDP::~CServerUDP(void) {
@@ -239,4 +246,35 @@ bool CServerUDP::write_msg(std::string alias, MessageType msg) {
 
 int CServerUDP::enable_keepalive(int sock) {
     return 0;
+}
+
+bool CServerUDP::update_alias_mapper(AliasType& alias_list) {
+    bool res = true;
+
+    try {
+        AliasType::iterator itor;
+
+        for ( itor = alias_list.begin(); itor != alias_list.end(); itor++ ) {
+            bool is_new = false;
+            std::shared_ptr<cf_alias::CAliasTrans> alias = std::static_pointer_cast<cf_alias::CAliasTrans>(*itor);
+            std::shared_ptr<struct sockaddr_in> destaddr = std::make_shared<struct sockaddr_in>();
+            assert( alias->pvd_type == get_provider_type());
+
+            destaddr->sin_family = ADDR_TYPE;
+            destaddr->sin_addr.s_addr = inet_addr(alias->ip.c_str());
+            destaddr->sin_port = htons(alias->port_num);
+            // set all bits of the padding field to 0
+            memset(destaddr->sin_zero, '\0', sizeof(destaddr->sin_zero));
+
+            // append pair(alias & address) to mapper.
+            mAddr.insert(alias->alias, destaddr, alias->pvd_type, is_new);
+        }
+    }
+    catch(const std::exception &e) {
+        LOGERR("%s", e.what());
+        res = false;
+        throw e;
+    }
+
+    return res;
 }

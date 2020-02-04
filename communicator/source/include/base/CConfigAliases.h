@@ -7,6 +7,8 @@
 #include <memory>
 #include <cassert>
 
+#include <Enum_common.h>
+
 // 'key' assignment of configuration.
 #define CONFIG_ALIAS_LIST       "aliases"
 #define CONFIG_ALIAS_PVD_TYPE   "provider-type"
@@ -28,20 +30,16 @@ namespace cf_alias {
 
     class IAlias {
     public:
-        IAlias(const char* alias_, const char* pvd_type_) {
-            assert(alias_ != NULL && pvd_type_ != NULL);
-            this->alias = alias_;
-            this->pvd_type = pvd_type_;
-        }
+        IAlias(const char* alias_, const char* pvd_type_);
 
-        ~IAlias(void) {
-            alias.clear();
-            pvd_type.clear();
-        }
+        ~IAlias(void);
+
+    private:
+        enum_c::ProviderType cvt_str2pvdtype(std::string pvd_type_str);
 
     public:
         std::string alias;
-        std::string pvd_type;
+        enum_c::ProviderType pvd_type;
     };
 
     class CAliasTrans : public IAlias {

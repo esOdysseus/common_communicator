@@ -33,9 +33,16 @@
 #define ADDR_TYPE       AF_INET
 
 
-CServerTCP::CServerTCP(void)
-: IServerInf() {
-    set_provider_type(enum_c::ProviderType::E_PVDT_TRANS_TCP);
+CServerTCP::CServerTCP(AliasType& alias_list)
+: IServerInf(alias_list) {
+    try{
+        set_provider_type(enum_c::ProviderType::E_PVDT_TRANS_TCP);
+        assert( update_alias_mapper(alias_list) == true );
+    }
+    catch (const std::exception &e) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
 }
 
 CServerTCP::~CServerTCP(void) {
@@ -314,4 +321,17 @@ void CServerTCP::remove_client(const int socket_num) {
 
 void CServerTCP::clear_clients(void) {
     m_socket_alias.clear();
+}
+
+bool CServerTCP::update_alias_mapper(AliasType& alias_list) {
+
+    try {
+        // TODO
+    }
+    catch(const std::exception &e) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+
+    return true;
 }

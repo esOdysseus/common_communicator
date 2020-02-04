@@ -16,6 +16,7 @@
 #include <BaseDatatypes.h>
 #include <CConfigProtocols.h>
 #include <CAliasAddr.h>
+#include <CConfigAliases.h>
 
 class IHProtocolInf;
 
@@ -28,9 +29,10 @@ public:
     using SharedThisType = std::enable_shared_from_this<IServerInf<PROTOCOL_H>>;
     using ThreadType = std::shared_ptr<std::thread>;
     using MessageType = dtype_b::MsgType;
+    using AliasType = std::list<std::shared_ptr<cf_alias::IAlias>>;
 
 public:
-    IServerInf(void);
+    IServerInf(AliasType& alias_list);
 
     ~IServerInf(void);
 
@@ -55,6 +57,8 @@ public:
 protected:
     virtual int enable_keepalive(int sock) = 0;
 
+    virtual bool update_alias_mapper(AliasType& alias_list) = 0;
+
     void clear(void);
 
     bool thread_create(std::string& client_addr, int socketfd, AppCallerType& app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager);
@@ -65,7 +69,7 @@ protected:
 
     void set_provider_type(enum_c::ProviderType type) { provider_type = type; }
 
-    virtual std::string make_client_id(const int addr_type, const struct sockaddr_in& cliaddr);
+    std::string make_client_id(const int addr_type, const struct sockaddr_in& cliaddr);
 
 protected:
     class CLooper;

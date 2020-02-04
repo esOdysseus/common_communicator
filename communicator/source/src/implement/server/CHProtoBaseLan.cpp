@@ -44,6 +44,9 @@ bool CHProtoBaseLan::write_payload(std::string alias, std::shared_ptr<payload::C
         if ( payload->get_op_flag(payload::E_PAYLOAD_FLAG::E_KEEP_PAYLOAD_AFTER_TX) == false ) {
             destroy_proto_chain(pro_payload);
         }
+        else {
+            LOGW("E_KEEP_PAYLOAD_AFTER_TX == true");
+        }
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());

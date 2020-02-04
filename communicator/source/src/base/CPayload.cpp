@@ -28,7 +28,7 @@ static const char* exception_switch(E_ERROR err_num) {
  * Public Function Definition
  */
 CPayload::CPayload(std::string name) 
-: _name_(name) {
+: _name_(name), _flag_op_(0) {
     _payload_ = std::make_shared<DataType>();
     _protocol_chain_name_.clear();
     _protocol_chain_.reset();
@@ -40,6 +40,7 @@ CPayload::~CPayload(void) {
     _protocol_chain_name_.clear();
     _name_.clear();
     _payload_.reset();
+    _flag_op_ = 0;
 }
 
 const std::string CPayload::get_name(void) {
@@ -108,9 +109,9 @@ bool CPayload::is_empty(void) {
 /** Get Flag with regard to Payload-Operating. */
 CPayload::FlagDataType CPayload::get_op_flag(E_PAYLOAD_FLAG target) {
     if ( target == E_PAYLOAD_FLAG::E_NONE ) {
-        return flag_op;
+        return _flag_op_;
     }
-    return (flag_op & target);
+    return (_flag_op_ & target);
 }
 
 /** Set Flag with regard to Payload-Operating. */
@@ -118,10 +119,10 @@ void CPayload::set_op_flag(E_PAYLOAD_FLAG target, bool value) {
     assert( target != E_PAYLOAD_FLAG::E_NONE );
 
     if ( value == false ) {
-        flag_op = flag_op & (~target);
+        _flag_op_ = _flag_op_ & (~target);
     }
     else {
-        flag_op = flag_op | target;
+        _flag_op_ = _flag_op_ | target;
     }
 }
 

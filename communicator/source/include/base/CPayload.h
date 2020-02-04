@@ -100,7 +100,7 @@ namespace payload
 
         std::weak_ptr<ProtoChainType> _protocol_chain_;   // link to external list-object.
 
-        FlagDataType flag_op;    // it describe about Payload-Operating.
+        FlagDataType _flag_op_;    // it describe about Payload-Operating.
 
     };
 

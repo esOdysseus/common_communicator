@@ -14,16 +14,16 @@ using namespace std::placeholders;
 
 int main(int argc, char *argv[])
 {
-    std::cout << "Sample-Server for check operating of UDP/TCP provider." << std::endl;
+    std::cout << "Sample-Client for check operating of UDP/TCP provider." << std::endl;
 
     // Create Communicator instance.
-    auto handler = create_communicator("TestApp01", 
+    auto handler = create_communicator("TestApp02", 
                                        "UDP_provider", 
                                        enum_c::ProviderType::E_PVDT_TRANS_UDP,
-                                       atoi(argv[2]), 
+                                       0,
+                                       NULL,
                                        argv[1],
-                                       argv[3],
-                                       argv[4]);
+                                       argv[2]);
 
     std::cout << "Common-API Version = " << handler->get_version() << std::endl;
 

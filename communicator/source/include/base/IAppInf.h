@@ -11,6 +11,8 @@
 #include <Enum_common.h>
 #include <CReceiver.h>
 #include <CAppInternalCaller.h>
+#include <CConfigProtocols.h>
+#include <CConfigAliases.h>
 
 class ICommunicator;
 
@@ -37,6 +39,7 @@ public:
                   std::string provider_id, 
                   enum_c::ProviderType provider_type, 
                   std::shared_ptr<cf_proto::CConfigProtocols> &proto_config,
+                  std::shared_ptr<cf_alias::CConfigAliases> &alias_config,
                   unsigned short port=0,
                   const char* ip=NULL);
 
@@ -246,6 +249,8 @@ private:
     bool runner_continue;   // Continue-flag of provider for Communicator.
 
     std::shared_ptr<cf_proto::CConfigProtocols> proto_config;   // protocol-configration.
+
+    std::shared_ptr<cf_alias::CConfigAliases> alias_config;     // alias-configuration.
 
 };
 

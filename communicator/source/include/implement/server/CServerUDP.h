@@ -9,7 +9,7 @@
 class CServerUDP : public IServerInf<CHProtoBaseLan> {
 
 public:
-    CServerUDP(void);
+    CServerUDP(AliasType& alias_list);
 
     ~CServerUDP(void);
 
@@ -25,6 +25,8 @@ public:
 
 protected:
     int enable_keepalive(int sock) override;
+
+    bool update_alias_mapper(AliasType& alias_list) override;
 
 };
 

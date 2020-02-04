@@ -23,7 +23,7 @@ std::shared_ptr<ICommunicator> create_communicator(std::string app_id,
     try {
             std::shared_ptr<cf_proto::CConfigProtocols> proto_config = std::make_shared<cf_proto::CConfigProtocols>(protocol_desp_path);
             std::shared_ptr<cf_alias::CConfigAliases> alias_config = std::make_shared<cf_alias::CConfigAliases>(alias_desp_path);
-            ret = std::make_shared<ICommunicator>(app_id, provider_id, provider_type, proto_config, port, ip);
+            ret = std::make_shared<ICommunicator>(app_id, provider_id, provider_type, proto_config, alias_config, port, ip);
     }
     catch (const std::exception &e) {
         LOGERR("%s", e.what());
@@ -39,6 +39,7 @@ ICommunicator::ICommunicator(std::string app_id,
               std::string provider_id, 
               enum_c::ProviderType provider_type, 
               std::shared_ptr<cf_proto::CConfigProtocols> &proto_config,
+              std::shared_ptr<cf_alias::CConfigAliases> &alias_config,
               unsigned short port, 
               const char* ip) 
 : runner_continue(false) {
@@ -51,6 +52,7 @@ ICommunicator::ICommunicator(std::string app_id,
         this->ip = ip;
     }
     this->proto_config = proto_config;
+    this->alias_config = alias_config;
 
     this->m_send_payload = NULL;
 }
@@ -67,6 +69,7 @@ ICommunicator::~ICommunicator(void) {
     this->port = 0;
     this->ip.clear();
     this->proto_config.reset();
+    this->alias_config.reset();
 
     this->m_send_payload = NULL;
 }
@@ -173,7 +176,7 @@ int ICommunicator::run(void) {
     {
     case enum_c::ProviderType::E_PVDT_TRANS_TCP:
         {
-            auto pvd = std::make_shared<CServerTCP>();
+            auto pvd = std::make_shared<CServerTCP>( alias_config->get_aliases(alias_config->TCP) );
             const char* ip_str = ip.empty() == true ? NULL : ip.c_str();
             pvd->init(provider_id, port, ip_str);
             pvd->start();
@@ -182,7 +185,7 @@ int ICommunicator::run(void) {
         break;
     case enum_c::ProviderType::E_PVDT_TRANS_UDP:
         {
-            auto pvd = std::make_shared<CServerUDP>();
+            auto pvd = std::make_shared<CServerUDP>( alias_config->get_aliases(alias_config->UDP) );
             const char* ip_str = ip.empty() == true ? NULL : ip.c_str();
             pvd->init(provider_id, port, ip_str);
             pvd->start();

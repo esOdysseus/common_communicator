@@ -55,9 +55,16 @@ IServerInf<PROTOCOL_H>::CLooper::~CLooper(void) {
  * Definition for Member-Function of IServerInf Class.
  */
 template <typename PROTOCOL_H> 
-IServerInf<PROTOCOL_H>::IServerInf(void) {
-    id = "";
-    clear();
+IServerInf<PROTOCOL_H>::IServerInf(AliasType& alias_list) {
+    try {
+        id = "";
+        clear();
+    }
+    catch (const std::exception &e) {
+        LOGERR("%s", e.what());
+        stop();
+        throw e;
+    }
 }
 
 template <typename PROTOCOL_H> 
