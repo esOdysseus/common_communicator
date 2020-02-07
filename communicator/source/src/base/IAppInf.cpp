@@ -102,7 +102,7 @@ void ICommunicator::register_message_handler(MessagePayloadCB_Type &&handler) {
     cb_handlers.cb_message_payload_handle = handler;
 }
 
-void ICommunicator::register_quit_handler(QuitCB_Type &&handler) {
+void ICommunicator::register_unintended_quit_handler(QuitCB_Type &&handler) {
     assert( handler != NULL );
     cb_handlers.cb_quit_handle = handler;
 }
@@ -179,8 +179,8 @@ int ICommunicator::run(void) {
             auto pvd = std::make_shared<CServerTCP>( alias_config->get_aliases(alias_config->TCP) );
             const char* ip_str = ip.empty() == true ? NULL : ip.c_str();
             pvd->init(provider_id, port, ip_str);
-            pvd->start();
-            while(pvd->accept(app_caller, proto_config) && is_running_continue());
+            pvd->start(app_caller, proto_config);
+            while(pvd->accept() && is_running_continue());
         }
         break;
     case enum_c::ProviderType::E_PVDT_TRANS_UDP:
@@ -188,8 +188,8 @@ int ICommunicator::run(void) {
             auto pvd = std::make_shared<CServerUDP>( alias_config->get_aliases(alias_config->UDP) );
             const char* ip_str = ip.empty() == true ? NULL : ip.c_str();
             pvd->init(provider_id, port, ip_str);
-            pvd->start();
-            while(pvd->accept(app_caller, proto_config) && is_running_continue());
+            pvd->start(app_caller, proto_config);
+            while(pvd->accept() && is_running_continue());
         }
         break;
     default:

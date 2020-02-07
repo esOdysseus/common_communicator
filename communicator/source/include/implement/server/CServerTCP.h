@@ -10,18 +10,19 @@
 
 class CServerTCP : public IServerInf<CHProtoBaseLan> {
 public:
-    using SocketMapType = std::map<int, std::string>;  // socket, client-id
-
-public:
     CServerTCP(AliasType& alias_list);
 
     ~CServerTCP(void);
 
     bool init(std::string id, unsigned int port=0, const char* ip=NULL) override;
 
-    bool start(void) override;
+    bool start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) override;
 
-    bool accept(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) override;
+    bool accept(void) override;
+
+    int make_connection(std::string alias) override;
+
+    bool disconnection(std::string alias) override;
 
     MessageType read_msg(int u_sockfd, bool &is_new) override;
 
@@ -32,19 +33,15 @@ protected:
 
     bool update_alias_mapper(AliasType& alias_list) override;
 
-private:
-    bool isthere_client_id(const int socket_num);
-
-    std::string get_client_id(const int socket_num);
-
-    bool insert_client(const int socket_num, std::string alias);
-
-    void remove_client(const int socket_num);
-
-    void clear_clients(void);
+    void run_receiver(std::string alias, bool *is_continue) override;
 
 private:
-    SocketMapType m_socket_alias;
+    int make_socket(int opt_flag);
+
+    int get_socket(std::string alias, MessageType &msg);
+
+private:
+    CAliasAddr m_alias2socket;      // alias => socket
 
 };
 

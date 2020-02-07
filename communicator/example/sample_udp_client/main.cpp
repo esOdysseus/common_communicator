@@ -14,16 +14,16 @@ using namespace std::placeholders;
 
 int main(int argc, char *argv[])
 {
-    std::cout << "Sample-Server for check operating of UDP/TCP provider." << std::endl;
+    std::cout << "Sample-Client for check operating of UDP provider." << std::endl;
 
     // Create Communicator instance.
-    auto handler = create_communicator("TestApp01", 
+    auto handler = create_communicator("TestApp02", 
                                        "UDP_provider", 
                                        enum_c::ProviderType::E_PVDT_TRANS_UDP,
-                                       atoi(argv[2]), 
+                                       0,
+                                       NULL,
                                        argv[1],
-                                       argv[3],
-                                       argv[4]);
+                                       argv[2]);
 
     std::cout << "Common-API Version = " << handler->get_version() << std::endl;
 
@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
     handler->register_initialization_handler(std::bind(&CAppTest::cb_initialization, &sample_App, _1, _2));
     handler->register_connection_handler(std::bind(&CAppTest::cb_connected, &sample_App, _1, _2));
     handler->register_message_handler(std::bind(&CAppTest::cb_receive_msg_handle, &sample_App, _1, _2));
-    handler->register_quit_handler(std::bind(&CAppTest::cb_abnormally_quit, &sample_App, _1));
+    handler->register_unintended_quit_handler(std::bind(&CAppTest::cb_abnormally_quit, &sample_App, _1));
 
     handler->init();
 

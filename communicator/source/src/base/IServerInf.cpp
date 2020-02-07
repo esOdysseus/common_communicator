@@ -17,7 +17,7 @@ template <typename PROTOCOL_H>
 class IServerInf<PROTOCOL_H>::CLooper {
 public:
     template <typename _Callable>
-    explicit CLooper(_Callable&& __f, HProtocolType& instance);
+    explicit CLooper(_Callable&& __f, std::string alias);
 
     ~CLooper(void);
 
@@ -25,10 +25,12 @@ public:
 
     void join(void) { if(h_thread) h_thread->join(); }
 
-private: 
-    HProtocolType h_protocol;
+    void force_join(void);
 
+private: 
     ThreadType h_thread;
+
+    bool is_continue;
 };
 
 /**************************************************
@@ -36,18 +38,27 @@ private:
  */
 template <typename PROTOCOL_H> 
 template<typename _Callable>
-IServerInf<PROTOCOL_H>::CLooper::CLooper(_Callable&& __f, HProtocolType& instance) {
-    this->h_protocol = move(instance);
-    this->h_thread = std::make_shared<std::thread>(std::forward<_Callable>(__f), this->h_protocol);
+IServerInf<PROTOCOL_H>::CLooper::CLooper(_Callable&& __f, std::string alias) {
+    this->is_continue = true;
+    this->h_thread = std::make_shared<std::thread>(std::forward<_Callable>(__f), alias, &is_continue);
+    assert(this->h_thread.get() != NULL);
 }
 
 template <typename PROTOCOL_H> 
 IServerInf<PROTOCOL_H>::CLooper::~CLooper(void) {
-    if( this->h_thread != nullptr && this->h_thread->joinable() ) {
-        this->h_thread->join();
+    force_join();
+}
+
+template <typename PROTOCOL_H> 
+void IServerInf<PROTOCOL_H>::CLooper::force_join(void) {
+    if ( this->h_thread.get() != NULL && this->is_continue == true) {
+        this->is_continue = false;
+
+        if( this->h_thread->joinable() ) {
+            this->h_thread->join();
+        }
+        this->h_thread.reset();
     }
-    this->h_thread.reset();
-    this->h_protocol.reset();
 }
 
 
@@ -127,19 +138,29 @@ void IServerInf<PROTOCOL_H>::clear(void) {
     bzero(&servaddr, sizeof(servaddr));
     listeningPort = 0;
     mLooperPool.clear();
+    hHprotocol.reset();
 }
 
 template <typename PROTOCOL_H> 
-bool IServerInf<PROTOCOL_H>::thread_create(std::string& client_id, int socketfd, 
-                                           AppCallerType& app, 
-                                           std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
+bool IServerInf<PROTOCOL_H>::create_hprotocol(AppCallerType& app, 
+                                              std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
+    try{
+        hHprotocol.reset();
+        hHprotocol = std::make_shared<PROTOCOL_H>(SharedThisType::shared_from_this(), 
+                                                  app, proto_manager);
+    }
+    catch( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        return false;
+    }
+    return true;
+}
+
+template <typename PROTOCOL_H> 
+bool IServerInf<PROTOCOL_H>::thread_create(std::string& client_id, FPreceiverType &&func) {
     try {
-        HProtocolType h_protocol = std::make_shared<PROTOCOL_H>(client_id, socketfd, 
-                                                      SharedThisType::shared_from_this(), 
-                                                      app, proto_manager);
-        
         if ( mLooperPool.find(client_id) == mLooperPool.end() ) {
-            mLooperPool.emplace(client_id, std::make_shared<CLooper>(&IHProtocolInf::run, h_protocol));
+            mLooperPool.emplace(client_id, std::make_shared<CLooper>( func, client_id));
         }
         else {
             LOGW("Already, thread was created by %s", client_id.c_str());
@@ -152,22 +173,37 @@ bool IServerInf<PROTOCOL_H>::thread_create(std::string& client_id, int socketfd,
 }
 
 template <typename PROTOCOL_H> 
-bool IServerInf<PROTOCOL_H>::thread_this_migrate(std::string& client_id, int socketfd, 
-                                                 AppCallerType& app, 
-                                                 std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
+bool IServerInf<PROTOCOL_H>::thread_this_migrate(std::string& client_id, FPreceiverType &&func, bool *is_continue) {
+    assert(is_continue != NULL);
+
     try {
         if (client_id.empty()) {
             client_id = "ALL_CLIENT";
         }
-        
-        HProtocolType h_protocol = std::make_shared<PROTOCOL_H>(client_id, socketfd, 
-                                                      SharedThisType::shared_from_this(), 
-                                                      app, proto_manager);
-        h_protocol->run();
+
+        func(client_id, is_continue);
         return true;
     } catch (const std::exception &e) {
         LOGERR("%d: %s", errno, strerror(errno));
     }
+    return false;
+}
+
+template <typename PROTOCOL_H> 
+bool IServerInf<PROTOCOL_H>::thread_destroy(std::string client_id) {
+    try{
+        if ( mLooperPool.find(client_id) == mLooperPool.end() ) {
+            auto itor = mLooperPool.find(client_id);
+            itor->second->force_join();
+            itor->second.reset();
+            mLooperPool.erase(itor);
+        }
+        return true;
+    }
+    catch( const std::exception &e ) {
+        LOGERR("%s", e.what());
+    }
+
     return false;
 }
 

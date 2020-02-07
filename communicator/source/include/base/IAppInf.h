@@ -76,7 +76,7 @@ public:
     //   - Precondition : None
     //   - Practice : Register handler for checking System-quit INFO, abnormally.
     //   - Postcondition : When the system was forced-quit abnormally in run-time, the handler will be called.
-    void register_quit_handler(QuitCB_Type &&handler);
+    void register_unintended_quit_handler(QuitCB_Type &&handler);
 
     // >> Server/Client-side
     //   - Precondition : None

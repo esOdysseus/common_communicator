@@ -15,6 +15,8 @@
 #include <CRawMessage.h>
 #include <server/CServerUDP.h>
 
+using namespace std::placeholders;
+
 // ***** Socket Type ****
 // SOCK_STREAM :    TCP socket
 // SOCK_DGRAM :     UDP socket
@@ -39,6 +41,7 @@ CServerUDP::CServerUDP(AliasType& alias_list)
     try{
         set_provider_type(enum_c::ProviderType::E_PVDT_TRANS_UDP);
         assert( update_alias_mapper(alias_list) == true );
+        _is_continue_ = false;
     }
     catch (const std::exception &e) {
         LOGERR("%s", e.what());
@@ -48,6 +51,7 @@ CServerUDP::CServerUDP(AliasType& alias_list)
 
 CServerUDP::~CServerUDP(void) {
     set_provider_type(enum_c::ProviderType::E_PVDT_NOT_DEFINE);
+    _is_continue_ = false;
 }
 
 bool CServerUDP::init(std::string id, unsigned int port, const char* ip) {
@@ -96,7 +100,7 @@ bool CServerUDP::init(std::string id, unsigned int port, const char* ip) {
     return inited;
 }
 
-bool CServerUDP::start(void) {
+bool CServerUDP::start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
     
     if (inited != true) {
         LOGERR("We need to init ServerTCP. Please check it.");
@@ -109,15 +113,20 @@ bool CServerUDP::start(void) {
         return false;
     }
 
+    // Create instance of Protocol-Handler.
+    assert( create_hprotocol(app, proto_manager) == true );
+
     started = true;
     return started;
 }
 
-bool CServerUDP::accept(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
+bool CServerUDP::accept(void) {
     if(started) {
         std::string client_addr;
+
         // sockfd is not client-socket-fd so, We will insert value-Zero(0) to parameter-2.
-        if (thread_this_migrate(client_addr, 0, app, proto_manager) == false) {
+        _is_continue_ = true;
+        if (thread_this_migrate(client_addr, std::bind(&CServerUDP::run_receiver, this, _1, _2), &_is_continue_) == false) {
             LOGERR("%d: %s", errno, strerror(errno));
             return false;
         }
@@ -125,6 +134,21 @@ bool CServerUDP::accept(AppCallerType &app, std::shared_ptr<cf_proto::CConfigPro
     }
 
     return false;
+}
+
+int CServerUDP::make_connection(std::string alias) {
+    try{
+        return mAddr.is_there(alias);
+    }
+    catch (const std::exception &e) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+}
+
+bool CServerUDP::disconnection(std::string alias) {
+    // TODO
+    return true;
 }
 
 CServerUDP::MessageType CServerUDP::read_msg(int u_sockfd, bool &is_new) {
@@ -175,6 +199,7 @@ CServerUDP::MessageType CServerUDP::read_msg(int u_sockfd, bool &is_new) {
     catch(const std::exception &e) {
         LOGERR("%d: %s", errno, strerror(errno));
         msg->destroy();
+        throw e;
     }
     return msg;
 }
@@ -198,8 +223,7 @@ bool CServerUDP::write_msg(std::string alias, MessageType msg) {
             p_cliaddr = mAddr.get<struct sockaddr_in>(alias).get();
         }
         else {
-            // TODO insert new-address to mapper.
-            LOGERR("Not Support yet. insert new address.");
+            LOGERR("E_UDP_UNKNOWN_ALIAS in provider-pkg");
         }
     }
     else {  // alias is NULL.
@@ -277,4 +301,34 @@ bool CServerUDP::update_alias_mapper(AliasType& alias_list) {
     }
 
     return res;
+}
+
+void CServerUDP::run_receiver(std::string alias, bool *is_continue) {
+    LOGI("Called with alias(%s)", alias.c_str());
+
+    try {
+        assert( hHprotocol->handle_initialization(get_provider_type(), true) == true );
+        
+        // Start receiver
+        LOGD("Start MSG-receiver.");
+        while(*is_continue) {
+            bool is_new = false;
+            MessageType msg_raw;
+
+            // check received message 
+            msg_raw = read_msg(0, is_new);     // get raw message. (Blocking)
+            if( is_new == true ) {
+                // trig connected call-back to app.
+                assert( hHprotocol->handle_connection(msg_raw->get_source_alias(), true) == true );
+            }
+            // trig handling of protocol & Call-back to app
+            assert( hHprotocol->handle_protocol_chain(msg_raw) == true );
+        }
+    }
+    catch(const std::exception &e) {
+        LOGERR("%s", e.what());
+        hHprotocol->handle_unintended_quit(e);
+    }
+
+    *is_continue = false;
 }

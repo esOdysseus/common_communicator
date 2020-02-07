@@ -37,7 +37,7 @@ limitations under the License.
 - esOdysseus (email: es.odysseus@gmail.com)
 
 ### Latest Release
-- version 0.1.3 (Date: 2020-02-04)
+- version 0.1.4 (Date: 2020-02-07)
 ---
 ## Installation
 > Please refer following commands.
@@ -64,16 +64,28 @@ $ bash ./build.sh -m release -t example -arch x86
    ```
    - Common-API is described in "IAppInf.h file".
 
-### Example
+### Example (UDP)
 - You can test the communicator SDK library by using following guide-line.
    > If you want to make a application with common-API, then reference following guide-line.
    ```shell
    $ cd ${work}
-   $ bash ./build.sh release example
-   $ ./release/bin/example_common_api ${IP} ${Port} ${Path-of-desp-Protocol.json} ${Path-of-desp-Alias.json}
-   $ ./release/bin/sample_client ${Path-of-desp-Protocol.json} ${Path-of-desp-Alias.json}
+   $ bash ./build.sh -m release -t example -arch x86
+   $ ./release/bin/sample_udp_server ${IP} ${Port} ${Path-of-desp-Protocol.json} ${Path-of-desp-Alias.json} &
+   $ ./release/bin/sample_udp_client ${Path-of-desp-Protocol.json} ${Path-of-desp-Alias.json}
    ```
    - Attention : You have to set "LD_LIBRARY_PATH" with "${work}/release/lib".
+
+### Example (TCP)
+- You can test the communicator SDK library by using following guide-line.
+   > If you want to make a application with common-API, then reference following guide-line.
+   ```shell
+   $ cd ${work}
+   $ bash ./build.sh -m release -t example -arch x86
+   $ ./release/bin/sample_tcp_server ${IP} ${Port} ${Path-of-desp-Protocol.json} ${Path-of-desp-Alias.json} &
+   $ ./release/bin/sample_tcp_client ${Path-of-desp-Protocol.json} ${Path-of-desp-Alias.json}
+   ```
+   - Attention : You have to set "LD_LIBRARY_PATH" with "${work}/release/lib".
+
 ---
 ## History
 Date | Commit-ID | Version | Description
@@ -88,10 +100,11 @@ Date | Commit-ID | Version | Description
 `2020-02-02` | `7d763ab057b0532388a787f7ffd5edd8c9995cb9` | Ver 0.1.3 | Add Converter that convert alias-name to essential-address.
 `2020-02-03` | `be28532ec0b07dfc337f0b9785216d22db5c6552` | Ver 0.1.3 | Add CConfigAliases class that load desp-alias.json file.
 `2020-02-04` | `c9893217d54b6be28ec6f2f029bacf1c9e6464a9` | Ver 0.1.3 | 1. Support Client of UDP.<br> 2. Fix bug of _flag_op_ in CPayload class.
+`2020-02-07` | `` | Ver 0.1.4 | 1. Support Client of TCP.<br> 2. Support Server of TCP.<br> 3. Support Server of UDP.
 
 ### TBD-list
-- Support Client.
 - Build Routing-Manager.
 - Support vSOME/IP.
 - Support IoTivity of OCF.
+- Support UDS for sharing state of communicator.
 - Common-API will be improved through review-processing & consideration variety of situation.

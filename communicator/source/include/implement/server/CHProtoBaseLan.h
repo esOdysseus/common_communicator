@@ -13,15 +13,10 @@ public:
     using AddressType = CRawMessage::LanAddrType;
 
 public:
-    CHProtoBaseLan(std::string client_addr, int socket_handler, 
-                   ServerType &&server, AppCallerType &app, 
+    CHProtoBaseLan(ServerType &&server, AppCallerType &app, 
                    std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager);
 
     ~CHProtoBaseLan(void);
-
-    void run(void) override;
-    
-    bool destroy(void) override;
 
 protected:
     bool set_app_call_back(void) override;

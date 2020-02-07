@@ -13,9 +13,16 @@ private:
     using AddressMapType = std::map<std::string /*alias*/, CSource /*essential-addr*/>;
 
 public:
+    using iterator = AddressMapType::iterator;
+
+public:
     CAliasAddr(void);
 
     ~CAliasAddr(void);
+
+    iterator begin(void) { return map_addr.begin(); };
+
+    iterator end(void) { return map_addr.end(); };
 
     bool is_there(std::string alias);
 

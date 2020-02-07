@@ -26,26 +26,20 @@ public:
 
 public:
 
-    IHProtocolInf(std::string client_addr,
-                  int socket_handler,
-                  AppCallerType &app,
+    IHProtocolInf(AppCallerType &app,
                   std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager);
 
     ~IHProtocolInf(void);
 
-    virtual void run(void) = 0;
-    
-    virtual bool destroy(void) = 0;
+    bool handle_initialization(enum_c::ProviderType pvd_type, bool flag);
 
-    bool get_running_flag(void);
+    bool handle_connection(std::string alias, bool flag);
 
-    std::string get_thread_id(void);
+    bool handle_protocol_chain(RawMsgType msg_raw);
 
-    std::string get_client_id(void);
+    bool handle_unintended_quit(const std::exception &e);
 
 protected:
-    void set_running_flag(bool value);
-
     virtual bool set_app_call_back(void) = 0;
 
     virtual bool write_payload(std::string alias, std::shared_ptr<payload::CPayload>&& payload) = 0;
@@ -58,20 +52,11 @@ protected:
 
     bool destroy_proto_chain(ProtocolType &chain);
 
-    int get_sockfd(void);
-
 private:
     AppCallerType s_app;
 
     std::shared_ptr<cf_proto::CConfigProtocols> s_proto_config;
 
-    int h_socket;
-
-    std::string t_id;
-
-    std::string client_id;
-
-    bool f_is_run;
 };
 
 #endif // I_HANDLER_PROTOCOL_INTERFACE_H_

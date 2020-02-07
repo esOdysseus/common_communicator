@@ -66,9 +66,6 @@ bool CAliasAddr::insert(std::string alias,
             assert(src != NULL);
 
             src->init(address, alias.c_str(), pvd_type);
-            // map_addr[alias] = std::make_shared<struct sockaddr_in>();
-            // struct sockaddr_in* p_addr = map_addr[alias].get();
-            // memcpy(p_addr, &address, sizeof(address));
             is_new = true;
         }
         result = true;

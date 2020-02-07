@@ -1,4 +1,4 @@
-TARGET = example_sample_client
+TARGET = sample_tcp_client
 TEMPLATE = app
 QT -= gui core
 

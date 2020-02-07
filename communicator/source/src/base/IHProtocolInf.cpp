@@ -9,52 +9,20 @@
 /**********************************
  * Public Function definition.
  */
-IHProtocolInf::IHProtocolInf(std::string client_addr, 
-                             int socket_handler, 
-                             AppCallerType &app,
+IHProtocolInf::IHProtocolInf(AppCallerType &app,
                              std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
-    assert(client_addr.empty()==false);
-
-    this->t_id = client_addr;
-    this->h_socket = socket_handler;
     this->s_app = app;
     this->s_proto_config = proto_manager;
-    this->client_id = client_addr;
-    
-    set_running_flag(false);
 }
 
 IHProtocolInf::~IHProtocolInf(void) {
-    if (h_socket != 0) {
-        close(h_socket);
-    }
-    t_id = "destroyed";
-    h_socket = 0;
-    set_running_flag(false);
     s_app.reset();
     s_proto_config.reset();
-    client_id = "";
-}
-
-bool IHProtocolInf::get_running_flag(void) {
-    return f_is_run;
-}
-
-std::string IHProtocolInf::get_thread_id(void) {
-    return t_id;
-}
-
-std::string IHProtocolInf::get_client_id(void) {
-    return client_id;
 }
 
 /***********************************
  * Protected Function definition.
  */ 
-void IHProtocolInf::set_running_flag(bool value) {
-    f_is_run = value;
-}
-
 IHProtocolInf::SegmentsType IHProtocolInf::encapsulation(IHProtocolInf::ProtocolType& protocol, 
                                                          enum_c::ProviderType provider_type) {
     /****
@@ -102,10 +70,73 @@ IHProtocolInf::AppCallerType& IHProtocolInf::get_app_instance(void) {
     return s_app;
 }
 
-bool IHProtocolInf::destroy_proto_chain(ProtocolType &chain) {
-    return s_proto_config->destroy_protocols_chain(chain);
+bool IHProtocolInf::handle_initialization(enum_c::ProviderType pvd_type, bool flag) {
+    try {
+        AppCallerType& app = get_app_instance();
+        assert(app.get() != NULL);
+
+        app->get_cb_handlers().cb_initialization_handle(pvd_type, flag);
+        return true;
+    }
+    catch (const std::exception &e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+    return false;
 }
 
-int IHProtocolInf::get_sockfd(void) {
-    return h_socket;
+bool IHProtocolInf::handle_connection(std::string alias, bool flag) {
+    try {
+        AppCallerType& app = get_app_instance();
+        assert(app.get() != NULL);
+
+        app->get_cb_handlers().cb_connection_handle( alias, flag );
+        return true;
+    }
+    catch (const std::exception &e) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+    return false;
+}
+
+bool IHProtocolInf::handle_protocol_chain(RawMsgType msg_raw) {
+    try {
+        AppCallerType& app = get_app_instance();
+        assert(app.get() != NULL);
+
+        // message parsing with regard to PROTOCOL.
+        ProtocolType p_msg = decapsulation(msg_raw);
+        if(p_msg->is_empty() == false) {
+            app->get_cb_handlers().cb_message_payload_handle(msg_raw->get_source_alias(),
+                                                            p_msg);  // trig app-function.
+        }
+        destroy_proto_chain(p_msg);
+        return true;
+    }
+    catch (const std::exception &e) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+
+    return false;
+}
+
+bool IHProtocolInf::handle_unintended_quit(const std::exception &e) {
+    try {
+        AppCallerType& app = get_app_instance();
+        assert(app.get() != NULL);
+
+        app->get_cb_handlers().cb_quit_handle(e);
+        return true;
+    }
+    catch (const std::exception &e) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+    return false;
+}
+
+bool IHProtocolInf::destroy_proto_chain(ProtocolType &chain) {
+    return s_proto_config->destroy_protocols_chain(chain);
 }

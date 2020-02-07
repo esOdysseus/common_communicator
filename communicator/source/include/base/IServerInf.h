@@ -30,6 +30,12 @@ public:
     using ThreadType = std::shared_ptr<std::thread>;
     using MessageType = dtype_b::MsgType;
     using AliasType = std::list<std::shared_ptr<cf_alias::IAlias>>;
+    using FPreceiverType = std::function<void(std::string alias, bool *is_continue)>;
+
+private:
+    class CLooper;
+
+    using LoopPoolType = std::unordered_map<std::string /* alias */, std::shared_ptr<CLooper> >;
 
 public:
     IServerInf(AliasType& alias_list);
@@ -38,9 +44,13 @@ public:
 
     virtual bool init(std::string id, unsigned int port=0, const char* ip=NULL) = 0;
 
-    virtual bool start(void) = 0;
+    virtual bool start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) = 0;
 
-    virtual bool accept(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) = 0;
+    virtual bool accept(void) = 0;
+
+    virtual int make_connection(std::string alias) = 0;
+
+    virtual bool disconnection(std::string alias) = 0;
 
     virtual MessageType read_msg(int u_sockfd, bool &is_new) = 0;
 
@@ -59,11 +69,17 @@ protected:
 
     virtual bool update_alias_mapper(AliasType& alias_list) = 0;
 
+    virtual void run_receiver(std::string alias, bool *is_continue) = 0;
+
     void clear(void);
 
-    bool thread_create(std::string& client_addr, int socketfd, AppCallerType& app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager);
+    bool create_hprotocol(AppCallerType& app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager);
 
-    bool thread_this_migrate(std::string& client_addr, int socketfd, AppCallerType& app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager);
+    bool thread_create(std::string& client_id, FPreceiverType &&func);
+
+    bool thread_this_migrate(std::string& client_id, FPreceiverType &&func, bool *is_continue);
+
+    bool thread_destroy(std::string client_id);
 
     void set_id(std::string& value) { id = value; }
 
@@ -72,23 +88,21 @@ protected:
     std::string make_client_id(const int addr_type, const struct sockaddr_in& cliaddr);
 
 protected:
-    class CLooper;
-
     bool started;
 
     bool inited;
 
     int sockfd;   // start server to listen for clients to send them ids
 
-    struct sockaddr_in servaddr;
+    struct sockaddr_in servaddr;    // server-side address
 
     unsigned int listeningPort;
 
     std::mutex mtx_write, mtx_read;
 
-    std::unordered_map<std::string /* ClientName */, std::shared_ptr<CLooper> > mLooperPool;
+    CAliasAddr mAddr;   // alias : essential-address
 
-    CAliasAddr mAddr;
+    HProtocolType hHprotocol;   // handle of Protocol-Handler
 
     static const unsigned int read_bufsize = 2048;
 
@@ -96,6 +110,8 @@ protected:
 
 private:
     std::string id;
+
+    LoopPoolType mLooperPool;
 
     enum_c::ProviderType provider_type;
 

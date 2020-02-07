@@ -1,4 +1,4 @@
-TARGET = example_common_api
+TARGET = sample_udp_server
 TEMPLATE = app
 QT -= gui core
 

@@ -14,6 +14,8 @@
 #include <CRawMessage.h>
 #include <server/CServerTCP.h>
 
+using namespace std::placeholders;
+
 // ***** Socket Type ****
 // SOCK_STREAM :    TCP socket
 // SOCK_DGRAM :     UDP socket
@@ -32,12 +34,49 @@
 #define PROTO_TYPE      PF_INET
 #define ADDR_TYPE       AF_INET
 
+typedef enum E_ERROR {
+    E_TCP_NO_ERROR = 0,
+    E_TCP_UNKNOWN_ALIAS = 1,
+    E_TCP_HAVE_NOT_ALIAS = 2,
+    E_TCP_NOT_SUPPORT_CLOUD_CONNECTION = 3,
+    E_TCP_SESSION_CLOSED = 4,
+    E_TCP_CREATE_THREAD_FAILED = 5,
+    E_TCP_ACCEPT_FAILED = 6,
+    E_TCP_CONNECT_FAILED = 7,
+}E_ERROR;
+
+static const char* exception_switch(E_ERROR err_num) {
+    switch(err_num) {
+    case E_ERROR::E_TCP_NO_ERROR:
+        return "E_TCP_NO_ERROR in provider pkg.";
+    case E_ERROR::E_TCP_UNKNOWN_ALIAS:
+        return "E_TCP_UNKNOWN_ALIAS in provider pkg.";
+    case E_ERROR::E_TCP_HAVE_NOT_ALIAS:
+        return "E_TCP_HAVE_NOT_ALIAS in provider pkg.";
+    case E_ERROR::E_TCP_NOT_SUPPORT_CLOUD_CONNECTION:
+        return "E_TCP_NOT_SUPPORT_CLOUD_CONNECTION in provider pkg.";
+    case E_ERROR::E_TCP_SESSION_CLOSED:
+        return "E_TCP_SESSION_CLOSED in provider pkg.";
+    case E_ERROR::E_TCP_CREATE_THREAD_FAILED:
+        return "E_TCP_CREATE_THREAD_FAILED in provider pkg.";
+    case E_ERROR::E_TCP_ACCEPT_FAILED:
+        return "E_TCP_ACCEPT_FAILED in provider pkg.";
+    case E_ERROR::E_TCP_CONNECT_FAILED:
+        return "E_TCP_CONNECT_FAILED in provider pkg.";
+    default:
+        return "\'not support error_type\' in provider pkg.";
+    }
+}
+
+#include <CException.h>
+
 
 CServerTCP::CServerTCP(AliasType& alias_list)
 : IServerInf(alias_list) {
     try{
         set_provider_type(enum_c::ProviderType::E_PVDT_TRANS_TCP);
         assert( update_alias_mapper(alias_list) == true );
+        m_alias2socket.clear();
     }
     catch (const std::exception &e) {
         LOGERR("%s", e.what());
@@ -46,12 +85,19 @@ CServerTCP::CServerTCP(AliasType& alias_list)
 }
 
 CServerTCP::~CServerTCP(void) {
+    CAliasAddr::iterator itor;
     set_provider_type(enum_c::ProviderType::E_PVDT_NOT_DEFINE);
+    
+    for( itor = m_alias2socket.begin(); itor != m_alias2socket.end(); itor++ ) {
+        int u_sockfd = *(m_alias2socket.get<int>(itor->first).get());
+        thread_destroy(itor->first);
+        usleep(10000);      // for wait thread delete-complete.
+        close(u_sockfd);
+    }
+    m_alias2socket.clear();
 }
 
 bool CServerTCP::init(std::string id, unsigned int port, const char* ip) {
-    int yes = 1;
-
     set_id(id);
 
     if (inited == true) {
@@ -65,18 +111,8 @@ bool CServerTCP::init(std::string id, unsigned int port, const char* ip) {
         return false;
     }
 
-    // make TCP-Socket
-    if( (sockfd = socket(PROTO_TYPE, SOCKET_TYPE, 0)) < 0 ) {
-        LOGERR("%d: %s", errno, strerror(errno));
-        return false;
-    }
-    if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1) {
-        LOGERR("%d: %s", errno, strerror(errno));
-        return false;
-    }
-
-    // activate Keep-Alive.
-    enable_keepalive(sockfd);
+    // make socket
+    assert( (sockfd = make_socket(1)) > 0 );
 
     // make serveraddr struct
     listeningPort = port;
@@ -100,7 +136,7 @@ bool CServerTCP::init(std::string id, unsigned int port, const char* ip) {
     return inited;
 }
 
-bool CServerTCP::start(void) {
+bool CServerTCP::start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
     
     if (inited != true) {
         LOGERR("We need to init ServerTCP. Please check it.");
@@ -120,11 +156,15 @@ bool CServerTCP::start(void) {
         return false;
     }
 
+    // Create instance of Protocol-Handler.
+    assert( create_hprotocol(app, proto_manager) == true );
+    assert( hHprotocol->handle_initialization(get_provider_type(), true) == true );
+
     started = true;
     return started;
 }
 
-bool CServerTCP::accept(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
+bool CServerTCP::accept(void) {
     if(started) {
         bool is_new = false;
         std::string client_id;
@@ -132,63 +172,140 @@ bool CServerTCP::accept(AppCallerType &app, std::shared_ptr<cf_proto::CConfigPro
         socklen_t clilen = sizeof(cliaddr);
         std::shared_ptr<int> address = std::make_shared<int>();
 
-        // start accept-blocking.
-        int newsockfd = ::accept(sockfd, (struct sockaddr*) &cliaddr, &clilen); // Blocking Function.
-        if(newsockfd < 0) {
-            LOGERR("%d: %s", errno, strerror(errno));
-            return false;
+        try{
+            // start accept-blocking.
+            int newsockfd = ::accept(sockfd, (struct sockaddr*) &cliaddr, &clilen); // Blocking Function.
+            if(newsockfd < 0) {
+                LOGERR("%d: %s", errno, strerror(errno));
+                throw CException(E_ERROR::E_TCP_ACCEPT_FAILED);
+            }
+
+            // Get client-ID
+            client_id = make_client_id(ADDR_TYPE, cliaddr);
+            *(address.get()) = newsockfd;
+            assert( m_alias2socket.insert(client_id, address, get_provider_type(), is_new) == true );
+
+            if ( client_id.empty() == false ) {
+                // create thread with PROTOCOL for new-sesseion by new-user.
+                if (thread_create(client_id, std::bind(&CServerTCP::run_receiver, this, _1, _2)) == false) {
+                    LOGERR("%d: Thread Create failed: %s", errno, strerror(errno));
+                    assert( disconnection(client_id) == true);
+                    throw CException(E_ERROR::E_TCP_CREATE_THREAD_FAILED);
+                }
+            }
+
+            return true;
+        }
+        catch( const std::exception &e ) {
+            LOGERR("%s", e.what());
+        }
+    }
+
+    return false;
+}
+
+int CServerTCP::make_connection(std::string alias) {
+    bool is_new = false;
+    int new_sockfd = -1;
+    struct sockaddr_in *destaddr = NULL;
+    std::shared_ptr<int> address = std::make_shared<int>();
+
+    try{
+        if ( alias.find("http://") != std::string::npos ||
+             alias.find("https://") != std::string::npos ) {
+            // TODO: try connect to cloud base on TCP.
+            // destaddr = cloud_connection(alias);
+            throw CException(E_ERROR::E_TCP_NOT_SUPPORT_CLOUD_CONNECTION);
+        }
+        else if( mAddr.is_there(alias) == true ) {
+            destaddr = mAddr.get<struct sockaddr_in>(alias).get();
+        }
+        else {
+            throw CException(E_ERROR::E_TCP_UNKNOWN_ALIAS);
         }
 
-        // Get client-ID
-        client_id = make_client_id(ADDR_TYPE, cliaddr);
-        assert( insert_client(newsockfd, client_id) == true );
-        *(address.get()) = newsockfd;
-        assert( mAddr.insert(client_id, address, get_provider_type(), is_new) == true );
+        assert( (new_sockfd = make_socket(1)) > 0 );
+        if( connect(new_sockfd, (struct sockaddr *)destaddr, sizeof(*destaddr)) >= 0 ) {
+            LOGD("Connection to DEST.(%s) is success.", alias.c_str());
 
-        if ( client_id.empty() == false ) {
+            // register new_sockfd to m_alias2socket.
+            *(address.get()) = new_sockfd;
+            assert( m_alias2socket.insert(alias, address, get_provider_type(), is_new) == true );
+            assert( is_new == true );
+            
             // create thread with PROTOCOL for new-sesseion by new-user.
-            if (thread_create(client_id, newsockfd, app, proto_manager) == false) {
+            if (thread_create(alias, std::bind(&CServerTCP::run_receiver, this, _1, _2)) == false) {
                 LOGERR("%d: Thread Create failed: %s", errno, strerror(errno));
-                return false;
+                assert( disconnection(alias) == true);
+                throw CException(E_ERROR::E_TCP_CREATE_THREAD_FAILED);
             }
         }
+        else {
+            LOGW("Connection to DEST.(%s) is failed.", alias.c_str());
+            close(new_sockfd);
+            throw CException(E_ERROR::E_TCP_CONNECT_FAILED);
+        }
+    }
+    catch (const std::exception &e) {
+        LOGERR("%s", e.what());
+        new_sockfd = -1;
+        throw e;
+    }
 
+    return new_sockfd;
+}
+
+bool CServerTCP::disconnection(std::string alias) {
+    int u_sockfd = -1;
+
+    if ( m_alias2socket.is_there(alias) == false) {
+        LOGW("alias is not exist in m_alias2socket mapper.");
+        return false;
+    }
+
+    try {
+        u_sockfd = *(m_alias2socket.get<int>(alias).get());
+
+        // TODO need auto-lock
+        close( u_sockfd );
+        m_alias2socket.remove(alias);
         return true;
+    }
+    catch( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        throw e;
     }
 
     return false;
 }
 
 CServerTCP::MessageType CServerTCP::read_msg(int u_sockfd, bool &is_new) {
-    size_t msg_size = read_bufsize;
-    
-    if (u_sockfd == 0) {
-        u_sockfd = this->sockfd;
-    }
-    assert(u_sockfd != 0 && read_buf != NULL && read_bufsize > 0);
-    assert(isthere_client_id(u_sockfd) == true);
-
-    std::shared_ptr<int> socket = std::make_shared<int>();
+    ssize_t msg_size = read_bufsize;
+    assert(u_sockfd > 0 && read_buf != NULL && read_bufsize > 0);
     MessageType msg = std::make_shared<CRawMessage>();
-    *(socket.get()) = u_sockfd;
+    is_new = false;
 
     try {
         while(msg_size == read_bufsize) {
             // return value description
             // 0 : End of Field.
-            // -1 : Error.
+            // -1 : Error. (session is Closed by client)
             // > 0 : The number of received message.
             msg_size = read(u_sockfd, read_buf, read_bufsize);    // Blocking Function.
+            if(msg_size < 0) {
+                LOGW("Session is closed by Client. MSG-Receiving is failed.");
+                throw CException(E_ERROR::E_TCP_SESSION_CLOSED);
+            }
             assert( msg_size >= 0 && msg_size <= read_bufsize);
             if( msg_size > 0 ){
                 assert(msg->append_msg(read_buf, msg_size) == true);
             }
         }
-        msg->set_source(socket, get_client_id(u_sockfd).c_str());
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
         msg->destroy();
+        throw e;
     }
     return msg;
 }
@@ -197,41 +314,29 @@ bool CServerTCP::write_msg(std::string alias, MessageType msg) {
     assert( msg.get() != NULL );
     using RawDataType = CRawMessage::MsgDataType;
 
-    int u_sockfd = 0;
-    size_t msg_size = msg->get_msg_size();
+    bool res = true;
+    int u_sockfd = -1;
+    ssize_t msg_size = msg->get_msg_size();
     RawDataType* buffer = (RawDataType*)msg->get_msg_read_only();
 
     // alias is prepered. but, if alias is null, then we will use alias registed by msg.
-    if ( alias.empty() == false ) {
-        if ( mAddr.is_there(alias) == true ) {
-            u_sockfd = *(mAddr.get<int>(alias).get());
-        }
-        else {
-            // TODO insert new-address to mapper.
-            LOGERR("Not Support yet. insert new address.");
-        }
-    }
-    else {  // alias is NULL.
-        if (msg->get_source_alias().empty() == false) {
-            u_sockfd = msg->get_source_sock_read_only(get_provider_type());
-        }
-        else {
-            LOGERR("alias is NULL & msg doesn't have alias. Please check it.");
-        }
-    }
-
-    assert(u_sockfd != 0 && buffer != NULL && msg_size > 0);
+    u_sockfd = get_socket(alias, msg);
+    assert(u_sockfd > 0 && buffer != NULL && msg_size > 0);
 
     try {
-        size_t written_size = 0;
+        ssize_t written_size = 0;
         std::lock_guard<std::mutex> guard(mtx_write);
 
         while( msg_size > 0 ) {
             // return value description
-            // -1 : Error.
+            // -1 : Error. (session is Closed by client)
             // > 0 : The number of written message.
             written_size=write(u_sockfd, (const void*)buffer, msg_size);
-            assert(written_size > 0);
+            if(written_size < 0) {
+                LOGW("Session is closed by Client. MSG-Sending is failed.");
+                res = false;
+                break;
+            }
 
             msg_size -= written_size;
             buffer = buffer + written_size;
@@ -240,11 +345,14 @@ bool CServerTCP::write_msg(std::string alias, MessageType msg) {
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
-        return false;
+        res = false;
     }
-    return true;
+    return res;
 }
 
+/************************************
+ * Definition of Protected Function.
+ */
 int CServerTCP::enable_keepalive(int sock) {
     int yes = 1;
 
@@ -277,61 +385,124 @@ int CServerTCP::enable_keepalive(int sock) {
     return 0;
 }
 
-
-
-bool CServerTCP::isthere_client_id(const int socket_num) {
-    return ( m_socket_alias.find(socket_num) != m_socket_alias.end() ? true : false );
-}
-
-std::string CServerTCP::get_client_id(const int socket_num) {
-    std::string client_id;
-    
-    // Find Address correspond with Client-ID.
-    if ( m_socket_alias.find(socket_num) != m_socket_alias.end() ) {
-        client_id = m_socket_alias[socket_num];
-    }
-    return client_id;
-}
-
-bool CServerTCP::insert_client(const int socket_num, std::string alias) {
-    bool result = false;
-
-    try {
-        if( socket_num == NULL || alias.empty() == true ) {
-            return result;
-        }
-
-        if ( m_socket_alias.find(socket_num) == m_socket_alias.end() ) {
-            m_socket_alias[socket_num] = alias;
-        }
-        result = true;
-    }
-    catch(const std::exception &e) {
-        LOGERR("%s", e.what());
-    }
-    return result;
-}
-
-void CServerTCP::remove_client(const int socket_num) {
-    SocketMapType::iterator itor = m_socket_alias.find(socket_num);
-    if (itor != m_socket_alias.end()) {
-        m_socket_alias.erase(itor);
-    }
-}
-
-void CServerTCP::clear_clients(void) {
-    m_socket_alias.clear();
-}
-
 bool CServerTCP::update_alias_mapper(AliasType& alias_list) {
+    bool res = true;
 
     try {
-        // TODO
+        AliasType::iterator itor;
+
+        for ( itor = alias_list.begin(); itor != alias_list.end(); itor++ ) {
+            bool is_new = false;
+            std::shared_ptr<cf_alias::CAliasTrans> alias = std::static_pointer_cast<cf_alias::CAliasTrans>(*itor);
+            std::shared_ptr<struct sockaddr_in> destaddr = std::make_shared<struct sockaddr_in>();
+            assert( alias->pvd_type == get_provider_type());
+
+            // make sockaddr_in variables.
+            destaddr->sin_family = ADDR_TYPE;
+            destaddr->sin_addr.s_addr = inet_addr(alias->ip.c_str());
+            destaddr->sin_port = htons(alias->port_num);
+            // set all bits of the padding field to 0
+            memset(destaddr->sin_zero, '\0', sizeof(destaddr->sin_zero));
+
+            // append pair(alias & address) to mapper.
+            mAddr.insert(alias->alias, destaddr, alias->pvd_type, is_new);
+        }
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
+        res = false;
         throw e;
     }
 
-    return true;
+    return res;
+}
+
+void CServerTCP::run_receiver(std::string alias, bool *is_continue) {
+    LOGI("Called with alias(%s)", alias.c_str());
+    int socket_fd = -1;
+    bool is_new = false;
+    MessageType msg_raw;
+    std::shared_ptr<int> socket = std::make_shared<int>();
+    
+    try {
+        assert(is_continue != NULL && *is_continue == true);
+        assert( m_alias2socket.is_there(alias) == true );
+        assert( (socket_fd = *(m_alias2socket.get<int>(alias).get())) > 0 );
+        *(socket.get()) = socket_fd;
+
+        // trig connected call-back to app.
+        assert( hHprotocol->handle_connection(alias, true) == true );
+
+        // Start receiver
+        LOGD("Start MSG-receiver.");
+        while(*is_continue) {
+            is_new = false;
+            msg_raw.reset();
+
+            // check received message 
+            msg_raw = read_msg(socket_fd, is_new);     // get raw message. (Blocking)
+            msg_raw->set_source(socket, alias.c_str());
+            // trig handling of protocol & Call-back to app
+            assert( hHprotocol->handle_protocol_chain(msg_raw) == true );
+        }
+    }
+    catch(const std::exception &e) {
+        LOGERR("%s", e.what());
+        hHprotocol->handle_unintended_quit(e);
+    }
+
+    *is_continue = false;
+}
+
+/******************************************
+ * Definition of Private Function.
+ */ 
+int CServerTCP::make_socket(int opt_flag) {
+    int new_sockfd = -1;
+
+    // make TCP-Socket
+    if( (new_sockfd = socket(PROTO_TYPE, SOCKET_TYPE, 0)) < 0 ) {
+        LOGERR("%d: %s", errno, strerror(errno));
+        return false;
+    }
+    if(setsockopt(new_sockfd, SOL_SOCKET, SO_REUSEADDR, &opt_flag, sizeof(opt_flag)) == -1) {
+        LOGERR("%d: %s", errno, strerror(errno));
+        return false;
+    }
+
+    // activate Keep-Alive.
+    enable_keepalive(new_sockfd);
+
+    return new_sockfd;
+}
+
+int CServerTCP::get_socket(std::string alias, MessageType &msg) {
+    int u_sockfd = -1;
+
+    try {
+        // alias is prepered. but, if alias is null, then we will use alias registed by msg.
+        if ( alias.empty() == false ) {
+            if ( m_alias2socket.is_there(alias) == true ) {
+                u_sockfd = *(m_alias2socket.get<int>(alias).get());
+            }
+            else {
+                assert( (u_sockfd=make_connection(alias)) > 0 );
+            }
+        }
+        else {  // alias is NULL.
+            if (msg->get_source_alias().empty() == false) {
+                u_sockfd = msg->get_source_sock_read_only(get_provider_type());
+            }
+            else {
+                throw CException(E_ERROR::E_TCP_HAVE_NOT_ALIAS);
+            }
+        }
+    }
+    catch (const std::exception &e) {
+        LOGERR("%s", e.what());
+        u_sockfd = -1;
+        throw e;
+    }
+
+    return u_sockfd;
 }
