@@ -100,7 +100,7 @@ Date | Commit-ID | Version | Description
 `2020-02-02` | `7d763ab057b0532388a787f7ffd5edd8c9995cb9` | Ver 0.1.3 | Add Converter that convert alias-name to essential-address.
 `2020-02-03` | `be28532ec0b07dfc337f0b9785216d22db5c6552` | Ver 0.1.3 | Add CConfigAliases class that load desp-alias.json file.
 `2020-02-04` | `c9893217d54b6be28ec6f2f029bacf1c9e6464a9` | Ver 0.1.3 | 1. Support Client of UDP.<br> 2. Fix bug of _flag_op_ in CPayload class.
-`2020-02-07` | `` | Ver 0.1.4 | 1. Support Client of TCP.<br> 2. Support Server of TCP.<br> 3. Support Server of UDP.
+`2020-02-07` | `0cc7bf9e6d5427d2d5d5add075d90cfea644ab62` | Ver 0.1.4 | 1. Support Client of TCP.<br> 2. Support Server of TCP.<br> 3. Support Server of UDP.
 
 ### TBD-list
 - Build Routing-Manager.
