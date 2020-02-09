@@ -9,11 +9,12 @@
 Feature-name | Support | Category | Description
 :---|:---:|:---:|:---
 `UDP` | O | `Server/Client` | **[_Transaction_]** Fundamental UDP server/client.
-`TCP` | O | `Server` | **[_Transaction_]** Fundamental TCP server.
+`TCP` | O | `Server/Client` | **[_Transaction_]** Fundamental TCP server/client.
 `CPBigEndian` | O | `Protocol` | Sample protocol for Big-Endian type.
 `CPLittleEndian` | O | `Protocol` | Sample protocol for Little-Endian type.
 `Protocol-Chain` | O | `Protocol` | Chaining for Customized-Protocol cascading.
 `PAL` | O | `Protocol` | Protocols Abstraction Layer.
+`Alias` | O | `Addressing` | Friendly, naming with regard to address on TCP/UDP/vSomeIP/IoTivity.
 `Common-API` | X | `API` | **_Restrict_** API about only server for transaction-oriented communication.
 
 ## License

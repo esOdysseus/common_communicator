@@ -28,6 +28,13 @@ template std::shared_ptr<double> CMjson::get<double>(std::string &key);
 template std::shared_ptr<float> CMjson::get<float>(std::string &key);
 template std::shared_ptr<CMjson> CMjson::get<CMjson>(std::string &key);
 
+template bool CMjson::update<int>(std::string &key, int value);
+template bool CMjson::update<long>(std::string &key, long value);
+template bool CMjson::update<bool>(std::string &key, bool value);
+template bool CMjson::update<double>(std::string &key, double value);
+template bool CMjson::update<float>(std::string &key, float value);
+
+
 static const char* exception_switch(E_ERROR err_num) {
     switch(err_num) {
     case E_ERROR::E_NO_ERROR:
@@ -52,6 +59,7 @@ static const char* exception_switch(E_ERROR err_num) {
  */
 CMjson::CMjson(void) : is_parsed(false) {
     object.reset();
+    object = std::make_shared<Object_Type>(std::make_shared<Value_Type>(ValueDef_Flag)->GetObject());
 }
 
 CMjson::CMjson(Object_Type value) : is_parsed(false) {
@@ -93,6 +101,37 @@ bool CMjson::parse(std::string input_data, const E_PARSE arg_type) {
         throw e;
     }
     return is_parsed;
+}
+
+bool CMjson::parse(const char* input_data, const ssize_t input_size) {
+    assert(input_data != NULL);
+    assert(input_size > 0);
+    assert(strlen(input_data) == input_size);
+
+    try {
+        is_parsed = parse(input_data);
+    }
+    catch( const std::exception &e) {
+        LOGERR("%", e.what());
+        throw e;
+    }
+    return is_parsed;
+}
+
+const char* CMjson::print_buf(void) {
+    try{
+        rapidjson::StringBuffer buffer;
+        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+        Value_Type temp(*object.get());     // move data of 'object' to data of 'temp'.
+
+        temp.Accept(writer);
+        return buffer.GetString();
+    }
+    catch( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+    return NULL;
 }
 
 MemberIterator CMjson::begin(void) {
@@ -185,6 +224,10 @@ void CMjson::is_array_check(std::string &key) {
     }
 }
 
+std::shared_ptr<Object_Type> CMjson::get_object(void) {
+    return object;
+}
+
 /***
  * Third-party library dependency function.
  */
@@ -192,6 +235,19 @@ void CMjson::is_array_check(std::string &key) {
 bool CMjson::parse(std::shared_ptr<CRawMessage>& msg) {
     assert( msg.get() != NULL );
     const char* msg_const = (const char*)msg->get_msg_read_only();
+
+    if( manipulator.Parse(msg_const).HasParseError() ) {
+        return false;
+    }
+    assert(manipulator.IsObject());
+    object.reset();
+    object = std::make_shared<Object_Type>(manipulator.GetObject());
+
+    return true;
+}
+
+bool CMjson::parse(const char* msg_const) {
+    assert(msg_const != NULL);
 
     if( manipulator.Parse(msg_const).HasParseError() ) {
         return false;
@@ -213,6 +269,7 @@ bool CMjson::is_array(std::string &key) {
     return (*object.get())[key.c_str()].IsArray();
 }
 
+// Definition of Get Functions.
 template <typename T>
 std::shared_ptr<std::list<std::shared_ptr<T>>> CMjson::get_array(std::string &key) {
     assert(is_there() == true);
@@ -290,6 +347,117 @@ inline MemberIterator CMjson::get_end_member(void) {
 inline std::string CMjson::get_first_member(MemberIterator itor) {
     return itor->name.GetString();
 }
+
+// Definition of Set Functions.
+std::shared_ptr<CMjson> CMjson::update(std::string &key, CMjson *value) {
+    MemberIterator target;
+    Value_Type temp(rapidjson::kObjectType);
+
+    try {
+        target = object->FindMember(key.c_str());
+
+        // If already exist 'key', then remove it.
+        if ( target != object->MemberEnd() ) {
+            object->RemoveMember(target);
+        }
+
+        // insert new object & 'key'.
+        if ( value == NULL ) {
+            object->AddMember(rapidjson::GenericStringRef<char>(key.c_str()), 
+                                temp,                           // move data from 'temp' to 'object'.
+                                manipulator.GetAllocator());
+        }
+        else {
+            object->AddMember(rapidjson::GenericStringRef<char>(key.c_str()), 
+                                *(value->get_object().get()),   // move data from 'value' to 'object'.
+                                manipulator.GetAllocator());
+        }
+
+        target = object->FindMember(key.c_str());
+        assert( target->value.IsObject() == true );
+        return std::make_shared<CMjson>(target->value.GetObject());
+    }
+    catch ( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+
+    return std::make_shared<CMjson>();
+}
+
+template <>
+bool CMjson::update<const char *>(std::string &key, const char *value) {
+    Value_Type temp;
+
+    try {
+        temp.Set(value);
+        return update_value(key, temp);
+    }
+    catch ( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+
+    return false;
+}
+
+template <>
+bool CMjson::update<std::string>(std::string &key, std::string value) {
+    Value_Type temp;
+
+    try {
+        temp.Set(value.c_str());
+        return update_value(key, temp);
+    }
+    catch ( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+
+    return false;
+}
+
+template <typename T>
+bool CMjson::update(std::string &key, T value) {
+    Value_Type temp;
+
+    try {
+        temp.Set(std::to_string(value).c_str());
+        return update_value(key, temp);
+    }
+    catch ( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+
+    return false;
+}
+
+bool CMjson::update_value(std::string &key, Value_Type &value) {
+    MemberIterator target;
+
+    try {
+        target = object->FindMember(key.c_str());
+
+        // If already exist 'key', then swap it.
+        if ( target != object->MemberEnd() ) {
+            target->value.Swap(value);
+        }
+        else {  // Otherwise, insert new 'key' with value.
+            object->AddMember(rapidjson::GenericStringRef<char>(key.c_str()), 
+                                value,                           // move data from 'value' to 'object'.
+                                manipulator.GetAllocator());
+        }
+        return true;
+    }
+    catch ( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+
+    return false;
+}
+
 
 #elif JSON_LIB_HLOHMANN
     // TODO

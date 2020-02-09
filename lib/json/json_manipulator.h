@@ -37,6 +37,10 @@ namespace json_mng
 
         bool parse(std::string input_data, const E_PARSE arg_type=E_PARSE::E_PARSE_FILE);
 
+        bool parse(const char* input_data, const ssize_t input_size);
+
+        const char* print_buf(void);
+
         MemberIterator begin(void);
 
         MemberIterator end(void);
@@ -58,6 +62,15 @@ namespace json_mng
             return get_array<T>(key);
         }
 
+        std::shared_ptr<CMjson> set_member(std::string key, CMjson *value = NULL) {
+            return update(key, value);
+        }
+
+        template <typename T=std::string>
+        bool set_member(std::string key, T value) {
+            return update<T>(key, value);
+        }
+
     private:
         std::shared_ptr<CRawMessage> file_read(std::string &json_file_path);
 
@@ -65,12 +78,17 @@ namespace json_mng
 
         bool parse(std::shared_ptr<CRawMessage>& msg);
 
+        bool parse(const char* msg_const);
+
         bool has_member(std::string &key);
 
         bool is_array(std::string &key);
 
         void is_array_check(std::string &key);
 
+        std::shared_ptr<Object_Type> get_object(void);
+
+        // get
         template <typename T=std::string>
         std::shared_ptr<std::list<std::shared_ptr<T>>> get_array(std::string &key);
 
@@ -88,6 +106,14 @@ namespace json_mng
         MemberIterator get_end_member(void);
 
         static std::string get_first_member(MemberIterator itor);
+
+        // set
+        std::shared_ptr<CMjson> update(std::string &key, CMjson *value);
+
+        template <typename T>
+        bool update(std::string &key, T value);
+
+        bool update_value(std::string &key, Value_Type &value);
 
     private:
         bool is_parsed;

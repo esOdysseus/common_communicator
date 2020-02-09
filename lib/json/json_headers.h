@@ -6,6 +6,8 @@
     #define RAPIDJSON_PARSE_DEFAULT_FLAGS kParseCommentsFlag
 
     #include <rapidjson/document.h>
+    #include <rapidjson/stringbuffer.h>
+    #include <rapidjson/writer.h>
 
     namespace json_mng
     {
@@ -19,6 +21,8 @@
         using ValueIterator = rapidjson::Value::ValueIterator;
         /** for Object-members. */
         using MemberIterator = rapidjson::Value::MemberIterator;
+
+        #define ValueDef_Flag rapidjson::kObjectType
 
         // template <typename Encoding, typename Allocator> 
         // using first = rapidjson::GenericMember<Encoding, Allocator>::GenericValue<Encoding, Allocator> name;
