@@ -220,7 +220,7 @@ bool CServerUDP::write_msg(std::string alias, MessageType msg) {
     // alias is prepered. but, if alias is null, then we will use alias registed by msg.
     if ( alias.empty() == false ) {
         if ( mAddr.is_there(alias) == true ) {
-            p_cliaddr = mAddr.get<struct sockaddr_in>(alias).get();
+            p_cliaddr = mAddr.get(alias).get();
         }
         else {
             LOGERR("E_UDP_UNKNOWN_ALIAS in provider-pkg");

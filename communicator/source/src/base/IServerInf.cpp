@@ -210,26 +210,34 @@ bool IServerInf<PROTOCOL_H>::thread_destroy(std::string client_id) {
 template <typename PROTOCOL_H> 
 std::string IServerInf<PROTOCOL_H>::make_client_id(const int addr_type, const struct sockaddr_in& cliaddr) {
     std::string client_id;
+    char client_addr[client_bufsize] = {0,};
+    int port_num = -1;
 
     // Only support TCP/UDP M2M communication.
     assert( get_provider_type() == enum_c::ProviderType::E_PVDT_TRANS_TCP || 
             get_provider_type() == enum_c::ProviderType::E_PVDT_TRANS_UDP );
 
     try{
-        char client_addr[client_bufsize] = {0,};
+        if ( mAddr.is_there(cliaddr) == true ) {
+            // Already exist address, then get alias in map.
+            client_id = mAddr.get(cliaddr);
+        }
+        else {
+            // If unknown destination, then make new alias.
+            port_num = ntohs(cliaddr.sin_port);
+            inet_ntop(addr_type, &cliaddr.sin_addr.s_addr, client_addr, sizeof(client_addr));
 
-        inet_ntop(addr_type, &cliaddr.sin_addr.s_addr, client_addr, sizeof(client_addr));
-        LOGD("Server : %s:%d  client connected.", client_addr, cliaddr.sin_port);
-
-        if (strcmp(client_addr, "0.0.0.0") != 0) {
-            client_id = client_addr;
-            client_id += ':' + std::to_string(cliaddr.sin_port);
+            if (strcmp(client_addr, "0.0.0.0") != 0) {
+                client_id = client_addr;
+                client_id += ':' + std::to_string(port_num);
+            }
         }
     }
     catch(const std::exception &e){
         LOGERR("%s", e.what());
     }
 
+    LOGD("%s is connected.", client_id.c_str());
     return client_id;
 }
 

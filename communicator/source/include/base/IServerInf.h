@@ -16,6 +16,7 @@
 #include <BaseDatatypes.h>
 #include <CConfigProtocols.h>
 #include <CAliasAddr.h>
+#include <CAliasCompare.h>
 #include <CConfigAliases.h>
 
 class IHProtocolInf;
@@ -100,7 +101,7 @@ protected:
 
     std::mutex mtx_write, mtx_read;
 
-    CAliasAddr mAddr;   // alias : essential-address
+    CAliasAddr<struct sockaddr_in,CALIAS_CMPFUNC_for_sockaddr_in> mAddr;   // alias : essential-address
 
     HProtocolType hHprotocol;   // handle of Protocol-Handler
 

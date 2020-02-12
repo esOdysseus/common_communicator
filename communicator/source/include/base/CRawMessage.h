@@ -1,8 +1,12 @@
 #ifndef C_RAW_MESSAGE_H_
 #define C_RAW_MESSAGE_H_
 
-#include <mutex>
 #include <memory>
+#if __cplusplus > 201402L
+    #include <shared_mutex> // for c++17
+#else
+    #include <shared_mutex_kes.h>   // for c++11
+#endif
 
 #include <Enum_common.h>
 #include <CSource.h>
@@ -66,7 +70,7 @@ private:
 
     CSource source;
 
-    std::mutex mtx_copy;
+    std::shared_mutex mtx_sync;
 };
 
 #endif // C_RAW_MESSAGE_H_

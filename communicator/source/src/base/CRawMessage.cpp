@@ -1,6 +1,7 @@
 #include <cassert>
 #include <algorithm>
 #include <memory>
+#include <mutex>
 
 #include <logger.h>
 #include <CRawMessage.h>
@@ -64,6 +65,7 @@ size_t CRawMessage::get_msg(void* buffer, size_t cap) {
             throw std::invalid_argument("insufficent capacity of buffer. Please, Re-try agin.");
         }
 
+        std::shared_lock<std::shared_mutex> guard(mtx_sync);
         std::copy(msg, msg+msg_size, (MsgDataType*)buffer);
         return msg_size;
     }
@@ -88,7 +90,7 @@ bool CRawMessage::set_new_msg(const void* buf, size_t msize) {
 
     try {
         {   // clean msg-memory.
-            std::lock_guard<std::mutex> guard(mtx_copy);
+            std::lock_guard<std::shared_mutex> guard(mtx_sync);
             if(msg_size > 0) {
                 assert( msg != NULL );
                 msg_size = 0;
@@ -101,7 +103,7 @@ bool CRawMessage::set_new_msg(const void* buf, size_t msize) {
         }
 
         // copy message-data to msg-buf.
-        std::lock_guard<std::mutex> guard(mtx_copy);
+        std::lock_guard<std::shared_mutex> guard(mtx_sync);
         std::copy(buffer, buffer+msize, msg+msg_size);
         msg_size += msize;
         *(msg+msg_size) = '\0';     // append NULL for string.
@@ -123,7 +125,7 @@ bool CRawMessage::append_msg(void* buf, size_t msize) {
         }
 
         // copy message-data to msg-buf.
-        std::lock_guard<std::mutex> guard(mtx_copy);
+        std::lock_guard<std::shared_mutex> guard(mtx_sync);
         std::copy(buffer, buffer+msize, msg+msg_size);
         msg_size += msize;
         *(msg+msg_size) = '\0';     // append NULL for string.
@@ -217,7 +219,7 @@ bool CRawMessage::extend_capacity(size_t append_capacity) {
         MsgDataType* new_msg = new MsgDataType[capacity + append_capacity];
         assert( new_msg != NULL );
 
-        std::lock_guard<std::mutex> guard(mtx_copy);
+        std::lock_guard<std::shared_mutex> guard(mtx_sync);
         std::copy(msg, msg+msg_size, new_msg);
         delete msg;
         msg = new_msg;

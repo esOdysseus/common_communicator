@@ -4,7 +4,7 @@ QT -= gui core
 
 VER_MAJ = 0
 VER_MIN = 1
-VER_PAT = 4
+VER_PAT = 5
 VERSION = $$VER_MAJ"."$$VER_MIN"."$$VER_PAT
 
 !include ($$_PRO_FILE_PWD_/../common_config.pri) {
@@ -37,7 +37,8 @@ INCLUDEPATH += \
     $$ROOT_PATH/lib     \
     $$ROOT_PATH/lib/logger  \
     $$ROOT_PATH/lib/json    \
-    $$ROOT_PATH/lib/exception
+    $$ROOT_PATH/lib/exception   \
+    $$ROOT_PATH/lib/lock
 
 SOURCES += \
     $$files($$_PRO_FILE_PWD_/source/src/base/*.cpp)  \

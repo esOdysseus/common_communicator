@@ -31,6 +31,7 @@ INCLUDEPATH += \
     $$_PRO_FILE_PWD_/include        \
     $$ROOT_PATH/lib/logger  \
     $$ROOT_PATH/lib/exception   \
+    $$ROOT_PATH/lib/lock   \
     $$ROOT_PATH/lib
 
 SOURCES += \

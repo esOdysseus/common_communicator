@@ -7,6 +7,7 @@
 #include <IAppInf.h>
 #include <server/CHProtoBaseLan.h>
 #include <IProtocolInf.h>
+#include <CAliasAddr.h>
 
 class CServerTCP : public IServerInf<CHProtoBaseLan> {
 public:
@@ -41,7 +42,7 @@ private:
     int get_socket(std::string alias, MessageType &msg);
 
 private:
-    CAliasAddr m_alias2socket;      // alias => socket
+    CAliasAddr<int> m_alias2socket;      // alias => socket
 
 };
 

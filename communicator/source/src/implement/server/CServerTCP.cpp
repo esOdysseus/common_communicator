@@ -85,11 +85,11 @@ CServerTCP::CServerTCP(AliasType& alias_list)
 }
 
 CServerTCP::~CServerTCP(void) {
-    CAliasAddr::iterator itor;
+    CAliasAddr<int>::AddrIterator itor;
     set_provider_type(enum_c::ProviderType::E_PVDT_NOT_DEFINE);
     
     for( itor = m_alias2socket.begin(); itor != m_alias2socket.end(); itor++ ) {
-        int u_sockfd = *(m_alias2socket.get<int>(itor->first).get());
+        int u_sockfd = *(m_alias2socket.get(itor->first).get());
         thread_destroy(itor->first);
         usleep(10000);      // for wait thread delete-complete.
         close(u_sockfd);
@@ -218,7 +218,7 @@ int CServerTCP::make_connection(std::string alias) {
             throw CException(E_ERROR::E_TCP_NOT_SUPPORT_CLOUD_CONNECTION);
         }
         else if( mAddr.is_there(alias) == true ) {
-            destaddr = mAddr.get<struct sockaddr_in>(alias).get();
+            destaddr = (struct sockaddr_in*)mAddr.get(alias).get();
         }
         else {
             throw CException(E_ERROR::E_TCP_UNKNOWN_ALIAS);
@@ -264,7 +264,7 @@ bool CServerTCP::disconnection(std::string alias) {
     }
 
     try {
-        u_sockfd = *(m_alias2socket.get<int>(alias).get());
+        u_sockfd = *(m_alias2socket.get(alias).get());
 
         // TODO need auto-lock
         close( u_sockfd );
@@ -427,7 +427,7 @@ void CServerTCP::run_receiver(std::string alias, bool *is_continue) {
     try {
         assert(is_continue != NULL && *is_continue == true);
         assert( m_alias2socket.is_there(alias) == true );
-        assert( (socket_fd = *(m_alias2socket.get<int>(alias).get())) > 0 );
+        assert( (socket_fd = *(m_alias2socket.get(alias).get())) > 0 );
         *(socket.get()) = socket_fd;
 
         // trig connected call-back to app.
@@ -483,7 +483,7 @@ int CServerTCP::get_socket(std::string alias, MessageType &msg) {
         // alias is prepered. but, if alias is null, then we will use alias registed by msg.
         if ( alias.empty() == false ) {
             if ( m_alias2socket.is_there(alias) == true ) {
-                u_sockfd = *(m_alias2socket.get<int>(alias).get());
+                u_sockfd = *(m_alias2socket.get(alias).get());
             }
             else {
                 assert( (u_sockfd=make_connection(alias)) > 0 );
