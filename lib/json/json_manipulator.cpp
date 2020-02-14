@@ -59,18 +59,21 @@ static const char* exception_switch(E_ERROR err_num) {
  */
 CMjson::CMjson(void) : is_parsed(false) {
     object.reset();
-    object = std::make_shared<Object_Type>(std::make_shared<Value_Type>(ValueDef_Flag)->GetObject());
+    object_buf.Clear();
+    object = std::make_shared<Value_Type>(ValueDef_Flag);
 }
 
 CMjson::CMjson(Object_Type value) : is_parsed(false) {
     object.reset();
-    object = std::make_shared<Object_Type>(value);
+    object_buf.Clear();
+    object = std::make_shared<Value_Type>(value);
     is_parsed=true;
 }
 
 CMjson::~CMjson(void) {
     is_parsed = false;
     object.reset();
+    object_buf.Clear();
 }
 
 bool CMjson::is_there(void) {
@@ -119,13 +122,16 @@ bool CMjson::parse(const char* input_data, const ssize_t input_size) {
 }
 
 const char* CMjson::print_buf(void) {
-    try{
-        rapidjson::StringBuffer buffer;
-        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-        Value_Type temp(*object.get());     // move data of 'object' to data of 'temp'.
+	const char* data = NULL;
 
-        temp.Accept(writer);
-        return buffer.GetString();
+    try{
+    	object_buf.Clear();
+        rapidjson::Writer<rapidjson::StringBuffer> writer(object_buf);
+
+        object->Accept(writer);
+        data = object_buf.GetString();
+        LOGD("data = %s", data);
+        return data;
     }
     catch( const std::exception &e ) {
         LOGERR("%s", e.what());
@@ -224,7 +230,7 @@ void CMjson::is_array_check(std::string &key) {
     }
 }
 
-std::shared_ptr<Object_Type> CMjson::get_object(void) {
+std::shared_ptr<Value_Type> CMjson::get_object(void) {
     return object;
 }
 
@@ -241,7 +247,7 @@ bool CMjson::parse(std::shared_ptr<CRawMessage>& msg) {
     }
     assert(manipulator.IsObject());
     object.reset();
-    object = std::make_shared<Object_Type>(manipulator.GetObject());
+    object = std::make_shared<Value_Type>(manipulator.GetObject());
 
     return true;
 }
@@ -254,7 +260,7 @@ bool CMjson::parse(const char* msg_const) {
     }
     assert(manipulator.IsObject());
     object.reset();
-    object = std::make_shared<Object_Type>(manipulator.GetObject());
+    object = std::make_shared<Value_Type>(manipulator.GetObject());
 
     return true;
 }
@@ -351,31 +357,21 @@ inline std::string CMjson::get_first_member(MemberIterator itor) {
 // Definition of Set Functions.
 std::shared_ptr<CMjson> CMjson::update(std::string &key, CMjson *value) {
     MemberIterator target;
-    Value_Type temp(rapidjson::kObjectType);
+    // Value_Type key_name(rapidjson::StringRef(key.c_str()), manipulator.GetAllocator());
 
     try {
-        target = object->FindMember(key.c_str());
-
-        // If already exist 'key', then remove it.
-        if ( target != object->MemberEnd() ) {
-            object->RemoveMember(target);
-        }
-
-        // insert new object & 'key'.
         if ( value == NULL ) {
-            object->AddMember(rapidjson::GenericStringRef<char>(key.c_str()), 
-                                temp,                           // move data from 'temp' to 'object'.
-                                manipulator.GetAllocator());
+            Value_Type temp(rapidjson::kObjectType);
+            assert( update_value(key, temp) == true );
         }
         else {
-            object->AddMember(rapidjson::GenericStringRef<char>(key.c_str()), 
-                                *(value->get_object().get()),   // move data from 'value' to 'object'.
-                                manipulator.GetAllocator());
+            assert( update_value(key, *(value->get_object().get())) == true );
         }
 
         target = object->FindMember(key.c_str());
         assert( target->value.IsObject() == true );
-        return std::make_shared<CMjson>(target->value.GetObject());
+
+        return std::make_shared<CMjson>();
     }
     catch ( const std::exception &e ) {
         LOGERR("%s", e.what());
@@ -435,18 +431,20 @@ bool CMjson::update(std::string &key, T value) {
 
 bool CMjson::update_value(std::string &key, Value_Type &value) {
     MemberIterator target;
+    Value_Type key_name(rapidjson::StringRef(key.c_str()), manipulator.GetAllocator());
 
     try {
         target = object->FindMember(key.c_str());
 
         // If already exist 'key', then swap it.
         if ( target != object->MemberEnd() ) {
-            target->value.Swap(value);
+            target->value.CopyFrom(value, manipulator.GetAllocator(), true);
         }
         else {  // Otherwise, insert new 'key' with value.
-            object->AddMember(rapidjson::GenericStringRef<char>(key.c_str()), 
-                                value,                           // move data from 'value' to 'object'.
-                                manipulator.GetAllocator());
+            std::shared_ptr<Value_Type> Value = std::make_shared<Value_Type>(value, manipulator.GetAllocator(), true);
+            object->AddMember(key_name.Move(), 
+                              *(Value.get()),                           // move data from 'value' to 'object'.
+                              manipulator.GetAllocator());
         }
         return true;
     }

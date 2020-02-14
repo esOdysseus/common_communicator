@@ -86,7 +86,7 @@ namespace json_mng
 
         void is_array_check(std::string &key);
 
-        std::shared_ptr<Object_Type> get_object(void);
+        std::shared_ptr<Value_Type> get_object(void);
 
         // get
         template <typename T=std::string>
@@ -124,7 +124,9 @@ namespace json_mng
 
         JsonManipulator manipulator;
 
-        std::shared_ptr<Object_Type> object;
+        std::shared_ptr<Value_Type> object;
+
+        OutputBuffer object_buf;
 
     };
 }

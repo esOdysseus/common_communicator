@@ -22,6 +22,8 @@
         /** for Object-members. */
         using MemberIterator = rapidjson::Value::MemberIterator;
 
+        using OutputBuffer = rapidjson::StringBuffer;
+
         #define ValueDef_Flag rapidjson::kObjectType
 
         // template <typename Encoding, typename Allocator> 
