@@ -307,6 +307,7 @@ void CServerUDP::run_receiver(std::string alias, bool *is_continue) {
     LOGI("Called with alias(%s)", alias.c_str());
 
     try {
+        assert( is_continue != NULL );
         assert( hHprotocol->handle_initialization(get_provider_type(), true) == true );
         
         // Start receiver

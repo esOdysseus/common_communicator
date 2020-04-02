@@ -4,7 +4,7 @@ QT -= gui core
 
 VER_MAJ = 0
 VER_MIN = 1
-VER_PAT = 5
+VER_PAT = 6
 VERSION = $$VER_MAJ"."$$VER_MIN"."$$VER_PAT
 
 !include ($$_PRO_FILE_PWD_/../common_config.pri) {

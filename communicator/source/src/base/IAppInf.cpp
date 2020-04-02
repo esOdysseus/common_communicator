@@ -58,10 +58,7 @@ ICommunicator::ICommunicator(std::string app_id,
 }
 
 ICommunicator::~ICommunicator(void) {
-    if( runner.joinable() == true ) {
-        this->runner_continue = false;
-        this->runner.join();
-    }
+    quit();
 
     this->provider_type = enum_c::ProviderType::E_PVDT_NOT_DEFINE;
     this->app_id = "destroyed";
@@ -85,6 +82,13 @@ std::string ICommunicator::get_version(void) {
 void ICommunicator::init(void) {
     this->runner_continue = true;
     this->runner = std::thread(&ICommunicator::run, this);
+}
+
+void ICommunicator::quit(void) {
+    if( runner.joinable() == true ) {
+        this->runner_continue = false;
+        force_exit_thread(runner);
+    }
 }
 
 void ICommunicator::register_initialization_handler(InitialCB_Type &&handler) {
@@ -161,6 +165,11 @@ CReceiver& ICommunicator::get_cb_handlers(void) {
 /*****
  * Private Member Function.
  */ 
+static void cb_force_exit_thread(void* app_id) {
+    assert(app_id != NULL);
+    LOGW("%s Thread is force-exited.", (const char*)app_id);
+}
+
 bool ICommunicator::is_running_continue(void) {
     return runner_continue;
 }
@@ -172,6 +181,11 @@ int ICommunicator::run(void) {
     app_caller->get_cb_handlers = std::bind(&ICommunicator::get_cb_handlers, this);
     app_caller->get_app_id = std::bind(&ICommunicator::get_app_id, this);
 
+    // when receive 'cancel' signal, terminate this thread immediatly.
+    pthread_setcancelstate( PTHREAD_CANCEL_ENABLE, NULL );
+    pthread_setcanceltype( PTHREAD_CANCEL_ASYNCHRONOUS, NULL );
+    pthread_cleanup_push( cb_force_exit_thread, (void*)(get_app_id().c_str()) );
+
     switch(this->provider_type)
     {
     case enum_c::ProviderType::E_PVDT_TRANS_TCP:
@@ -180,7 +194,7 @@ int ICommunicator::run(void) {
             const char* ip_str = ip.empty() == true ? NULL : ip.c_str();
             pvd->init(provider_id, port, ip_str);
             pvd->start(app_caller, proto_config);
-            while(pvd->accept() && is_running_continue());
+            while(pvd->accept() && is_running_continue());  // Block
         }
         break;
     case enum_c::ProviderType::E_PVDT_TRANS_UDP:
@@ -189,12 +203,28 @@ int ICommunicator::run(void) {
             const char* ip_str = ip.empty() == true ? NULL : ip.c_str();
             pvd->init(provider_id, port, ip_str);
             pvd->start(app_caller, proto_config);
-            while(pvd->accept() && is_running_continue());
+            while(pvd->accept() && is_running_continue());  // Block
         }
         break;
     default:
         break;
     }
-    
+
+    pthread_cleanup_pop(0);     // Macro End of 'pthread_cleanup_push'
+    LOGD("Soft-Exit of thread.");
     return NULL;
+}
+
+void ICommunicator::force_exit_thread(std::thread &h_thread) {
+    if( h_thread.joinable() == true ) {
+        auto n_thread = h_thread.native_handle();
+
+        LOGD("Forcefully terminate Thread to join ...");
+        h_thread.detach();           // detach point of thread-handler from object.
+        pthread_cancel( n_thread );  // foce exit
+        LOGD("Done.(joinable=%d)", h_thread.joinable());
+
+        // wait for calling of 'cb_force_exit_thread' function
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
 }

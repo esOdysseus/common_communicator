@@ -56,7 +56,7 @@ public:
     //   - Precondition : init() was called
     //   - Practice : System destroy against communicate.
     //   - Postcondition : Handler registered by cb_register_initialization_handler() will be called.
-    // void quit(void);     // Mandatory
+    void quit(void);     // Mandatory
 
     // >> Server/Client-side
     //   - Precondition : None

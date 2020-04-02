@@ -64,7 +64,7 @@ public:
     //   - Precondition : init() was called
     //   - Practice : System destroy against communicate.
     //   - Postcondition : Handler registered by cb_register_initialization_handler() will be called.
-    // void quit(void);     // Mandatory
+    void quit(void);     // Mandatory
 
     // >> Server/Client-side
     //   - Precondition : None
@@ -228,6 +228,8 @@ private:
 
     // Thread-routin of provider for Communicator.
     int run(void);
+
+    void force_exit_thread(std::thread &h_thread);
 
 private:
     CReceiver cb_handlers;  // It contains many kinds of Call-back functions for Application.
