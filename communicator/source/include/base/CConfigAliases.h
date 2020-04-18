@@ -34,6 +34,8 @@ namespace cf_alias {
 
         ~IAlias(void);
 
+        static std::string get_pvd_type(enum_c::ProviderType pvd_type);
+
     private:
         enum_c::ProviderType cvt_str2pvdtype(std::string pvd_type_str);
 

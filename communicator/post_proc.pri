@@ -8,4 +8,3 @@ QMAKE_POST_LINK += $$quote($(MKDIR) -p $${RELEASE_CONFIG_PATH}$$escape_expand(\n
 for(FILE, CONFIG_FILES){
     QMAKE_POST_LINK += $$quote(cp $${FILE} $${RELEASE_CONFIG_PATH}$$escape_expand(\n\t))
 }
-

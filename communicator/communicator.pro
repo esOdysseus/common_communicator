@@ -4,8 +4,13 @@ QT -= gui core
 
 VER_MAJ = 0
 VER_MIN = 1
-VER_PAT = 6
+VER_PAT = 7
 VERSION = $$VER_MAJ"."$$VER_MIN"."$$VER_PAT
+
+# for pre-process, if exist.
+!include ($$_PRO_FILE_PWD_/pre_proc.pri) {
+    message( "Not exist pre_proc.pri file." )
+}
 
 !include ($$_PRO_FILE_PWD_/../common_config.pri) {
     message( "Not exist common_config.pri file." )
@@ -64,4 +69,6 @@ PKG_CONFIG_DESCRIPTION=Common-communicator SDK library that support transaction-
 }
 
 # for process, if exist.
-include ($$_PRO_FILE_PWD_/post_proc.pri)
+!include ($$_PRO_FILE_PWD_/post_proc.pri) {
+    message( "Not exist post_proc.pri file." )
+}

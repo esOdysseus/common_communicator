@@ -1,8 +1,8 @@
 #include <logger.h>
 #include <CSource.h>
 
-template void CSource::init(std::shared_ptr<struct sockaddr_in> addr, const char* alias, enum_c::ProviderType provider_type);
-template void CSource::init(std::shared_ptr<int> addr, const char* alias, enum_c::ProviderType provider_type);
+template void CSource::init(std::shared_ptr<struct sockaddr_in> addr, const char* alias, enum_c::ProviderType provider_type, bool connect_flag);
+template void CSource::init(std::shared_ptr<int> addr, const char* alias, enum_c::ProviderType provider_type, bool connect_flag);
 template std::shared_ptr<struct sockaddr_in> CSource::get_address(void);
 template std::shared_ptr<int> CSource::get_address(void);
 
@@ -12,6 +12,8 @@ template std::shared_ptr<int> CSource::get_address(void);
 CSource::CSource(void) {
     addr_type = EADDR_TYPE::E_PVDT_NOT_DEFINE;
     alias.clear();
+    address.reset();
+    connect_flag = false;
 }
 
 CSource::~CSource(void){
@@ -21,6 +23,7 @@ CSource::~CSource(void){
         }
         addr_type = EADDR_TYPE::E_PVDT_NOT_DEFINE;
         alias.clear();
+        connect_flag = false;
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
@@ -30,12 +33,14 @@ CSource::~CSource(void){
 template <typename ADDR_TYPE> 
 void CSource::init(std::shared_ptr<ADDR_TYPE> addr, 
                                 const char* alias, 
-                                enum_c::ProviderType provider_type) {
+                                enum_c::ProviderType provider_type,
+                                bool connect_flag) {
     try {
         std::shared_ptr<void> dumy = std::static_pointer_cast<void>(addr);
         this->address = move(dumy);
         this->addr_type = provider_type;
         this->alias = alias;
+        this->connect_flag = connect_flag;
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
@@ -59,3 +64,10 @@ CSource::EADDR_TYPE CSource::get_addr_type(void) {
     return addr_type;
 }
 
+bool CSource::get_connect_flag(void) {
+    return connect_flag;
+}
+
+void CSource::set_connect_flag(bool value) {
+    connect_flag = value;
+}

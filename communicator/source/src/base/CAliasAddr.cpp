@@ -41,6 +41,7 @@ std::shared_ptr<ADDR_TYPE> CAliasAddr<ADDR_TYPE,_Compare>::get(std::string alias
 
     try {
         std::shared_lock<std::shared_mutex> guard(mtx_sync);
+
         // Find Address correspond with Alias-naming.
         if ( (itor_addr = map_addr.find(alias)) != map_addr.end() ) {
             res = (itor_addr->second).get_address<ADDR_TYPE>();
@@ -48,7 +49,7 @@ std::shared_ptr<ADDR_TYPE> CAliasAddr<ADDR_TYPE,_Compare>::get(std::string alias
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
-        throw e;
+        throw ;
     }
 
     return res;
@@ -61,6 +62,19 @@ const ADDR_TYPE * CAliasAddr<ADDR_TYPE,_Compare>::get_read_only(std::string alia
 
 template <typename ADDR_TYPE, typename _Compare>
 std::string CAliasAddr<ADDR_TYPE,_Compare>::get(const ADDR_TYPE &addr) {
+    try {
+        return get(std::forward<const ADDR_TYPE>(addr));
+    }
+    catch(const std::exception &e) {
+        LOGERR("%s", e.what());
+        throw ;
+    }
+
+    return std::string();
+}
+
+template <typename ADDR_TYPE, typename _Compare>
+std::string CAliasAddr<ADDR_TYPE,_Compare>::get(const ADDR_TYPE &&addr) {
     AliasIterator itor_alias;
 
     try {
@@ -72,7 +86,7 @@ std::string CAliasAddr<ADDR_TYPE,_Compare>::get(const ADDR_TYPE &addr) {
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
-        throw e;
+        throw ;
     }
 
     return std::string();
@@ -82,7 +96,7 @@ template <typename ADDR_TYPE, typename _Compare>
 bool CAliasAddr<ADDR_TYPE,_Compare>::insert(std::string alias, 
                         std::shared_ptr<ADDR_TYPE> &address, 
                         enum_c::ProviderType pvd_type, 
-                        bool &is_new) {
+                        bool &is_new, bool connect_flag) {
     bool result = false;
     ADDR_TYPE addr;
 
@@ -93,17 +107,24 @@ bool CAliasAddr<ADDR_TYPE,_Compare>::insert(std::string alias,
 
         is_new = false;
         memcpy(&addr, address.get(), sizeof(ADDR_TYPE));
-        if ( map_addr.find(alias) == map_addr.end() ) {
+        if ( map_addr.find(alias) == map_addr.end() || 
+             map_addr.find(alias)->second.get_connect_flag() == false ) {
+
             std::lock_guard<std::shared_mutex> guard(mtx_sync);
 
-            if ( map_addr.find(alias) == map_addr.end() ) {
+            auto itor = map_addr.find(alias);
+            if ( itor == map_addr.end() ) {
                 assert( map_alias.find( addr ) == map_alias.end() );
                 CSource* src = &(map_addr[alias]);
                 assert(src != NULL);
 
-                src->init(address, alias.c_str(), pvd_type);
+                src->init(address, alias.c_str(), pvd_type, connect_flag);
                 map_alias.insert( std::make_pair(addr, alias) );
                 is_new = true;
+            }
+            else if (itor->second.get_connect_flag() == false) {
+                itor->second.set_connect_flag(connect_flag);
+                is_new = connect_flag;
             }
         }
         result = true;
@@ -125,7 +146,7 @@ void CAliasAddr<ADDR_TYPE,_Compare>::remove(std::string alias) {
     }
     catch( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw e;
+        throw ;
     }
 }
 
@@ -140,7 +161,7 @@ void CAliasAddr<ADDR_TYPE,_Compare>::remove(ADDR_TYPE &addr) {
     }
     catch ( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw e;
+        throw ;
     }
 }
 
@@ -165,11 +186,28 @@ void CAliasAddr<ADDR_TYPE,_Compare>::remove_impl(std::string alias, ADDR_TYPE ad
     }
     catch ( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw e;
+        throw ;
     }
 }
 
 template <typename ADDR_TYPE, typename _Compare>
 void CAliasAddr<ADDR_TYPE,_Compare>::clear(void) {
     map_addr.clear();
+}
+
+template <typename ADDR_TYPE, typename _Compare>
+void CAliasAddr<ADDR_TYPE,_Compare>::reset_connect_flag(std::string alias, bool &past_flag) {
+    try {
+        std::lock_guard<std::shared_mutex> guard(mtx_sync);
+
+        auto itor = map_addr.find(alias);
+        if( itor != map_addr.end() ) {
+            past_flag = itor->second.get_connect_flag();
+            itor->second.set_connect_flag(false);
+        }
+    }
+    catch ( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        throw ;
+    }
 }

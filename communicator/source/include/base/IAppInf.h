@@ -14,6 +14,8 @@
 #include <CConfigProtocols.h>
 #include <CConfigAliases.h>
 
+#include <IServerInf.h>
+
 class ICommunicator;
 
 std::shared_ptr<ICommunicator> create_communicator(std::string app_id, 
@@ -21,6 +23,7 @@ std::shared_ptr<ICommunicator> create_communicator(std::string app_id,
                                                    enum_c::ProviderType provider_type, 
                                                    unsigned short port=0, 
                                                    const char* ip=NULL,
+                                                   enum_c::ProviderMode mode=enum_c::ProviderMode::E_PVDM_BOTH,
                                                    const char* protocol_desp_path=NULL,
                                                    const char* alias_desp_path=NULL);
 
@@ -41,7 +44,8 @@ public:
                   std::shared_ptr<cf_proto::CConfigProtocols> &proto_config,
                   std::shared_ptr<cf_alias::CConfigAliases> &alias_config,
                   unsigned short port=0,
-                  const char* ip=NULL);
+                  const char* ip=NULL,
+                  enum_c::ProviderMode mode=enum_c::ProviderMode::E_PVDM_BOTH);
 
     ~ICommunicator(void);
 
@@ -172,13 +176,18 @@ public:
     //   - Postcondition : Handler registered by cb_register_connection_handler() will be called.
     //                   : If authentication mode is DISABLE,
     //                     then Handler registered by cb_register_available_handler() will be called.
-    // void connect(void);  // Mandatory
+    void connect(std::string &peer_ip, uint16_t peer_port, std::string &new_alias_name);  // Mandatory
+
+    // connect to peer that is pre-named as 'alias' variable.
+    void connect(std::string && alias);  // Mandatory
 
     //   - Precondition : connect() was called
     //   - Practice : disconnect from Cloud/Server/Service-Provider.
     //   - Postcondition : Handler registered by cb_register_available_handler() will be called.
     //                   : Handler registered by cb_register_connection_handler() will be called.
-    // void disconnect(void);   // Mandatory
+    void disconnect(std::string & alias);   // Mandatory
+
+    void disconnect(std::string && alias);   // Mandatory
 
     //   - Precondition : Handler registered by cb_register_available_handler() was called.
     //   - Practice : [PUB/SUB] Delare Event-Accepting to Service-Provider.
@@ -223,6 +232,10 @@ protected:
     CReceiver& get_cb_handlers(void);
 
 private:
+    void clear(void);
+
+    void validation_check(void);
+
     // Get continue-flag of provider for Communicator.
     bool is_running_continue(void);
 
@@ -244,6 +257,8 @@ private:
 
     std::string ip;         // IP-address for Provider.
 
+    enum_c::ProviderMode mode;    // Provider mode. (Both=default/Server/Client)
+
     SendPayloadType m_send_payload; // function-pointer for Send-Transaction with payload.
 
     std::thread runner;     // Thread-instance of provider for Communicator.
@@ -253,6 +268,8 @@ private:
     std::shared_ptr<cf_proto::CConfigProtocols> proto_config;   // protocol-configration.
 
     std::shared_ptr<cf_alias::CConfigAliases> alias_config;     // alias-configuration.
+
+    std::shared_ptr<IServerInf> h_pvd;  // Handler of provider instance.
 
 };
 

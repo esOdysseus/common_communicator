@@ -5,6 +5,7 @@
 #include <logger.h>
 #include <protocol/CPLittleEndian.h>
 
+constexpr unsigned int CPLittleEndian::Segment_ByteSize;
 
 /********************************
  * Public Function Definition

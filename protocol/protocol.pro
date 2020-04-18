@@ -8,7 +8,9 @@ VER_PAT = 0
 VERSION = $$VER_MAJ"."$$VER_MIN"."$$VER_PAT
 
 # for pre-process, if exist.
-include ($$_PRO_FILE_PWD_/pre_proc.pri)
+!include ($$_PRO_FILE_PWD_/pre_proc.pri) {
+    message( "Not exist pre_proc.pri file." )
+}
 
 
 # for building
@@ -54,4 +56,6 @@ PKG_CONFIG_DESCRIPTION=Protocols library that support common-communicator.
 
 
 # for post-process, if exist.
-include ($$_PRO_FILE_PWD_/post_proc.pri)
+!include ($$_PRO_FILE_PWD_/post_proc.pri) {
+    message( "Not exist post_proc.pri file." )
+}

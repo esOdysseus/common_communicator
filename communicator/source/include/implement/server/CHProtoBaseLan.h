@@ -9,7 +9,7 @@
 
 class CHProtoBaseLan : public IHProtocolInf {
 public:
-    using ServerType = std::shared_ptr<IServerInf<CHProtoBaseLan>>;
+    using ServerType = std::shared_ptr<IServerInf>;
     using AddressType = CRawMessage::LanAddrType;
 
 public:

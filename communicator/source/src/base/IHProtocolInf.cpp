@@ -38,7 +38,7 @@ IHProtocolInf::SegmentsType IHProtocolInf::encapsulation(IHProtocolInf::Protocol
         return protocol->pack_recursive(msg_raw, msg_size, provider_type);
     }catch(const std::exception &e) {
         LOGERR("%s", e.what());
-        throw e;
+        throw ;
     }
 }
 
@@ -60,7 +60,7 @@ IHProtocolInf::ProtocolType IHProtocolInf::decapsulation(IHProtocolInf::RawMsgTy
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
-        throw e;
+        throw ;
     }
 
     return protocol;
@@ -80,24 +80,22 @@ bool IHProtocolInf::handle_initialization(enum_c::ProviderType pvd_type, bool fl
     }
     catch (const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw e;
+        throw ;
     }
     return false;
 }
 
-bool IHProtocolInf::handle_connection(std::string alias, bool flag) {
+void IHProtocolInf::handle_connection(std::string alias, bool flag) {
     try {
         AppCallerType& app = get_app_instance();
         assert(app.get() != NULL);
 
         app->get_cb_handlers().cb_connection_handle( alias, flag );
-        return true;
     }
     catch (const std::exception &e) {
         LOGERR("%s", e.what());
-        throw e;
+        throw ;
     }
-    return false;
 }
 
 bool IHProtocolInf::handle_protocol_chain(RawMsgType msg_raw) {
@@ -116,7 +114,7 @@ bool IHProtocolInf::handle_protocol_chain(RawMsgType msg_raw) {
     }
     catch (const std::exception &e) {
         LOGERR("%s", e.what());
-        throw e;
+        throw ;
     }
 
     return false;
@@ -132,7 +130,7 @@ bool IHProtocolInf::handle_unintended_quit(const std::exception &e) {
     }
     catch (const std::exception &e) {
         LOGERR("%s", e.what());
-        throw e;
+        throw ;
     }
     return false;
 }

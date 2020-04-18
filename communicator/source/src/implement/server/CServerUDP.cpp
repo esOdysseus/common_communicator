@@ -14,6 +14,7 @@
 #include <logger.h>
 #include <CRawMessage.h>
 #include <server/CServerUDP.h>
+#include <server/CHProtoBaseLan.h>
 
 using namespace std::placeholders;
 
@@ -36,9 +37,13 @@ using namespace std::placeholders;
 #define ADDR_TYPE       AF_INET
 
 
+/******************************************
+ * Definition of Public Function.
+ */ 
 CServerUDP::CServerUDP(AliasType& alias_list)
 : IServerInf(alias_list) {
     try{
+        LOGD("Called.");
         set_provider_type(enum_c::ProviderType::E_PVDT_TRANS_UDP);
         assert( update_alias_mapper(alias_list) == true );
         _is_continue_ = false;
@@ -52,9 +57,12 @@ CServerUDP::CServerUDP(AliasType& alias_list)
 CServerUDP::~CServerUDP(void) {
     set_provider_type(enum_c::ProviderType::E_PVDT_NOT_DEFINE);
     _is_continue_ = false;
+    bzero(&servaddr, sizeof(servaddr));
 }
 
-bool CServerUDP::init(std::string id, unsigned int port, const char* ip) {
+bool CServerUDP::init(std::string id, unsigned int port, const char* ip, ProviderMode mode) {
+    /** UDP don't car about mode. Because, UDP has not classification of SERVER/CLIENT. */ 
+
     set_id(id);
 
     if (inited == true) {
@@ -114,7 +122,7 @@ bool CServerUDP::start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProt
     }
 
     // Create instance of Protocol-Handler.
-    assert( create_hprotocol(app, proto_manager) == true );
+    assert( create_hprotocol<CHProtoBaseLan>(app, proto_manager) == true );
 
     started = true;
     return started;
@@ -137,18 +145,42 @@ bool CServerUDP::accept(void) {
 }
 
 int CServerUDP::make_connection(std::string alias) {
+    bool is_new = false;
     try{
-        return mAddr.is_there(alias);
+        if( mAddr.is_there(alias) ) {
+            auto address = mAddr.get(alias);
+            assert( mAddr.insert(alias, address, get_provider_type(), is_new, true) == true );
+            if( is_new == true ) {
+                // trig connected call-back to app.
+                hHprotocol->handle_connection(alias, true);
+            }
+            return true;
+        }
     }
     catch (const std::exception &e) {
         LOGERR("%s", e.what());
-        throw e;
+        throw ;
     }
+    return false;
 }
 
-bool CServerUDP::disconnection(std::string alias) {
-    // TODO
-    return true;
+void CServerUDP::disconnection(std::string alias) {
+    bool had_connected = false;
+
+    try{
+        if( mAddr.is_there(alias) ) {
+            mAddr.reset_connect_flag(alias, had_connected);
+
+            if ( had_connected ) {
+                // trig connected call-back to app.
+                hHprotocol->handle_connection(alias, false);
+            }
+        }
+    }
+    catch (const std::exception &e) {
+        LOGERR("%s", e.what());
+        throw ;
+    }
 }
 
 CServerUDP::MessageType CServerUDP::read_msg(int u_sockfd, bool &is_new) {
@@ -193,13 +225,13 @@ CServerUDP::MessageType CServerUDP::read_msg(int u_sockfd, bool &is_new) {
             }
         }
 
-        assert( mAddr.insert(client_addr_str, cliaddr, get_provider_type(), is_new) == true );
+        assert( mAddr.insert(client_addr_str, cliaddr, get_provider_type(), is_new, true) == true );
         msg->set_source(cliaddr, client_addr_str.c_str());
     }
     catch(const std::exception &e) {
         LOGERR("%d: %s", errno, strerror(errno));
         msg->destroy();
-        throw e;
+        throw ;
     }
     return msg;
 }
@@ -218,21 +250,20 @@ bool CServerUDP::write_msg(std::string alias, MessageType msg) {
     assert(u_sockfd != 0 && buffer != NULL && msg_size > 0);
 
     // alias is prepered. but, if alias is null, then we will use alias registed by msg.
-    if ( alias.empty() == false ) {
-        if ( mAddr.is_there(alias) == true ) {
-            p_cliaddr = mAddr.get(alias).get();
-        }
-        else {
-            LOGERR("E_UDP_UNKNOWN_ALIAS in provider-pkg");
+    if ( alias.empty() == true ) {
+        alias = msg->get_source_alias();
+        if (alias.empty() == true) {
+            throw std::invalid_argument("alias is NULL & msg doesn't have alias. Please check it.");
         }
     }
-    else {  // alias is NULL.
-        if (msg->get_source_alias().empty() == false) {
-            p_cliaddr = (struct sockaddr_in*)msg->get_source_addr_read_only(get_provider_type());
-        }
-        else {
-            LOGERR("alias is NULL & msg doesn't have alias. Please check it.");
-        }
+
+    // if need trig about connection-call-back, then try it.
+    if( make_connection(alias) == true ) {
+        p_cliaddr = mAddr.get(alias).get();
+    }
+    else {
+        std::string err_str = "alias("+alias+") is not pre-naming in provider-pkg.";
+        throw std::out_of_range(err_str);
     }
 
     try {
@@ -268,19 +299,59 @@ bool CServerUDP::write_msg(std::string alias, MessageType msg) {
     return true;
 }
 
+/******************************************
+ * Definition of Protected Function.
+ */ 
 int CServerUDP::enable_keepalive(int sock) {
     return 0;
+}
+
+void CServerUDP::update_alias_mapper(AliasType& alias_list, 
+                                     std::string &res_alias_name) {
+    using AddressType = struct sockaddr_in;
+    assert(alias_list.size() == 1);
+
+    try {
+        LOGD("Called.");
+        AliasType::iterator itor;
+        std::string alias_name;
+
+        for ( itor = alias_list.begin(); itor != alias_list.end(); itor++ ) {
+            bool is_new = false;
+            std::shared_ptr<cf_alias::CAliasTrans> alias = std::static_pointer_cast<cf_alias::CAliasTrans>(*itor);
+            assert(alias.get() != NULL);
+            std::shared_ptr<struct sockaddr_in> destaddr = std::make_shared<struct sockaddr_in>();
+            assert( alias->pvd_type == get_provider_type());
+
+            destaddr->sin_family = ADDR_TYPE;
+            destaddr->sin_addr.s_addr = inet_addr(alias->ip.c_str());
+            destaddr->sin_port = htons(alias->port_num);
+            // set all bits of the padding field to 0
+            memset(destaddr->sin_zero, '\0', sizeof(destaddr->sin_zero));
+
+            // append pair(alias & address) to mapper.
+            mAddr.insert(alias->alias, destaddr, alias->pvd_type, is_new);
+            res_alias_name = mAddr.get( std::forward<const AddressType>(*destaddr.get()) );
+        }
+    }
+    catch(const std::exception &e) {
+        LOGERR("%s", e.what());
+        throw ;
+    }
 }
 
 bool CServerUDP::update_alias_mapper(AliasType& alias_list) {
     bool res = true;
 
     try {
+        LOGD("Called.");
         AliasType::iterator itor;
+        std::string alias_name;
 
         for ( itor = alias_list.begin(); itor != alias_list.end(); itor++ ) {
             bool is_new = false;
             std::shared_ptr<cf_alias::CAliasTrans> alias = std::static_pointer_cast<cf_alias::CAliasTrans>(*itor);
+            assert(alias.get() != NULL);
             std::shared_ptr<struct sockaddr_in> destaddr = std::make_shared<struct sockaddr_in>();
             assert( alias->pvd_type == get_provider_type());
 
@@ -297,7 +368,7 @@ bool CServerUDP::update_alias_mapper(AliasType& alias_list) {
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
         res = false;
-        throw e;
+        throw ;
     }
 
     return res;
@@ -320,7 +391,7 @@ void CServerUDP::run_receiver(std::string alias, bool *is_continue) {
             msg_raw = read_msg(0, is_new);     // get raw message. (Blocking)
             if( is_new == true ) {
                 // trig connected call-back to app.
-                assert( hHprotocol->handle_connection(msg_raw->get_source_alias(), true) == true );
+                hHprotocol->handle_connection(msg_raw->get_source_alias(), true);
             }
             // trig handling of protocol & Call-back to app
             assert( hHprotocol->handle_protocol_chain(msg_raw) == true );
@@ -332,4 +403,41 @@ void CServerUDP::run_receiver(std::string alias, bool *is_continue) {
     }
 
     *is_continue = false;
+}
+
+/******************************************
+ * Definition of Private Function.
+ */ 
+std::string CServerUDP::make_client_id(const int addr_type, const struct sockaddr_in& cliaddr) {
+    std::string client_id;
+    char client_addr[peer_name_bufsize] = {0,};
+    int port_num = -1;
+
+    // Only support TCP/UDP M2M communication.
+    assert( get_provider_type() == enum_c::ProviderType::E_PVDT_TRANS_TCP || 
+            get_provider_type() == enum_c::ProviderType::E_PVDT_TRANS_UDP || 
+            get_provider_type() == enum_c::ProviderType::E_PVDT_TRANS_UDS );
+
+    try{
+        if ( mAddr.is_there(cliaddr) == true ) {
+            // Already exist address, then get alias in map.
+            client_id = mAddr.get(cliaddr);
+        }
+        else {
+            // If unknown destination, then make new alias.
+            port_num = ntohs(cliaddr.sin_port);
+            inet_ntop(addr_type, &cliaddr.sin_addr.s_addr, client_addr, sizeof(client_addr));
+
+            if (strcmp(client_addr, "0.0.0.0") != 0) {
+                client_id = client_addr;
+                client_id += ':' + std::to_string(port_num);
+            }
+        }
+    }
+    catch(const std::exception &e){
+        LOGERR("%s", e.what());
+    }
+
+    LOGD("%s is connected.", client_id.c_str());
+    return client_id;
 }

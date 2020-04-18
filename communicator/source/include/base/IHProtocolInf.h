@@ -7,7 +7,6 @@
 #include <string>
 #include <memory>
 
-#include <IAppInf.h>
 #include <CRawMessage.h>
 #include <Enum_common.h>
 #include <BaseDatatypes.h>
@@ -21,7 +20,6 @@ public:
     using MsgType = dtype_b::MsgType;
     using SegmentsType = dtype_b::SegmentsType;
     using AppCallerType = dtype_b::AppCallerType;
-    using AppType = dtype_b::AppType;
     using ProtocolType = std::shared_ptr<IProtocolInf>;
 
 public:
@@ -33,7 +31,7 @@ public:
 
     bool handle_initialization(enum_c::ProviderType pvd_type, bool flag);
 
-    bool handle_connection(std::string alias, bool flag);
+    void handle_connection(std::string alias, bool flag);
 
     bool handle_protocol_chain(RawMsgType msg_raw);
 

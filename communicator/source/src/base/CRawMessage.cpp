@@ -47,7 +47,7 @@ void CRawMessage::clear(void) {
 
 void CRawMessage::destroy(void) {
     if (msg != NULL) {
-        delete msg;
+        delete [] msg;
         msg = NULL;
     }
     msg_size = 0;

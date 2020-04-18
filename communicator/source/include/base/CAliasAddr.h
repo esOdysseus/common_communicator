@@ -42,16 +42,21 @@ public:
 
     std::string get(const ADDR_TYPE &addr);
 
+    std::string get(const ADDR_TYPE &&addr);
+
     bool insert(std::string alias, 
                 std::shared_ptr<ADDR_TYPE> &address, 
                 enum_c::ProviderType pvd_type, 
-                bool &is_new);
+                bool &is_new,
+                bool connect_flag=false);
 
     void remove(std::string alias);
 
     void remove(ADDR_TYPE &addr);
 
     void clear(void);
+
+    void reset_connect_flag(std::string alias, bool &past_flag);
 
 private:
     void remove_impl(std::string alias, ADDR_TYPE addr);

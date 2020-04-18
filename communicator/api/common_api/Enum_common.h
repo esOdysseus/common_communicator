@@ -11,6 +11,13 @@ namespace enum_c
         E_PVDT_SERVICE_VSOMEIP = 4,
         E_PVDT_RSC_IOTIVITY = 5
     } ProviderType;
+
+    enum class ProviderMode {
+        E_PVDM_NONE = 0,
+        E_PVDM_SERVER = 1,
+        E_PVDM_CLIENT = 2,
+        E_PVDM_BOTH = 3
+    };
 }
 
 

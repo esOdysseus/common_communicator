@@ -9,12 +9,9 @@
 #include <IHProtocolInf.h>
 #include <server/CHProtoBaseLan.h>
 
-template class IServerInf<CHProtoBaseLan>;
+template bool IServerInf::create_hprotocol<CHProtoBaseLan>(AppCallerType& app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager);
 
-static const unsigned short client_bufsize = 20;
-
-template <typename PROTOCOL_H> 
-class IServerInf<PROTOCOL_H>::CLooper {
+class IServerInf::CLooper {
 public:
     template <typename _Callable>
     explicit CLooper(_Callable&& __f, std::string alias);
@@ -36,21 +33,18 @@ private:
 /**************************************************
  * Definition for Member-Function of CLooper Class.
  */
-template <typename PROTOCOL_H> 
 template<typename _Callable>
-IServerInf<PROTOCOL_H>::CLooper::CLooper(_Callable&& __f, std::string alias) {
+IServerInf::CLooper::CLooper(_Callable&& __f, std::string alias) {
     this->is_continue = true;
     this->h_thread = std::make_shared<std::thread>(std::forward<_Callable>(__f), alias, &is_continue);
     assert(this->h_thread.get() != NULL);
 }
 
-template <typename PROTOCOL_H> 
-IServerInf<PROTOCOL_H>::CLooper::~CLooper(void) {
+IServerInf::CLooper::~CLooper(void) {
     force_join();
 }
 
-template <typename PROTOCOL_H> 
-void IServerInf<PROTOCOL_H>::CLooper::force_join(void) {
+void IServerInf::CLooper::force_join(void) {
     if ( this->h_thread.get() != NULL && this->is_continue == true) {
         this->is_continue = false;
 
@@ -65,9 +59,10 @@ void IServerInf<PROTOCOL_H>::CLooper::force_join(void) {
 /**************************************************
  * Definition for Member-Function of IServerInf Class.
  */
-template <typename PROTOCOL_H> 
-IServerInf<PROTOCOL_H>::IServerInf(AliasType& alias_list) {
+
+IServerInf::IServerInf(AliasType& alias_list) {
     try {
+        LOGD("Called.");
         id = "";
         clear();
     }
@@ -78,13 +73,47 @@ IServerInf<PROTOCOL_H>::IServerInf(AliasType& alias_list) {
     }
 }
 
-template <typename PROTOCOL_H> 
-IServerInf<PROTOCOL_H>::~IServerInf(void) {
+IServerInf::~IServerInf(void) {
     stop();
 }
 
-template <typename PROTOCOL_H> 
-bool IServerInf<PROTOCOL_H>::stop(void) {
+bool IServerInf::register_new_alias(const char* peer_ip, uint16_t peer_port, 
+                                    std::string &wanted_name) {
+    using AliasType = cf_alias::CAliasTrans;
+    std::string str_pvd_type;
+    std::list<std::shared_ptr<cf_alias::IAlias>> alias_list;
+    assert(peer_ip != NULL);
+    assert(peer_port > 0);
+    assert(wanted_name.empty() == false);
+
+    try {
+        if ( get_provider_type() != enum_c::ProviderType::E_PVDT_TRANS_TCP && 
+            get_provider_type() != enum_c::ProviderType::E_PVDT_TRANS_UDP && 
+            get_provider_type() != enum_c::ProviderType::E_PVDT_TRANS_UDS ) {
+            throw std::domain_error("IP/Port is only allowed within TCP/UDP/UDS.");
+        }
+
+        // convert String-type ip/port to Abstracted IAlias-type.
+        str_pvd_type = AliasType::get_pvd_type(get_provider_type());
+        auto alias = std::make_shared<AliasType>(wanted_name.c_str(), str_pvd_type.c_str());
+        alias->ip = peer_ip;
+        alias->port_num = peer_port;
+        alias->mask = 24;
+        alias_list.push_back(alias);
+
+        // append new alias to internal data-structure of Provider.
+        update_alias_mapper(alias_list, wanted_name);
+        return true;
+    }
+    catch( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        throw ;
+    }
+
+    return false;
+}
+
+bool IServerInf::stop(void) {
     int res = 0;
 
     // close socket.
@@ -109,8 +138,7 @@ bool IServerInf<PROTOCOL_H>::stop(void) {
     return true;
 }
 
-template <typename PROTOCOL_H> 
-int IServerInf<PROTOCOL_H>::gen_random_portnum(void) {
+int IServerInf::gen_random_portnum(void) {
     int port = -1;
     int port_min = 10000;
     int port_max = 60000;
@@ -128,22 +156,20 @@ int IServerInf<PROTOCOL_H>::gen_random_portnum(void) {
     return port;
 }
 
-template <typename PROTOCOL_H> 
-void IServerInf<PROTOCOL_H>::clear(void) {
+void IServerInf::clear(void) {
     // clear All-member-variables
     inited = false;
     started = false;
     sockfd = 0;
     provider_type = enum_c::ProviderType::E_PVDT_NOT_DEFINE;
-    bzero(&servaddr, sizeof(servaddr));
     listeningPort = 0;
     mLooperPool.clear();
     hHprotocol.reset();
 }
 
 template <typename PROTOCOL_H> 
-bool IServerInf<PROTOCOL_H>::create_hprotocol(AppCallerType& app, 
-                                              std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
+bool IServerInf::create_hprotocol(AppCallerType& app, 
+                                  std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
     try{
         hHprotocol.reset();
         hHprotocol = std::make_shared<PROTOCOL_H>(SharedThisType::shared_from_this(), 
@@ -156,8 +182,7 @@ bool IServerInf<PROTOCOL_H>::create_hprotocol(AppCallerType& app,
     return true;
 }
 
-template <typename PROTOCOL_H> 
-bool IServerInf<PROTOCOL_H>::thread_create(std::string& client_id, FPreceiverType &&func) {
+bool IServerInf::thread_create(std::string& client_id, FPreceiverType &&func) {
     try {
         if ( mLooperPool.find(client_id) == mLooperPool.end() ) {
             mLooperPool.emplace(client_id, std::make_shared<CLooper>( func, client_id));
@@ -172,8 +197,7 @@ bool IServerInf<PROTOCOL_H>::thread_create(std::string& client_id, FPreceiverTyp
     return false;
 }
 
-template <typename PROTOCOL_H> 
-bool IServerInf<PROTOCOL_H>::thread_this_migrate(std::string& client_id, FPreceiverType &&func, bool *is_continue) {
+bool IServerInf::thread_this_migrate(std::string& client_id, FPreceiverType &&func, bool *is_continue) {
     assert(is_continue != NULL);
 
     try {
@@ -189,8 +213,7 @@ bool IServerInf<PROTOCOL_H>::thread_this_migrate(std::string& client_id, FPrecei
     return false;
 }
 
-template <typename PROTOCOL_H> 
-bool IServerInf<PROTOCOL_H>::thread_destroy(std::string client_id) {
+bool IServerInf::thread_destroy(std::string client_id) {
     try{
         if ( mLooperPool.find(client_id) == mLooperPool.end() ) {
             auto itor = mLooperPool.find(client_id);
@@ -207,37 +230,5 @@ bool IServerInf<PROTOCOL_H>::thread_destroy(std::string client_id) {
     return false;
 }
 
-template <typename PROTOCOL_H> 
-std::string IServerInf<PROTOCOL_H>::make_client_id(const int addr_type, const struct sockaddr_in& cliaddr) {
-    std::string client_id;
-    char client_addr[client_bufsize] = {0,};
-    int port_num = -1;
 
-    // Only support TCP/UDP M2M communication.
-    assert( get_provider_type() == enum_c::ProviderType::E_PVDT_TRANS_TCP || 
-            get_provider_type() == enum_c::ProviderType::E_PVDT_TRANS_UDP );
-
-    try{
-        if ( mAddr.is_there(cliaddr) == true ) {
-            // Already exist address, then get alias in map.
-            client_id = mAddr.get(cliaddr);
-        }
-        else {
-            // If unknown destination, then make new alias.
-            port_num = ntohs(cliaddr.sin_port);
-            inet_ntop(addr_type, &cliaddr.sin_addr.s_addr, client_addr, sizeof(client_addr));
-
-            if (strcmp(client_addr, "0.0.0.0") != 0) {
-                client_id = client_addr;
-                client_id += ':' + std::to_string(port_num);
-            }
-        }
-    }
-    catch(const std::exception &e){
-        LOGERR("%s", e.what());
-    }
-
-    LOGD("%s is connected.", client_id.c_str());
-    return client_id;
-}
 

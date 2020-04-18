@@ -15,9 +15,9 @@ TO_COPY_CPPS += \
 PROTOCOL_PATH=$${_PRO_FILE_PWD_}
 
 # make command & register to pre-linker
-mkdir.commands = $(MKDIR) $${PROTOCOL_PATH}/include/base && $(MKDIR) $${PROTOCOL_PATH}/src/base
-QMAKE_PRE_LINK += $$system(mkdir $${PROTOCOL_PATH}/include/base)
-QMAKE_PRE_LINK += $$system(mkdir $${PROTOCOL_PATH}/src/base)
+mkdir.commands = $(MKDIR) -p $${PROTOCOL_PATH}/include/base && $(MKDIR) -p $${PROTOCOL_PATH}/src/base
+QMAKE_PRE_LINK += $$system(mkdir -p $${PROTOCOL_PATH}/include/base)
+QMAKE_PRE_LINK += $$system(mkdir -p $${PROTOCOL_PATH}/src/base)
 for(FILE, TO_COPY_HEADERS){
     QMAKE_PRE_LINK += $$system(cp $${FILE} $${PROTOCOL_PATH}/include/base/)
 }

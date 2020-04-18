@@ -16,6 +16,7 @@ std::shared_ptr<ICommunicator> create_communicator(std::string app_id,
                                                    enum_c::ProviderType provider_type, 
                                                    unsigned short port=0, 
                                                    const char* ip=NULL,
+                                                   enum_c::ProviderMode mode=enum_c::ProviderMode::E_PVDM_BOTH,
                                                    const char* protocol_desp_path=NULL,
                                                    const char* alias_desp_path=NULL);
 
@@ -33,7 +34,8 @@ public:
                   std::shared_ptr<void> &proto_config,
                   std::shared_ptr<void> &alias_config,
                   unsigned short port=0,
-                  const char* ip=NULL);
+                  const char* ip=NULL,
+                  enum_c::ProviderMode mode=enum_c::ProviderMode::E_PVDM_BOTH);
 
     ~ICommunicator(void);
 
@@ -148,13 +150,13 @@ public:
     //   - Practice : [REQ/RESP] Send request-message to Server.
     //   - Postcondition : If Server reply with response-message,
     //                     then Handler registered by cb_register_message_handler() will be called.
-    bool send(std::string client_id, std::shared_ptr<payload::CPayload>&& payload);      // Mandatory
+    bool send(std::string alias, std::shared_ptr<payload::CPayload>&& payload);      // Mandatory
 
     // [REQ/RESP] Send response-message to Client.
-    bool send(std::string client_id, std::shared_ptr<payload::CPayload>& payload);      // Mandatory
+    bool send(std::string alias, std::shared_ptr<payload::CPayload>& payload);      // Mandatory
 
     // [REQ/RESP] Send response-message to Client.
-    bool send(std::string client_id, const void* msg, size_t msg_size);
+    bool send(std::string alias, const void* msg, size_t msg_size);                 // Mandatory
 
     /**
      * Client-Side
@@ -164,13 +166,18 @@ public:
     //   - Postcondition : Handler registered by cb_register_connection_handler() will be called.
     //                   : If authentication mode is DISABLE,
     //                     then Handler registered by cb_register_available_handler() will be called.
-    // void connect(void);  // Mandatory
+    void connect(std::string &peer_ip, uint16_t peer_port, std::string &new_alias_name);  // Mandatory
+
+    // connect to peer that is pre-named as 'alias' variable.
+    void connect(std::string && alias);  // Mandatory
 
     //   - Precondition : connect() was called
     //   - Practice : disconnect from Cloud/Server/Service-Provider.
     //   - Postcondition : Handler registered by cb_register_available_handler() will be called.
     //                   : Handler registered by cb_register_connection_handler() will be called.
-    // void disconnect(void);   // Mandatory
+    void disconnect(std::string & alias);   // Mandatory
+    
+    void disconnect(std::string && alias);   // Mandatory
 
     //   - Precondition : Handler registered by cb_register_available_handler() was called.
     //   - Practice : [PUB/SUB] Delare Event-Accepting to Service-Provider.

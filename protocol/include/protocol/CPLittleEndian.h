@@ -56,7 +56,7 @@ private:
 private:
     UProtocol protocol;
 
-    static const unsigned int Segment_ByteSize = 1500U;     // MTU size
+    static constexpr unsigned int Segment_ByteSize = 1500U;     // MTU size
 
 };
 

@@ -17,19 +17,18 @@ std::shared_ptr<ICommunicator> create_communicator(std::string app_id,
                                                    enum_c::ProviderType provider_type, 
                                                    unsigned short port, 
                                                    const char* ip,
+                                                   enum_c::ProviderMode mode,
                                                    const char* protocol_desp_path,
                                                    const char* alias_desp_path) {
-    std::shared_ptr<ICommunicator> ret;
     try {
             std::shared_ptr<cf_proto::CConfigProtocols> proto_config = std::make_shared<cf_proto::CConfigProtocols>(protocol_desp_path);
             std::shared_ptr<cf_alias::CConfigAliases> alias_config = std::make_shared<cf_alias::CConfigAliases>(alias_desp_path);
-            ret = std::make_shared<ICommunicator>(app_id, provider_id, provider_type, proto_config, alias_config, port, ip);
+            return std::make_shared<ICommunicator>(app_id, provider_id, provider_type, proto_config, alias_config, port, ip, mode);
     }
     catch (const std::exception &e) {
         LOGERR("%s", e.what());
+        throw ;
     }
-
-    return ret;
 }
 
 /*****
@@ -41,34 +40,33 @@ ICommunicator::ICommunicator(std::string app_id,
               std::shared_ptr<cf_proto::CConfigProtocols> &proto_config,
               std::shared_ptr<cf_alias::CConfigAliases> &alias_config,
               unsigned short port, 
-              const char* ip) 
-: runner_continue(false) {
+              const char* ip,
+              enum_c::ProviderMode mode) {
+    clear();
 
-    this->app_id = app_id;
-    this->provider_id = provider_id;
-    this->provider_type = provider_type;
-    this->port = port;
-    if ( ip != NULL ) {
-        this->ip = ip;
+    try {
+        this->app_id = app_id;
+        this->provider_id = provider_id;
+        this->provider_type = provider_type;
+        this->port = port;
+        if ( ip != NULL ) {
+            this->ip = ip;
+        }
+        this->mode = mode;
+        this->proto_config = proto_config;
+        this->alias_config = alias_config;
+
+        validation_check();
     }
-    this->proto_config = proto_config;
-    this->alias_config = alias_config;
-
-    this->m_send_payload = NULL;
+    catch( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        throw ;
+    }
 }
 
 ICommunicator::~ICommunicator(void) {
-    quit();
-
-    this->provider_type = enum_c::ProviderType::E_PVDT_NOT_DEFINE;
-    this->app_id = "destroyed";
-    this->provider_id = "destroyed";
-    this->port = 0;
-    this->ip.clear();
-    this->proto_config.reset();
-    this->alias_config.reset();
-
-    this->m_send_payload = NULL;
+    quit();     // thread quit
+    clear();    // variables clear
 }
 
 std::string ICommunicator::get_app_id(void) { 
@@ -80,6 +78,7 @@ std::string ICommunicator::get_version(void) {
 }
 
 void ICommunicator::init(void) {
+    LOGD("Called.");
     this->runner_continue = true;
     this->runner = std::thread(&ICommunicator::run, this);
 }
@@ -142,12 +141,80 @@ bool ICommunicator::send(std::string alias, const void* msg, size_t msg_size) {
     }
     catch( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw e;
+        throw ;
     }
 
     return false;
 }
 
+void ICommunicator::connect(std::string &peer_ip, uint16_t peer_port, std::string &new_alias) {
+    assert( peer_ip.empty() != true );
+    assert( peer_port > 0 );
+    assert( new_alias.empty() == false );
+
+    try {
+        if( h_pvd.get() == NULL ) {
+            throw std::runtime_error("Provider instance is NULL, Please check it.");
+        }
+        
+        assert( h_pvd->register_new_alias(peer_ip.c_str(), peer_port, new_alias) == true );
+        assert( h_pvd->make_connection(new_alias) != 0 );
+    }
+    catch( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        throw ;
+    }
+}
+
+void ICommunicator::connect(std::string && alias) {
+    assert( alias.empty() == false );
+
+    try{
+        if( h_pvd.get() == NULL ) {
+            throw std::runtime_error("Provider instance is NULL, Please check it.");
+        }
+
+        assert( h_pvd->make_connection( alias ) != 0 );
+    }
+    catch( const std::exception &e) {
+        LOGERR("%s", e.what());
+        throw ;
+    }
+}
+
+void ICommunicator::disconnect(std::string & alias) {
+    assert( alias.empty() == false );
+
+    try{
+        if( h_pvd.get() == NULL ) {
+            LOGW("Provider instance is NULL, Please check it.");
+            return ;
+        }
+
+        h_pvd->disconnection(alias);
+    }
+    catch( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        throw ;
+    }
+}
+
+void ICommunicator::disconnect(std::string && alias) {
+    assert( alias.empty() == false );
+
+    try{
+        if( h_pvd.get() == NULL ) {
+            LOGW("Provider instance is NULL, Please check it.");
+            return ;
+        }
+
+        h_pvd->disconnection(alias);
+    }
+    catch( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        throw ;
+    }
+}
 
 /*****
  * Protected Member Function.
@@ -170,16 +237,47 @@ static void cb_force_exit_thread(void* app_id) {
     LOGW("%s Thread is force-exited.", (const char*)app_id);
 }
 
+void ICommunicator::clear(void) {
+    this->runner_continue = false;
+    this->provider_type = enum_c::ProviderType::E_PVDT_NOT_DEFINE;
+    this->app_id = "destroyed";
+    this->provider_id = "destroyed";
+    this->port = 0;
+    this->ip.clear();
+    this->mode=enum_c::ProviderMode::E_PVDM_NONE;
+    this->proto_config.reset();
+    this->alias_config.reset();
+
+    this->m_send_payload = NULL;
+    this->h_pvd.reset();
+}
+
+void ICommunicator::validation_check(void) {
+    if(this->provider_type == enum_c::ProviderType::E_PVDT_NOT_DEFINE) {
+        throw std::invalid_argument("Invalid Input: provider_type is NOT_DEFINE.");
+    }
+    if(this->mode == enum_c::ProviderMode::E_PVDM_NONE) {
+        throw std::invalid_argument("Invalid Input: mode is NONE.");
+    }
+    if(this->app_id.empty() == true) {
+        throw std::invalid_argument("Invalid Input: app_id is empty.");
+    }
+    if(this->provider_id.empty() == true) {
+        throw std::invalid_argument("Invalid Input: provider_id is empty.");
+    }
+}
+
 bool ICommunicator::is_running_continue(void) {
     return runner_continue;
 }
 
 int ICommunicator::run(void) {
-
+    LOGD("Called.");
     std::shared_ptr<CAppInternalCaller> app_caller = std::make_shared<CAppInternalCaller>();
     app_caller->set_send_payload_of_app = std::bind(&ICommunicator::set_send_payload_fp, this, std::placeholders::_1);
     app_caller->get_cb_handlers = std::bind(&ICommunicator::get_cb_handlers, this);
     app_caller->get_app_id = std::bind(&ICommunicator::get_app_id, this);
+    h_pvd.reset();
 
     // when receive 'cancel' signal, terminate this thread immediatly.
     pthread_setcancelstate( PTHREAD_CANCEL_ENABLE, NULL );
@@ -190,26 +288,27 @@ int ICommunicator::run(void) {
     {
     case enum_c::ProviderType::E_PVDT_TRANS_TCP:
         {
-            auto pvd = std::make_shared<CServerTCP>( alias_config->get_aliases(alias_config->TCP) );
+            h_pvd = std::make_shared<CServerTCP>( alias_config->get_aliases(alias_config->TCP) );
             const char* ip_str = ip.empty() == true ? NULL : ip.c_str();
-            pvd->init(provider_id, port, ip_str);
-            pvd->start(app_caller, proto_config);
-            while(pvd->accept() && is_running_continue());  // Block
+            h_pvd->init(provider_id, port, ip_str, mode);
+            h_pvd->start(app_caller, proto_config);
+            while(h_pvd->accept() && is_running_continue());  // Block
         }
         break;
     case enum_c::ProviderType::E_PVDT_TRANS_UDP:
         {
-            auto pvd = std::make_shared<CServerUDP>( alias_config->get_aliases(alias_config->UDP) );
+            h_pvd = std::make_shared<CServerUDP>( alias_config->get_aliases(alias_config->UDP) );
             const char* ip_str = ip.empty() == true ? NULL : ip.c_str();
-            pvd->init(provider_id, port, ip_str);
-            pvd->start(app_caller, proto_config);
-            while(pvd->accept() && is_running_continue());  // Block
+            h_pvd->init(provider_id, port, ip_str, mode);
+            h_pvd->start(app_caller, proto_config);
+            while(h_pvd->accept() && is_running_continue());  // Block
         }
         break;
     default:
         break;
     }
 
+    h_pvd.reset();
     pthread_cleanup_pop(0);     // Macro End of 'pthread_cleanup_push'
     LOGD("Soft-Exit of thread.");
     return NULL;

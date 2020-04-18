@@ -53,7 +53,7 @@ CConfigAliases::CConfigAliases(const char* config_path)
     }
     catch ( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw e;
+        throw ;
     }
 }
 
@@ -78,7 +78,7 @@ CConfigAliases::AliasType& CConfigAliases::get_aliases(std::string type) {
     }
     catch ( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw e;
+        throw ;
     }
 }
 
@@ -108,7 +108,7 @@ bool CConfigAliases::init(const std::string config_path) {
     catch( const std::exception &e ) {
         LOGERR("%s", e.what());
         res = false;
-        throw e;
+        throw ;
     }
 
     return res;
@@ -143,7 +143,7 @@ static std::shared_ptr<IAlias> make_alias(std::string alias,
     }
     catch( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw e;
+        throw ;
     }
 
     return res;
@@ -183,7 +183,7 @@ static std::shared_ptr<CAliasTrans> make_alias_trans(std::string alias,
     }
     catch ( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw e;
+        throw ;
     }
 
     return res;
@@ -219,7 +219,7 @@ static std::shared_ptr<CAliasService> make_alias_service(std::string alias,
     }
     catch ( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw e;
+        throw ;
     }
 
     return res;
@@ -237,7 +237,7 @@ IAlias::IAlias(const char* alias_, const char* pvd_type_) {
     }
     catch( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw e;
+        throw ;
     }
 }
 
@@ -261,6 +261,29 @@ enum_c::ProviderType IAlias::cvt_str2pvdtype(std::string pvd_type_str) {
     else {
         throw CException(E_ERROR::E_NOT_SUPPORTED_PVD_TYPE);
     }
+}
+
+std::string IAlias::get_pvd_type(enum_c::ProviderType pvd_type) {
+    std::string res;
+
+    switch( pvd_type ) {
+    case enum_c::ProviderType::E_PVDT_TRANS_UDP:
+        res = CConfigAliases::UDP;
+        break;
+    case enum_c::ProviderType::E_PVDT_TRANS_TCP:
+        res = CConfigAliases::TCP;
+        break;
+    case enum_c::ProviderType::E_PVDT_SERVICE_VSOMEIP:
+        res = CConfigAliases::VSOMEIP;
+        break;
+    default:
+        {
+            std::string err_str = "Not Support Provider-Type.(" + std::to_string(pvd_type) + ")";
+            throw std::out_of_range(err_str);
+        }
+    }
+
+    return res;
 }
 
 }   // namespace cf_alias

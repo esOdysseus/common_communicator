@@ -22,6 +22,7 @@ int main(int argc, char *argv[])
                                        enum_c::ProviderType::E_PVDT_TRANS_TCP,
                                        atoi(argv[2]), 
                                        argv[1],
+                                       enum_c::ProviderMode::E_PVDM_BOTH,
                                        argv[3],
                                        argv[4]);
 

@@ -3,11 +3,16 @@
 #include <logger.h>
 #include <IProtocolInf.h>
 
-template bool IProtocolInf::set_property<int>(const std::string key, int value);
-template bool IProtocolInf::set_property<long>(const std::string key, long value);
+template bool IProtocolInf::set_property<int8_t>(const std::string key, int8_t value);
+template bool IProtocolInf::set_property<int16_t>(const std::string key, int16_t value);
+template bool IProtocolInf::set_property<int32_t>(const std::string key, int32_t value);
+template bool IProtocolInf::set_property<int64_t>(const std::string key, int64_t value);
 template bool IProtocolInf::set_property<float>(const std::string key, float value);
 template bool IProtocolInf::set_property<double>(const std::string key, double value);
-
+template bool IProtocolInf::set_property<uint8_t>(const std::string key, uint8_t value);
+template bool IProtocolInf::set_property<uint16_t>(const std::string key, uint16_t value);
+template bool IProtocolInf::set_property<uint32_t>(const std::string key, uint32_t value);
+template bool IProtocolInf::set_property<uint64_t>(const std::string key, uint64_t value);
 
 /******************************
  * Public Function Definition

@@ -22,6 +22,7 @@ int main(int argc, char *argv[])
                                        enum_c::ProviderType::E_PVDT_TRANS_UDP,
                                        0,
                                        NULL,
+                                       enum_c::ProviderMode::E_PVDM_BOTH,
                                        argv[1],
                                        argv[2]);
 

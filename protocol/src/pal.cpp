@@ -1,5 +1,5 @@
 /*
- * abl.cpp
+ * pal.cpp
  *
  *  Created on: 2020. 1. 1.
  *      Author: esOdysseus
