@@ -1,3 +1,10 @@
+/***
+ * pal.h
+ * Copyright [2019-] 
+ * Written by EunSeok Kim <es.odysseus@gmail.com>
+ * 
+ * This file is part of the Common-Communicator framework.
+ */
 #ifndef _PROTOCOL_ABSTRACTION_LAYER_H_
 #define _PROTOCOL_ABSTRACTION_LAYER_H_
 

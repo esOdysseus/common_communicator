@@ -1,3 +1,10 @@
+/***
+ * CConfigAliases.cpp
+ * Copyright [2019-] 
+ * Written by EunSeok Kim <es.odysseus@gmail.com>
+ * 
+ * This file is part of the Common-Communicator framework.
+ */
 #include <cassert>
 
 #include <logger.h>

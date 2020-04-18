@@ -1,10 +1,10 @@
-/*
+/***
  * pal.cpp
- *
- *  Created on: 2020. 1. 1.
- *      Author: esOdysseus
+ * Copyright [2019-] 
+ * Written by EunSeok Kim <es.odysseus@gmail.com>
+ * 
+ * This file is part of the Common-Communicator framework.
  */
-
 #include <cassert>
 
 #include <stdio.h>

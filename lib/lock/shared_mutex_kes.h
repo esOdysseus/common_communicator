@@ -1,12 +1,12 @@
-/*
+/***
  * shared_mutex_kes.h
+ * Copyright [2019-] 
+ * Written by EunSeok Kim <es.odysseus@gmail.com>
  * 
- * Description : alternative-standard library of shared_mutex for c++11 supporting.
- *
- *  Created on: Feb 12, 2020
- *  Author: eunseok, kim
+ * This file is part of the Common-Communicator framework.
+ * Description:
+ *  alternative-standard library of shared_mutex for c++11 supporting.
  */
-
 #ifndef LIB_SHARED_MUTEX_KES_H_
 #define LIB_SHARED_MUTEX_KES_H_
 

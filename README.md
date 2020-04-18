@@ -19,7 +19,8 @@ Feature-name | Support | Category | Description
 
 ## License
 ```
-Copyright [2019] [es.odysseus@gmail.com]
+Copyright [2019-] 
+Written by EunSeok Kim <es.odysseus@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -104,7 +105,7 @@ Date | Commit-ID | Version | Description
 `2020-02-07` | `0cc7bf9e6d5427d2d5d5add075d90cfea644ab62` | Ver 0.1.4 | 1. Support Client of TCP.<br> 2. Support Server of TCP.<br> 3. Support Server of UDP.
 `2020-02-12` | `30f2973d546a1620c2b49488e3fbecb316d827ba` | Ver 0.1.5 | 1. Add shared_mutex library for c++11.<br> 2. Add Address to Alias mapper.
 `2020-04-03` | `0fdbdd8b2e4457fbe0440071002537b57b4b04bc` | Ver 0.1.6 | Add quit API.
-`2020-04-18` | `` | Ver 0.1.7 | 1. Add connect, disconnect API.<br> 2. Allow additional new-alias in runtime.
+`2020-04-18` | `bec7426aa13923a9017a7389399060f0c9318031` | Ver 0.1.7 | 1. Add connect, disconnect API.<br> 2. Allow additional new-alias in runtime.
 
 ### TBD-list
 - Build Routing-Manager.

@@ -1,3 +1,10 @@
+/***
+ * CAppTest.h
+ * Copyright [2019-] 
+ * Written by EunSeok Kim <es.odysseus@gmail.com>
+ * 
+ * This file is part of the Common-Communicator framework.
+ */
 #ifndef C_APP_TEST_H_
 #define C_APP_TEST_H_
 

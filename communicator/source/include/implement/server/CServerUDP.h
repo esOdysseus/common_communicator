@@ -1,3 +1,10 @@
+/***
+ * CServerUDP.h
+ * Copyright [2019-] 
+ * Written by EunSeok Kim <es.odysseus@gmail.com>
+ * 
+ * This file is part of the Common-Communicator framework.
+ */
 #ifndef C_SERVER_UDP_H
 #define C_SERVER_UDP_H
 

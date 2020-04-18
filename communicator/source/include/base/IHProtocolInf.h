@@ -1,4 +1,10 @@
-
+/***
+ * IHProtocolInf.h
+ * Copyright [2019-] 
+ * Written by EunSeok Kim <es.odysseus@gmail.com>
+ * 
+ * This file is part of the Common-Communicator framework.
+ */
 #ifndef I_HANDLER_PROTOCOL_INTERFACE_H_
 #define I_HANDLER_PROTOCOL_INTERFACE_H_
 

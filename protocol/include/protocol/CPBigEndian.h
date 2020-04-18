@@ -1,3 +1,10 @@
+/***
+ * CPBigEndian.h
+ * Copyright [2019-] 
+ * Written by EunSeok Kim <es.odysseus@gmail.com>
+ * 
+ * This file is part of the Common-Communicator framework.
+ */
 #ifndef C_PROTOCOL_BIG_ENDIAN_H_
 #define C_PROTOCOL_BIG_ENDIAN_H_
 

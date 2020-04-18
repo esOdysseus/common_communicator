@@ -1,6 +1,9 @@
-/*
+/***
  * logger.h
- * Created on: Apr 21, 2015
+ * Copyright [2019-] 
+ * Written by EunSeok Kim <es.odysseus@gmail.com>
+ * 
+ * This file is part of the Common-Communicator framework.
  */
 #ifndef LOGGER_KES_H_
 #define LOGGER_KES_H_

@@ -1,3 +1,10 @@
+/***
+ * CConfigAliases.h
+ * Copyright [2019-] 
+ * Written by EunSeok Kim <es.odysseus@gmail.com>
+ * 
+ * This file is part of the Common-Communicator framework.
+ */
 #ifndef _C_CONFIG_ALIASES_H_
 #define _C_CONFIG_ALIASES_H_
 
