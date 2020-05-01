@@ -183,10 +183,10 @@ public:
     //   - Postcondition : Handler registered by cb_register_connection_handler() will be called.
     //                   : If authentication mode is DISABLE,
     //                     then Handler registered by cb_register_available_handler() will be called.
-    void connect(std::string &peer_ip, uint16_t peer_port, std::string &new_alias_name);  // Mandatory
+    bool connect_try(std::string &peer_ip, uint16_t peer_port, std::string &new_alias_name);  // Mandatory
 
     // connect to peer that is pre-named as 'alias' variable.
-    void connect(std::string && alias);  // Mandatory
+    bool connect_try(std::string && alias);  // Mandatory
 
     //   - Precondition : connect() was called
     //   - Practice : disconnect from Cloud/Server/Service-Provider.

@@ -42,7 +42,9 @@ bool CHProtoBaseLan::write_payload(std::string alias, std::shared_ptr<payload::C
 
         // message write.
         for(SegmentsType::iterator itor = segments.begin(); itor != segments.end(); itor++) {
-            assert(s_server->write_msg(alias, *itor) == true);
+            if(s_server->write_msg(alias, *itor) != true) {
+                throw std::logic_error("write message is failed.");
+            }
         }
 
         if ( payload->get_op_flag(payload::E_PAYLOAD_FLAG::E_KEEP_PAYLOAD_AFTER_TX) == false ) {
@@ -51,10 +53,11 @@ bool CHProtoBaseLan::write_payload(std::string alias, std::shared_ptr<payload::C
         else {
             LOGW("E_KEEP_PAYLOAD_AFTER_TX == true");
         }
+
+        return true;
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
-        return false;
     }
-    return true;
+    return false;
 }

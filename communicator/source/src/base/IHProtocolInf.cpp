@@ -55,12 +55,16 @@ IHProtocolInf::ProtocolType IHProtocolInf::decapsulation(IHProtocolInf::RawMsgTy
      *          : 2. Decoding(payload)
      */
     bool res = false;
-    auto payload = s_proto_config->create_protocols_chain();
-    ProtocolType protocol = payload->get(payload::CPayload::Myself_Name);
+    size_t data_size = 0;
+    const void * data = NULL;
+    std::shared_ptr<payload::CPayload> payload;
+    ProtocolType protocol;
 
     try{
-        size_t data_size = 0;
-        const void * data = msg_raw->get_msg_read_only( &data_size );
+        payload = s_proto_config->create_protocols_chain();
+        protocol = payload->get(payload::CPayload::Myself_Name);
+
+        data = msg_raw->get_msg_read_only( &data_size );
         res = protocol->unpack_recurcive(data, data_size);
         assert(res==true);
     }

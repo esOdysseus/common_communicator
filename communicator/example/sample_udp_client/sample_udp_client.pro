@@ -2,17 +2,21 @@ TARGET = sample_udp_client
 TEMPLATE = app
 QT -= gui core
 
+!include ($$_PRO_FILE_PWD_/../common.pri) {
+    error( "Not exist common.pri file." )
+}
+
 isEmpty(DESTDIR) {
     error("We need DESTDIR variable, please insert it.")
 }
 
-message( "[$$TARGET] DESTDIR=$$DESTDIR")
-!include ($$DESTDIR/../../common_config.pri) {
-    error( "Not exist common_config.pri file." )
-}
-
 # for building
-LIBS += -lpthread -lcommunicator -L$$DESTDIR/../lib
+LIBS += -l$$LIB_NAME -L$$DESTDIR/../lib
+
+equals(CPU_ARCH, "x86") {
+    # If OS-type is Ubuntu, then need these libraries.
+    LIBS += -lpthread
+}
 
 INCLUDEPATH += \
     $$_PRO_FILE_PWD_    \

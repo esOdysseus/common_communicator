@@ -106,29 +106,51 @@ IProtocolInf::SegmentsType& IProtocolInf::pack_recursive(const void* msg, size_t
 
 bool IProtocolInf::unpack_recurcive(const void* msg_raw, size_t msg_size) {
     LOGD("Called");
-    auto proto_chain = get_proto_chain();
-    assert(proto_chain->end() != proto_chain->begin());
     bool res = false;
+    MsgType payload;
+    std::shared_ptr<CPayload::ProtoChainType> proto_chain;
+    assert(msg_raw != NULL);
+    assert(msg_size > 0);
+    
     #define GET_PROTOCOL(iterator)  (*(iterator))->get(payload::CPayload::Myself_Name)
 
     try{
+        proto_chain = get_proto_chain();
+        assert(proto_chain->end() != proto_chain->begin());
+
         auto itr = proto_chain->end();
         itr--;
         auto pre_protocol = GET_PROTOCOL(itr);
         assert( (res = pre_protocol->unpack(msg_raw, msg_size)) == true );
         assert( (res = !pre_protocol->is_empty()) == true );
         
-        MsgType payload = pre_protocol->get_payload();
-        if ( (*itr)->get_name() !=  payload::CPayload::Default_Name ) {
-            for (; itr != proto_chain->begin();) {
-                itr--;
-                res = GET_PROTOCOL(itr)->unpack(payload->get_msg_read_only(), 
-                                                payload->get_msg_size());
-                assert(res == true);
+        payload = pre_protocol->get_payload();
+
+        for (; itr != proto_chain->begin();) {
+            itr--;
+            if ( (*itr)->get_name() !=  payload::CPayload::Default_Name ) {
                 pre_protocol.reset();
                 pre_protocol = GET_PROTOCOL(itr);
+                res = pre_protocol->unpack(payload->get_msg_read_only(), 
+                                            payload->get_msg_size());
+                assert(res == true);
+                assert( (res = !pre_protocol->is_empty()) == true );
+                
+                payload = pre_protocol->get_payload();
             }
         }
+    }
+    catch(const std::length_error &e) {
+        LOGW("%s", e.what());
+        throw;
+    }
+    catch(const std::out_of_range &e) {
+        LOGW("%s", e.what());
+        throw;
+    }
+    catch(const std::invalid_argument &e) {
+        LOGW("%s", e.what());
+        throw;
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());

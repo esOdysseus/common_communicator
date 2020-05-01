@@ -298,12 +298,15 @@ bool CServerUDP::write_msg(std::string alias, MessageType msg) {
             buffer = buffer + written_size;
             written_size = 0;
         }
+
+        return true;
     }
     catch(const std::exception &e) {
+        LOGW("%s", e.what());
         LOGERR("%d: %s", errno, strerror(errno));
-        return false;
     }
-    return true;
+
+    return false;    
 }
 
 /******************************************
@@ -316,18 +319,23 @@ int CServerUDP::enable_keepalive(int sock) {
 void CServerUDP::update_alias_mapper(AliasType& alias_list, 
                                      std::string &res_alias_name) {
     using AddressType = struct sockaddr_in;
+    LOGD("Called.");
+    bool is_new = false;
+    AliasType::iterator itor;
+    std::string alias_name;
+    std::shared_ptr<cf_alias::CAliasTrans> alias;
+    std::shared_ptr<struct sockaddr_in> destaddr;
     assert(alias_list.size() == 1);
 
     try {
-        LOGD("Called.");
-        AliasType::iterator itor;
-        std::string alias_name;
-
         for ( itor = alias_list.begin(); itor != alias_list.end(); itor++ ) {
-            bool is_new = false;
-            std::shared_ptr<cf_alias::CAliasTrans> alias = std::static_pointer_cast<cf_alias::CAliasTrans>(*itor);
+            alias.reset();
+            destaddr.reset();
+            is_new = false;
+            
+            alias = std::static_pointer_cast<cf_alias::CAliasTrans>(*itor);
             assert(alias.get() != NULL);
-            std::shared_ptr<struct sockaddr_in> destaddr = std::make_shared<struct sockaddr_in>();
+            destaddr = std::make_shared<struct sockaddr_in>();
             assert( alias->pvd_type == get_provider_type());
 
             destaddr->sin_family = ADDR_TYPE;
@@ -348,18 +356,23 @@ void CServerUDP::update_alias_mapper(AliasType& alias_list,
 }
 
 bool CServerUDP::update_alias_mapper(AliasType& alias_list) {
+    LOGD("Called.");
     bool res = true;
-
+    bool is_new = false;
+    AliasType::iterator itor;
+    std::string alias_name;
+    std::shared_ptr<cf_alias::CAliasTrans> alias;
+    std::shared_ptr<struct sockaddr_in> destaddr;
+    
     try {
-        LOGD("Called.");
-        AliasType::iterator itor;
-        std::string alias_name;
-
         for ( itor = alias_list.begin(); itor != alias_list.end(); itor++ ) {
-            bool is_new = false;
-            std::shared_ptr<cf_alias::CAliasTrans> alias = std::static_pointer_cast<cf_alias::CAliasTrans>(*itor);
+            alias.reset();
+            destaddr.reset();
+            is_new = false;
+
+            alias = std::static_pointer_cast<cf_alias::CAliasTrans>(*itor);
             assert(alias.get() != NULL);
-            std::shared_ptr<struct sockaddr_in> destaddr = std::make_shared<struct sockaddr_in>();
+            destaddr = std::make_shared<struct sockaddr_in>();
             assert( alias->pvd_type == get_provider_type());
 
             destaddr->sin_family = ADDR_TYPE;
@@ -396,12 +409,15 @@ void CServerUDP::run_receiver(std::string alias, bool *is_continue) {
 
             // check received message 
             msg_raw = read_msg(0, is_new);     // get raw message. (Blocking)
-            if( is_new == true ) {
-                // trig connected call-back to app.
-                hHprotocol->handle_connection(msg_raw->get_source_alias(), true);
+            
+            if( msg_raw->get_msg_size() > 0 ) {
+                if( is_new == true ) {
+                    // trig connected call-back to app.
+                    hHprotocol->handle_connection(msg_raw->get_source_alias(), true);
+                }
+                // trig handling of protocol & Call-back to app
+                assert( hHprotocol->handle_protocol_chain(msg_raw) == true );
             }
-            // trig handling of protocol & Call-back to app
-            assert( hHprotocol->handle_protocol_chain(msg_raw) == true );
         }
     }
     catch(const std::exception &e) {

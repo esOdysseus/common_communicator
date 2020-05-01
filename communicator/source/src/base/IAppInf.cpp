@@ -154,7 +154,8 @@ bool ICommunicator::send(std::string alias, const void* msg, size_t msg_size) {
     return false;
 }
 
-void ICommunicator::connect(std::string &peer_ip, uint16_t peer_port, std::string &new_alias) {
+bool ICommunicator::connect_try(std::string &peer_ip, uint16_t peer_port, std::string &new_alias) {
+    bool ret = true;
     assert( peer_ip.empty() != true );
     assert( peer_port > 0 );
     assert( new_alias.empty() == false );
@@ -165,15 +166,20 @@ void ICommunicator::connect(std::string &peer_ip, uint16_t peer_port, std::strin
         }
         
         assert( h_pvd->register_new_alias(peer_ip.c_str(), peer_port, new_alias) == true );
-        assert( h_pvd->make_connection(new_alias) != 0 );
+        if( h_pvd->make_connection(new_alias) <= 0 ) {
+            ret = false;
+        }
     }
     catch( const std::exception &e ) {
         LOGERR("%s", e.what());
         throw ;
     }
+
+    return ret;
 }
 
-void ICommunicator::connect(std::string && alias) {
+bool ICommunicator::connect_try(std::string && alias) {
+    bool ret = true;
     assert( alias.empty() == false );
 
     try{
@@ -181,12 +187,16 @@ void ICommunicator::connect(std::string && alias) {
             throw std::runtime_error("Provider instance is NULL, Please check it.");
         }
 
-        assert( h_pvd->make_connection( alias ) != 0 );
+        if( h_pvd->make_connection( alias ) <= 0 ) {
+            ret = false;
+        }
     }
     catch( const std::exception &e) {
         LOGERR("%s", e.what());
         throw ;
     }
+
+    return ret;
 }
 
 void ICommunicator::disconnect(std::string & alias) {

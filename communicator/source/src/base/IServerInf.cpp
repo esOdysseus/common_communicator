@@ -6,6 +6,7 @@
  * This file is part of the Common-Communicator framework.
  */
 #include <random>
+#include <ctime>
 
 #include <unistd.h>
 #include <string.h> 
@@ -31,6 +32,8 @@ public:
 
     void force_join(void);
 
+    bool is_thread_continue(void) { return is_continue; };
+
 private: 
     ThreadType h_thread;
 
@@ -52,7 +55,7 @@ IServerInf::CLooper::~CLooper(void) {
 }
 
 void IServerInf::CLooper::force_join(void) {
-    if ( this->h_thread.get() != NULL && this->is_continue == true) {
+    if ( this->h_thread.get() != NULL ) {
         this->is_continue = false;
 
         if( this->h_thread->joinable() ) {
@@ -136,8 +139,14 @@ bool IServerInf::stop(void) {
     }
 
     // mLooperPool remove
-    for( auto itor = mLooperPool.begin(); itor != mLooperPool.end(); itor++ ) {
-        itor->second.reset();
+    {
+        std::unique_lock<std::mutex> guard(mtx_looperpool);
+
+        for( auto itor = mLooperPool.begin(); itor != mLooperPool.end();) {
+            std::string alias = itor->first;
+            itor++;
+            thread_destroy(alias);
+        }
     }
 
     // clear variables.
@@ -149,8 +158,9 @@ int IServerInf::gen_random_portnum(void) {
     int port = -1;
     int port_min = 10000;
     int port_max = 60000;
-    std::random_device rd;  //Will be used to obtain a seed for the random number engine
-    std::mt19937 gen( rd() ); 
+    // std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    // std::mt19937 gen( rd() ); 
+    std::mt19937 gen( (uint32_t)time(NULL) ); 
     std::uniform_int_distribution<> dist(port_min, port_max); 
     
     LOGD("Random Port-Min : %d", dist.min());
@@ -170,8 +180,16 @@ void IServerInf::clear(void) {
     sockfd = 0;
     provider_type = enum_c::ProviderType::E_PVDT_NOT_DEFINE;
     listeningPort = 0;
-    mLooperPool.clear();
+    {
+        std::unique_lock<std::mutex> guard(mtx_looperpool);
+        mLooperPool.clear();
+    }
+    {
+        std::unique_lock<std::mutex> guard(mtx_loopergarbage);
+        mLooperGarbage.clear();
+    }
     hHprotocol.reset();
+    id.clear();
 }
 
 template <typename PROTOCOL_H> 
@@ -191,6 +209,8 @@ bool IServerInf::create_hprotocol(AppCallerType& app,
 
 bool IServerInf::thread_create(std::string& client_id, FPreceiverType &&func) {
     try {
+        std::unique_lock<std::mutex> guard(mtx_looperpool);
+
         if ( mLooperPool.find(client_id) == mLooperPool.end() ) {
             mLooperPool.emplace(client_id, std::make_shared<CLooper>( func, client_id));
         }
@@ -222,11 +242,36 @@ bool IServerInf::thread_this_migrate(std::string& client_id, FPreceiverType &&fu
 
 bool IServerInf::thread_destroy(std::string client_id) {
     try{
-        if ( mLooperPool.find(client_id) == mLooperPool.end() ) {
+        if ( mLooperPool.find(client_id) != mLooperPool.end() ) {
             auto itor = mLooperPool.find(client_id);
             itor->second->force_join();
             itor->second.reset();
             mLooperPool.erase(itor);
+
+            assert( mLooperPool.find(client_id) == mLooperPool.end() );
+        }
+        return true;
+    }
+    catch( const std::exception &e ) {
+        LOGERR("%s", e.what());
+    }
+
+    return false;
+}
+
+bool IServerInf::zombi_thread_migrate(std::string client_id) {
+    try{
+        std::unique_lock<std::mutex> guard(mtx_looperpool);
+
+        if ( mLooperPool.find(client_id) != mLooperPool.end() ) {
+            auto itor = mLooperPool.find(client_id);
+            {
+                std::unique_lock<std::mutex> guard(mtx_loopergarbage);
+                mLooperGarbage[itor->first] = itor->second;
+            }
+            mLooperPool.erase(itor);
+
+            assert( mLooperPool.find(client_id) == mLooperPool.end() );
         }
         return true;
     }

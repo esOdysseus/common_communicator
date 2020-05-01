@@ -4,15 +4,22 @@ QT -= gui core
 
 VER_MAJ = 0
 VER_MIN = 1
-VER_PAT = 7
+VER_PAT = 8
 VERSION = $$VER_MAJ"."$$VER_MIN"."$$VER_PAT
+
+message( "[ Build 'communicator' " )
+
+ROOT_PATH=$(ROOT_PATH)
+isEmpty(ROOT_PATH) {
+    error("We need ROOT_PATH variable, please insert it.")
+}
 
 # for pre-process, if exist.
 !include ($$_PRO_FILE_PWD_/pre_proc.pri) {
     message( "Not exist pre_proc.pri file." )
 }
 
-!include ($$_PRO_FILE_PWD_/../common_config.pri) {
+!include ($$ROOT_PATH/common_config.pri) {
     message( "Not exist common_config.pri file." )
 }
 
@@ -64,7 +71,7 @@ EXTRA_BINFILES = \
 
 PKG_CONFIG_DESCRIPTION=Common-communicator SDK library that support transaction-orient & service-orient.
 
-!include ($$_PRO_FILE_PWD_/../sdk_deploy.pri) {
+!include ($$ROOT_PATH/sdk_deploy.pri) {
     message( "Not exist sdk_deploy.pri file." )
 }
 

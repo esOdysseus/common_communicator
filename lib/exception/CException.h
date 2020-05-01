@@ -38,6 +38,10 @@ public:
         return exception_switch(__err_n);
     }
 
+    const uint32_t get_id(void) const throw () {
+        return (uint32_t)__err_n;
+    }
+
 protected:
     /** Error message.
      */

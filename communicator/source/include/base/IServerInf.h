@@ -94,6 +94,8 @@ protected:
 
     bool thread_destroy(std::string client_id);
 
+    bool zombi_thread_migrate(std::string client_id);
+
     void set_id(std::string& value) { id = value; }
 
     void set_provider_type(enum_c::ProviderType type) { provider_type = type; }
@@ -109,6 +111,8 @@ protected:
 
     std::mutex mtx_write, mtx_read;
 
+    std::mutex mtx_looperpool, mtx_loopergarbage;
+
     HProtocolType hHprotocol;   // handle of Protocol-Handler
 
     static const unsigned int read_bufsize = 2048;
@@ -121,6 +125,8 @@ private:
     std::string id;
 
     LoopPoolType mLooperPool;
+
+    LoopPoolType mLooperGarbage;
 
     enum_c::ProviderType provider_type;
 

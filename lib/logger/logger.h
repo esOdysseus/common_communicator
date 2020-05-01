@@ -47,7 +47,7 @@
     #define _HEXOUT(fmt, buf, length)   \
             {               \
                 int _i_ = 0;      \
-                printf("["LOGGER_TAG"]HEX: " "%s(%s:%d):length=%u, HEXOUTPUT:\n" fmt, _FUNC_NAME_, _FILE_NAME_, __LINE__, length);   \
+                printf("[" LOGGER_TAG "]HEX: " "%s(%s:%d):length=%u, HEXOUTPUT:\n" fmt, _FUNC_NAME_, _FILE_NAME_, __LINE__, length);   \
                 for(_i_=0; _i_ < (length); _i_++)       \
                 {           \
                     printf(" %02X", (buf)[_i_]);   \
@@ -55,14 +55,14 @@
                 printf( "\n");   \
             }
     #define _DBG(fmt, arg...)   \
-            printf("["LOGGER_TAG"]D: " "%s(%s:%d):" fmt "\n", _FUNC_NAME_, _FILE_NAME_, __LINE__, ##arg)
+            printf("[" LOGGER_TAG "]D: " "%s(%s:%d):" fmt "\n", _FUNC_NAME_, _FILE_NAME_, __LINE__, ##arg)
     #define _INFO(fmt, arg...)  \
-            printf("["LOGGER_TAG"]I: " "%s(%s:%d):" fmt "\n", _FUNC_NAME_, _FILE_NAME_, __LINE__, ##arg)
+            printf("[" LOGGER_TAG "]I: " "%s(%s:%d):" fmt "\n", _FUNC_NAME_, _FILE_NAME_, __LINE__, ##arg)
     #define _WARN(fmt, arg...)  \
-            printf("["LOGGER_TAG"]W: " "%s(%s:%d):" fmt "\n", _FUNC_NAME_, _FILE_NAME_, __LINE__, ##arg)
+            printf("[" LOGGER_TAG "]W: " "%s(%s:%d):" fmt "\n", _FUNC_NAME_, _FILE_NAME_, __LINE__, ##arg)
     #define _ERR(fmt, arg...)   \
             {   \
-                printf("["LOGGER_TAG"]E: " "%s(%s:%d):" fmt "\n", _FUNC_NAME_, _FILE_NAME_, __LINE__, ##arg);    \
+                printf("[" LOGGER_TAG "]E: " "%s(%s:%d):" fmt "\n", _FUNC_NAME_, _FILE_NAME_, __LINE__, ##arg);    \
                 LOG_EXIT(-1);   \
             }
 #else

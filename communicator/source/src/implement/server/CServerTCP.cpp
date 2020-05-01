@@ -295,14 +295,26 @@ int CServerTCP::make_connection(std::string alias) {
         }
         else {
             LOGW("Connection to DEST.(%s) is failed.", alias.c_str());
-            close(new_sockfd);
             throw CException(E_ERROR::E_TCP_CONNECT_FAILED);
         }
+    }
+    catch(const CException &e) {
+        switch(e.get_id()) {
+        case E_ERROR::E_TCP_CONNECT_FAILED:
+            LOGW("%s", e.what());
+            break;
+        default:
+            LOGERR("%s", e.what());
+        }
+
+        if( _mode_ == ProviderMode::E_PVDM_CLIENT ) {
+            release_self_sockfd(new_sockfd);
+        }
+        new_sockfd = -1;
     }
     catch (const std::exception &e) {
         LOGERR("%s", e.what());
         new_sockfd = -1;
-        throw ;
     }
 
     return new_sockfd;
@@ -344,7 +356,7 @@ CServerTCP::MessageType CServerTCP::read_msg(int u_sockfd, bool &is_new) {
         while(msg_size == read_bufsize) {
             // return value description
             // 0 : End of Field.
-            // -1 : Error. (session is Closed by client)
+            // -1 : Error. (session is Closed by peer)
             // > 0 : The number of received message.
             msg_size = read(u_sockfd, read_buf, read_bufsize);    // Blocking Function.
             if(0 > msg_size || msg_size > read_bufsize) {
@@ -357,8 +369,8 @@ CServerTCP::MessageType CServerTCP::read_msg(int u_sockfd, bool &is_new) {
         }
     }
     catch(const std::range_error &e) {
-        LOGERR("%s", e.what());
-        LOGERR("errno:%d, msg:%s", errno, strerror(errno));
+        LOGW("%s", e.what());
+        LOGW("errno:%d, msg:%s", errno, strerror(errno));
         msg->destroy();
         msg.reset();
         throw;
@@ -378,15 +390,15 @@ bool CServerTCP::write_msg(std::string alias, MessageType msg) {
 
     bool res = true;
     int u_sockfd = -1;
+    ssize_t written_size = 0;
     ssize_t msg_size = msg->get_msg_size();
     RawDataType* buffer = (RawDataType*)msg->get_msg_read_only();
 
-    // alias is prepered. but, if alias is null, then we will use alias registed by msg.
-    u_sockfd = get_connected_socket(alias, msg);
-    assert(u_sockfd > 0 && buffer != NULL && msg_size > 0);
-
     try {
-        ssize_t written_size = 0;
+        // alias is prepered. but, if alias is null, then we will use alias registed by msg.
+        u_sockfd = get_connected_socket(alias, msg);
+        assert(u_sockfd > 0 && buffer != NULL && msg_size > 0);
+                
         std::lock_guard<std::mutex> guard(mtx_write);
 
         while( msg_size > 0 ) {
@@ -406,7 +418,8 @@ bool CServerTCP::write_msg(std::string alias, MessageType msg) {
         }
     }
     catch(const std::exception &e) {
-        LOGERR("%s", e.what());
+        LOGW("%s", e.what());
+        LOGERR("%d: %s", errno, strerror(errno));
         res = false;
     }
     return res;
@@ -450,18 +463,25 @@ int CServerTCP::enable_keepalive(int sock) {
 void CServerTCP::update_alias_mapper(AliasType& alias_list, 
                                      std::string &res_alias_name) {
     using AddressType = struct sockaddr_in;
+
+    LOGD("Called.");
+    bool is_new = false;
+    AliasType::iterator itor;
+    std::string alias_name;
+    std::shared_ptr<cf_alias::CAliasTrans> alias;
+    std::shared_ptr<AddressType> destaddr;
     assert(alias_list.size() == 1);
     
     try {
-        LOGD("Called.");
-        AliasType::iterator itor;
-        std::string alias_name;
-
         for ( itor = alias_list.begin(); itor != alias_list.end(); itor++ ) {
-            bool is_new = false;
-            std::shared_ptr<cf_alias::CAliasTrans> alias = std::static_pointer_cast<cf_alias::CAliasTrans>(*itor);
+            alias.reset();
+            destaddr.reset();
+            is_new = false;
+
+            // get alias info & alloc memory
+            alias = std::static_pointer_cast<cf_alias::CAliasTrans>(*itor);
             assert(alias.get() != NULL);
-            std::shared_ptr<struct sockaddr_in> destaddr = std::make_shared<struct sockaddr_in>();
+            destaddr = std::make_shared<AddressType>();
             assert( alias->pvd_type == get_provider_type());
 
             destaddr->sin_family = ADDR_TYPE;
@@ -482,24 +502,31 @@ void CServerTCP::update_alias_mapper(AliasType& alias_list,
 }
 
 bool CServerTCP::update_alias_mapper(AliasType& alias_list) {
+    LOGD("Called.");
     bool res = true;
+    bool is_new = false;
+    AliasType::iterator itor;
+    std::string alias_name;
+    std::shared_ptr<cf_alias::CAliasTrans> alias;
+    std::shared_ptr<struct sockaddr_in> destaddr;
 
     try {
-        LOGD("Called.");
-        AliasType::iterator itor;
-        std::string alias_name;
-
         for ( itor = alias_list.begin(); itor != alias_list.end(); itor++ ) {
-            bool is_new = false;
-            std::shared_ptr<cf_alias::CAliasTrans> alias = std::static_pointer_cast<cf_alias::CAliasTrans>(*itor);
+            alias.reset();
+            destaddr.reset();
+            is_new = false;
+
+            // get alias info & alloc memory
+            alias = std::static_pointer_cast<cf_alias::CAliasTrans>(*itor);
             assert(alias.get() != NULL);
-            std::shared_ptr<struct sockaddr_in> destaddr = std::make_shared<struct sockaddr_in>();
+            destaddr = std::make_shared<struct sockaddr_in>();
             assert( alias->pvd_type == get_provider_type());
 
             // make sockaddr_in variables.
             destaddr->sin_family = ADDR_TYPE;
             destaddr->sin_addr.s_addr = inet_addr(alias->ip.c_str());
             destaddr->sin_port = htons(alias->port_num);
+
             // set all bits of the padding field to 0
             memset(destaddr->sin_zero, '\0', sizeof(destaddr->sin_zero));
 
@@ -538,19 +565,52 @@ void CServerTCP::run_receiver(std::string alias, bool *is_continue) {
             is_new = false;
             msg_raw.reset();
 
-            // check received message 
-            msg_raw = read_msg(socket_fd, is_new);     // get raw message. (Blocking)
-            msg_raw->set_source(socket, alias.c_str());
-            // trig handling of protocol & Call-back to app
-            assert( hHprotocol->handle_protocol_chain(msg_raw) == true );
+            try {
+                // check received message 
+                msg_raw = read_msg(socket_fd, is_new);     // get raw message. (Blocking)
+
+                if( msg_raw->get_msg_size() > 0 ) {
+                    msg_raw->set_source(socket, alias.c_str());
+                    // trig handling of protocol & Call-back to app
+                    assert( hHprotocol->handle_protocol_chain(msg_raw) == true );
+                }
+                else {
+                    LOGW("msg_size == 0, we are regard this that connection close by peer.");
+                    *is_continue = false;
+                }
+            }
+            catch(const std::length_error &e) { // occure when payload length in packet is invalid.
+                LOGW("%s", e.what());
+            }
+            catch(const std::out_of_range &e) { // occure when payload is NULL.
+                LOGW("%s", e.what());
+            }
+            catch(const std::invalid_argument &e) { // occure when msg_size is invalid.
+                LOGW("%s", e.what());
+            }
+
+            msg_raw.reset();
         }
+
+        // trig connected call-back to app.
+        hHprotocol->handle_connection(alias, false);    
+    }
+    catch(const std::range_error &e) {  // occure when connection close by peer.
+        LOGW("%s", e.what());
+        // trig connected call-back to app.
+        hHprotocol->handle_connection(alias, false);
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
+        
+        // trig connected call-back to app.
+        hHprotocol->handle_connection(alias, false);
         hHprotocol->handle_unintended_quit(e);
     }
 
     *is_continue = false;
+    disconnection(alias);
+    zombi_thread_migrate(alias);
 }
 
 /******************************************
@@ -585,7 +645,10 @@ int CServerTCP::get_connected_socket(std::string alias, MessageType &msg) {
                 u_sockfd = *(m_alias2socket.get(alias).get());
             }
             else {
-                assert( (u_sockfd=make_connection(alias)) > 0 );
+                u_sockfd=make_connection(alias);
+                if( u_sockfd < 0 ) {
+                    throw std::logic_error("make_connection failed.");
+                }
             }
         }
         else {  // alias is NULL.

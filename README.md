@@ -39,7 +39,7 @@ limitations under the License.
 - esOdysseus (email: es.odysseus@gmail.com)
 
 ### Latest Release
-- version 0.1.7 (Date: 2020-04-18)
+- version 0.1.8 (Date: 2020-05-01)
 ---
 ## Installation
 > Please refer following commands.
@@ -106,6 +106,7 @@ Date | Commit-ID | Version | Description
 `2020-02-12` | `30f2973d546a1620c2b49488e3fbecb316d827ba` | Ver 0.1.5 | 1. Add shared_mutex library for c++11.<br> 2. Add Address to Alias mapper.
 `2020-04-03` | `0fdbdd8b2e4457fbe0440071002537b57b4b04bc` | Ver 0.1.6 | Add quit API.
 `2020-04-18` | `bec7426aa13923a9017a7389399060f0c9318031` | Ver 0.1.7 | 1. Add connect, disconnect API.<br> 2. Allow additional new-alias in runtime.
+`2020-05-01` | `` | Ver 0.1.8 | 1. Bug-Fix: TCP disconn & re-connect bug.<br> 2. Bug-Fix: Protocol-Chain buf.<br> 3. Bug-Fix: Random-Device bug.<br> 4. API-chang: connect --> connect_try.
 
 ### TBD-list
 - Build Routing-Manager.

@@ -2,17 +2,16 @@ TARGET = sample_udp_server
 TEMPLATE = app
 QT -= gui core
 
+!include ($$_PRO_FILE_PWD_/../common.pri) {
+    error( "Not exist common.pri file." )
+}
+
 isEmpty(DESTDIR) {
     error("We need DESTDIR variable, please insert it.")
 }
 
-message( "[$$TARGET] DESTDIR=$$DESTDIR")
-!include ($$DESTDIR/../../common_config.pri) {
-    error( "Not exist common_config.pri file." )
-}
-
 # for building
-LIBS += -lcommunicator -L$$DESTDIR/../lib
+LIBS += -l$$LIB_NAME -L$$DESTDIR/../lib
 
 INCLUDEPATH += \
     $$_PRO_FILE_PWD_    \
