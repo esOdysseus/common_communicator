@@ -21,7 +21,7 @@
 #include <CConfigProtocols.h>
 #include <CConfigAliases.h>
 
-#include <IServerInf.h>
+#include <IPVDInf.h>
 
 class ICommunicator;
 
@@ -276,7 +276,7 @@ private:
 
     std::shared_ptr<cf_alias::CConfigAliases> alias_config;     // alias-configuration.
 
-    std::shared_ptr<IServerInf> h_pvd;  // Handler of provider instance.
+    std::shared_ptr<IPVDInf> h_pvd;  // Handler of provider instance.
 
 };
 

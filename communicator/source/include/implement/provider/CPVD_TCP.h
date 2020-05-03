@@ -1,25 +1,25 @@
 /***
- * CServerTCP.h
+ * CPVD_TCP.h
  * Copyright [2019-] 
  * Written by EunSeok Kim <es.odysseus@gmail.com>
  * 
  * This file is part of the Common-Communicator framework.
  */
-#ifndef C_SERVER_TCP_H_
+#ifndef C_PROVIDER_TCP_H_
 #define C_SERVER_TCP_H_
 
 #include <map>
 #include <string>
-#include <IServerInf.h>
+#include <IPVDInf.h>
 #include <IAppInf.h>
 #include <IProtocolInf.h>
 #include <CAliasAddr.h>
 
-class CServerTCP : public IServerInf {
+class CPVD_TCP : public IPVDInf {
 public:
-    CServerTCP(AliasType& alias_list);
+    CPVD_TCP(AliasType& alias_list);
 
-    ~CServerTCP(void);
+    ~CPVD_TCP(void);
 
     bool init(std::string id, unsigned int port=0, const char* ip=NULL, ProviderMode mode=ProviderMode::E_PVDM_BOTH) override;
 

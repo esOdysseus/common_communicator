@@ -13,8 +13,8 @@
 #include <CConfigProtocols.h>
 #include <CConfigAliases.h>
 #include <IAppInf.h>
-#include <server/CServerUDP.h>
-#include <server/CServerTCP.h>
+#include <provider/CPVD_TCP.h>
+#include <provider/CPVD_UDP.h>
 
 /*****
  * Static Function.
@@ -305,7 +305,7 @@ int ICommunicator::run(void) {
     {
     case enum_c::ProviderType::E_PVDT_TRANS_TCP:
         {
-            h_pvd = std::make_shared<CServerTCP>( alias_config->get_aliases(alias_config->TCP) );
+            h_pvd = std::make_shared<CPVD_TCP>( alias_config->get_aliases(alias_config->TCP) );
             const char* ip_str = ip.empty() == true ? NULL : ip.c_str();
             h_pvd->init(provider_id, port, ip_str, mode);
             h_pvd->start(app_caller, proto_config);
@@ -314,7 +314,7 @@ int ICommunicator::run(void) {
         break;
     case enum_c::ProviderType::E_PVDT_TRANS_UDP:
         {
-            h_pvd = std::make_shared<CServerUDP>( alias_config->get_aliases(alias_config->UDP) );
+            h_pvd = std::make_shared<CPVD_UDP>( alias_config->get_aliases(alias_config->UDP) );
             const char* ip_str = ip.empty() == true ? NULL : ip.c_str();
             h_pvd->init(provider_id, port, ip_str, mode);
             h_pvd->start(app_caller, proto_config);

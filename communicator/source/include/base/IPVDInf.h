@@ -1,12 +1,12 @@
 /***
- * IServerInf.h
+ * IPVDInf.h
  * Copyright [2019-] 
  * Written by EunSeok Kim <es.odysseus@gmail.com>
  * 
  * This file is part of the Common-Communicator framework.
  */
-#ifndef ISERVER_INTERFACE_H_
-#define ISERVER_INTERFACE_H_
+#ifndef _INTERFACE_PROVIDER_H_
+#define _INTERFACE_PROVIDER_H_
 
 #include <string>
 #include <memory>
@@ -26,11 +26,11 @@
 
 class IHProtocolInf;
 
-class IServerInf: public std::enable_shared_from_this<IServerInf> {
+class IPVDInf: public std::enable_shared_from_this<IPVDInf> {
 public:
     using AppCallerType = dtype_b::AppCallerType;
     using HProtocolType = std::shared_ptr<IHProtocolInf>;
-    using SharedThisType = std::enable_shared_from_this<IServerInf>;
+    using SharedThisType = std::enable_shared_from_this<IPVDInf>;
     using ThreadType = std::shared_ptr<std::thread>;
     using MessageType = dtype_b::MsgType;
     using AliasType = std::list<std::shared_ptr<cf_alias::IAlias>>;
@@ -45,9 +45,9 @@ private:
     using LoopPoolType = std::unordered_map<std::string /* alias */, std::shared_ptr<CLooper> >;
 
 public:
-    IServerInf(AliasType& alias_list);
+    IPVDInf(AliasType& alias_list);
 
-    ~IServerInf(void);
+    ~IPVDInf(void);
 
     virtual bool init(std::string id, unsigned int port=0, const char* ip=NULL, ProviderMode mode=ProviderMode::E_PVDM_BOTH) = 0;
 
@@ -132,4 +132,4 @@ private:
 
 };
 
-#endif // ISERVER_INTERFACE_H_
+#endif // _INTERFACE_PROVIDER_H_

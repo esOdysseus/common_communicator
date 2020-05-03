@@ -54,7 +54,7 @@ INCLUDEPATH += \
 
 SOURCES += \
     $$files($$_PRO_FILE_PWD_/source/src/base/*.cpp)  \
-    $$files($$_PRO_FILE_PWD_/source/src/implement/server/*.cpp)  \
+    $$files($$_PRO_FILE_PWD_/source/src/implement/provider/*.cpp)  \
     $$files($$ROOT_PATH/lib/json/*.cpp)     \
     $$files($$ROOT_PATH/lib/pal/*.c)
 

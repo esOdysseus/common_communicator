@@ -1,22 +1,22 @@
 /***
- * CServerUDP.h
+ * CPVD_UDP.h
  * Copyright [2019-] 
  * Written by EunSeok Kim <es.odysseus@gmail.com>
  * 
  * This file is part of the Common-Communicator framework.
  */
-#ifndef C_SERVER_UDP_H
-#define C_SERVER_UDP_H
+#ifndef C_PROVIDER_UDP_H
+#define C_PROVIDER_UDP_H
 
 #include <string>
-#include <IServerInf.h>
+#include <IPVDInf.h>
 #include <IAppInf.h>
 
-class CServerUDP : public IServerInf {
+class CPVD_UDP : public IPVDInf {
 public:
-    CServerUDP(AliasType& alias_list);
+    CPVD_UDP(AliasType& alias_list);
 
-    ~CServerUDP(void);
+    ~CPVD_UDP(void);
 
     bool init(std::string id, unsigned int port=0, const char* ip=NULL, ProviderMode mode=ProviderMode::E_PVDM_BOTH) override;
 
@@ -53,4 +53,4 @@ private:
 
 };
 
-#endif // C_SERVER_UDP_H
+#endif // C_PROVIDER_UDP_H

@@ -9,14 +9,14 @@
 #define C_HANDLE_ETHERNET_TP_H_
 
 #include <map>
-#include <IServerInf.h>
+#include <IPVDInf.h>
 #include <IHProtocolInf.h>
 #include <BaseDatatypes.h>
 #include <CRawMessage.h>
 
 class CHProtoBaseLan : public IHProtocolInf {
 public:
-    using ServerType = std::shared_ptr<IServerInf>;
+    using ServerType = std::shared_ptr<IPVDInf>;
     using AddressType = CRawMessage::LanAddrType;
 
 public:

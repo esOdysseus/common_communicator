@@ -1,5 +1,5 @@
 /***
- * CServerUDP.cpp
+ * CPVD_UDP.cpp
  * Copyright [2019-] 
  * Written by EunSeok Kim <es.odysseus@gmail.com>
  * 
@@ -20,8 +20,8 @@
 
 #include <logger.h>
 #include <CRawMessage.h>
-#include <server/CServerUDP.h>
-#include <server/CHProtoBaseLan.h>
+#include <provider/CPVD_UDP.h>
+#include <provider/CHProtoBaseLan.h>
 
 using namespace std::placeholders;
 
@@ -47,8 +47,8 @@ using namespace std::placeholders;
 /******************************************
  * Definition of Public Function.
  */ 
-CServerUDP::CServerUDP(AliasType& alias_list)
-: IServerInf(alias_list) {
+CPVD_UDP::CPVD_UDP(AliasType& alias_list)
+: IPVDInf(alias_list) {
     try{
         LOGD("Called.");
         set_provider_type(enum_c::ProviderType::E_PVDT_TRANS_UDP);
@@ -61,13 +61,13 @@ CServerUDP::CServerUDP(AliasType& alias_list)
     }
 }
 
-CServerUDP::~CServerUDP(void) {
+CPVD_UDP::~CPVD_UDP(void) {
     set_provider_type(enum_c::ProviderType::E_PVDT_NOT_DEFINE);
     _is_continue_ = false;
     bzero(&servaddr, sizeof(servaddr));
 }
 
-bool CServerUDP::init(std::string id, unsigned int port, const char* ip, ProviderMode mode) {
+bool CPVD_UDP::init(std::string id, unsigned int port, const char* ip, ProviderMode mode) {
     /** UDP don't car about mode. Because, UDP has not classification of SERVER/CLIENT. */ 
 
     set_id(id);
@@ -115,7 +115,7 @@ bool CServerUDP::init(std::string id, unsigned int port, const char* ip, Provide
     return inited;
 }
 
-bool CServerUDP::start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
+bool CPVD_UDP::start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
     
     if (inited != true) {
         LOGERR("We need to init ServerTCP. Please check it.");
@@ -135,13 +135,13 @@ bool CServerUDP::start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProt
     return started;
 }
 
-bool CServerUDP::accept(void) {
+bool CPVD_UDP::accept(void) {
     if(started) {
         std::string client_addr;
 
         // sockfd is not client-socket-fd so, We will insert value-Zero(0) to parameter-2.
         _is_continue_ = true;
-        if (thread_this_migrate(client_addr, std::bind(&CServerUDP::run_receiver, this, _1, _2), &_is_continue_) == false) {
+        if (thread_this_migrate(client_addr, std::bind(&CPVD_UDP::run_receiver, this, _1, _2), &_is_continue_) == false) {
             LOGERR("%d: %s", errno, strerror(errno));
             return false;
         }
@@ -151,7 +151,7 @@ bool CServerUDP::accept(void) {
     return false;
 }
 
-int CServerUDP::make_connection(std::string alias) {
+int CPVD_UDP::make_connection(std::string alias) {
     bool is_new = false;
     try{
         if( mAddr.is_there(alias) ) {
@@ -171,7 +171,7 @@ int CServerUDP::make_connection(std::string alias) {
     return false;
 }
 
-void CServerUDP::disconnection(std::string alias) {
+void CPVD_UDP::disconnection(std::string alias) {
     bool had_connected = false;
 
     try{
@@ -190,7 +190,7 @@ void CServerUDP::disconnection(std::string alias) {
     }
 }
 
-CServerUDP::MessageType CServerUDP::read_msg(int u_sockfd, bool &is_new) {
+CPVD_UDP::MessageType CPVD_UDP::read_msg(int u_sockfd, bool &is_new) {
     size_t msg_size = read_bufsize;
     
     u_sockfd = this->sockfd;
@@ -243,7 +243,7 @@ CServerUDP::MessageType CServerUDP::read_msg(int u_sockfd, bool &is_new) {
     return msg;
 }
 
-bool CServerUDP::write_msg(std::string alias, MessageType msg) {
+bool CPVD_UDP::write_msg(std::string alias, MessageType msg) {
     assert( msg.get() != NULL );
     using RawDataType = CRawMessage::MsgDataType;
 
@@ -312,11 +312,11 @@ bool CServerUDP::write_msg(std::string alias, MessageType msg) {
 /******************************************
  * Definition of Protected Function.
  */ 
-int CServerUDP::enable_keepalive(int sock) {
+int CPVD_UDP::enable_keepalive(int sock) {
     return 0;
 }
 
-void CServerUDP::update_alias_mapper(AliasType& alias_list, 
+void CPVD_UDP::update_alias_mapper(AliasType& alias_list, 
                                      std::string &res_alias_name) {
     using AddressType = struct sockaddr_in;
     LOGD("Called.");
@@ -355,7 +355,7 @@ void CServerUDP::update_alias_mapper(AliasType& alias_list,
     }
 }
 
-bool CServerUDP::update_alias_mapper(AliasType& alias_list) {
+bool CPVD_UDP::update_alias_mapper(AliasType& alias_list) {
     LOGD("Called.");
     bool res = true;
     bool is_new = false;
@@ -394,7 +394,7 @@ bool CServerUDP::update_alias_mapper(AliasType& alias_list) {
     return res;
 }
 
-void CServerUDP::run_receiver(std::string alias, bool *is_continue) {
+void CPVD_UDP::run_receiver(std::string alias, bool *is_continue) {
     LOGI("Called with alias(%s)", alias.c_str());
 
     try {
@@ -431,7 +431,7 @@ void CServerUDP::run_receiver(std::string alias, bool *is_continue) {
 /******************************************
  * Definition of Private Function.
  */ 
-std::string CServerUDP::make_client_id(const int addr_type, const struct sockaddr_in& cliaddr) {
+std::string CPVD_UDP::make_client_id(const int addr_type, const struct sockaddr_in& cliaddr) {
     std::string client_id;
     char client_addr[peer_name_bufsize] = {0,};
     int port_num = -1;

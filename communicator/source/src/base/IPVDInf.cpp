@@ -1,5 +1,5 @@
 /***
- * IServerInf.cpp
+ * IPVDInf.cpp
  * Copyright [2019-] 
  * Written by EunSeok Kim <es.odysseus@gmail.com>
  * 
@@ -13,13 +13,13 @@
 #include <arpa/inet.h>
 
 #include <logger.h>
-#include <IServerInf.h>
+#include <IPVDInf.h>
 #include <IHProtocolInf.h>
-#include <server/CHProtoBaseLan.h>
+#include <provider/CHProtoBaseLan.h>
 
-template bool IServerInf::create_hprotocol<CHProtoBaseLan>(AppCallerType& app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager);
+template bool IPVDInf::create_hprotocol<CHProtoBaseLan>(AppCallerType& app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager);
 
-class IServerInf::CLooper {
+class IPVDInf::CLooper {
 public:
     template <typename _Callable>
     explicit CLooper(_Callable&& __f, std::string alias);
@@ -44,17 +44,17 @@ private:
  * Definition for Member-Function of CLooper Class.
  */
 template<typename _Callable>
-IServerInf::CLooper::CLooper(_Callable&& __f, std::string alias) {
+IPVDInf::CLooper::CLooper(_Callable&& __f, std::string alias) {
     this->is_continue = true;
     this->h_thread = std::make_shared<std::thread>(std::forward<_Callable>(__f), alias, &is_continue);
     assert(this->h_thread.get() != NULL);
 }
 
-IServerInf::CLooper::~CLooper(void) {
+IPVDInf::CLooper::~CLooper(void) {
     force_join();
 }
 
-void IServerInf::CLooper::force_join(void) {
+void IPVDInf::CLooper::force_join(void) {
     if ( this->h_thread.get() != NULL ) {
         this->is_continue = false;
 
@@ -67,10 +67,10 @@ void IServerInf::CLooper::force_join(void) {
 
 
 /**************************************************
- * Definition for Member-Function of IServerInf Class.
+ * Definition for Member-Function of IPVDInf Class.
  */
 
-IServerInf::IServerInf(AliasType& alias_list) {
+IPVDInf::IPVDInf(AliasType& alias_list) {
     try {
         LOGD("Called.");
         id = "";
@@ -83,11 +83,11 @@ IServerInf::IServerInf(AliasType& alias_list) {
     }
 }
 
-IServerInf::~IServerInf(void) {
+IPVDInf::~IPVDInf(void) {
     stop();
 }
 
-bool IServerInf::register_new_alias(const char* peer_ip, uint16_t peer_port, 
+bool IPVDInf::register_new_alias(const char* peer_ip, uint16_t peer_port, 
                                     std::string &wanted_name) {
     using AliasType = cf_alias::CAliasTrans;
     std::string str_pvd_type;
@@ -123,7 +123,7 @@ bool IServerInf::register_new_alias(const char* peer_ip, uint16_t peer_port,
     return false;
 }
 
-bool IServerInf::stop(void) {
+bool IPVDInf::stop(void) {
     int res = 0;
 
     // close socket.
@@ -154,7 +154,7 @@ bool IServerInf::stop(void) {
     return true;
 }
 
-int IServerInf::gen_random_portnum(void) {
+int IPVDInf::gen_random_portnum(void) {
     int port = -1;
     int port_min = 10000;
     int port_max = 60000;
@@ -173,7 +173,7 @@ int IServerInf::gen_random_portnum(void) {
     return port;
 }
 
-void IServerInf::clear(void) {
+void IPVDInf::clear(void) {
     // clear All-member-variables
     inited = false;
     started = false;
@@ -193,7 +193,7 @@ void IServerInf::clear(void) {
 }
 
 template <typename PROTOCOL_H> 
-bool IServerInf::create_hprotocol(AppCallerType& app, 
+bool IPVDInf::create_hprotocol(AppCallerType& app, 
                                   std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
     try{
         hHprotocol.reset();
@@ -207,7 +207,7 @@ bool IServerInf::create_hprotocol(AppCallerType& app,
     return true;
 }
 
-bool IServerInf::thread_create(std::string& client_id, FPreceiverType &&func) {
+bool IPVDInf::thread_create(std::string& client_id, FPreceiverType &&func) {
     try {
         std::unique_lock<std::mutex> guard(mtx_looperpool);
 
@@ -224,7 +224,7 @@ bool IServerInf::thread_create(std::string& client_id, FPreceiverType &&func) {
     return false;
 }
 
-bool IServerInf::thread_this_migrate(std::string& client_id, FPreceiverType &&func, bool *is_continue) {
+bool IPVDInf::thread_this_migrate(std::string& client_id, FPreceiverType &&func, bool *is_continue) {
     assert(is_continue != NULL);
 
     try {
@@ -240,7 +240,7 @@ bool IServerInf::thread_this_migrate(std::string& client_id, FPreceiverType &&fu
     return false;
 }
 
-bool IServerInf::thread_destroy(std::string client_id) {
+bool IPVDInf::thread_destroy(std::string client_id) {
     try{
         if ( mLooperPool.find(client_id) != mLooperPool.end() ) {
             auto itor = mLooperPool.find(client_id);
@@ -259,7 +259,7 @@ bool IServerInf::thread_destroy(std::string client_id) {
     return false;
 }
 
-bool IServerInf::zombi_thread_migrate(std::string client_id) {
+bool IPVDInf::zombi_thread_migrate(std::string client_id) {
     try{
         std::unique_lock<std::mutex> guard(mtx_looperpool);
 

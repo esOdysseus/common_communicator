@@ -1,5 +1,5 @@
 /***
- * CServerTCP.cpp
+ * CPVD_TCP.cpp
  * Copyright [2019-] 
  * Written by EunSeok Kim <es.odysseus@gmail.com>
  * 
@@ -19,8 +19,8 @@
 
 #include <logger.h>
 #include <CRawMessage.h>
-#include <server/CServerTCP.h>
-#include <server/CHProtoBaseLan.h>
+#include <provider/CPVD_TCP.h>
+#include <provider/CHProtoBaseLan.h>
 
 using namespace std::placeholders;
 
@@ -79,8 +79,8 @@ static const char* exception_switch(E_ERROR err_num) {
 #include <CException.h>
 
 
-CServerTCP::CServerTCP(AliasType& alias_list)
-: IServerInf(alias_list) {
+CPVD_TCP::CPVD_TCP(AliasType& alias_list)
+: IPVDInf(alias_list) {
     try{
         _mode_ = ProviderMode::E_PVDM_NONE;
         set_provider_type(enum_c::ProviderType::E_PVDT_TRANS_TCP);
@@ -93,7 +93,7 @@ CServerTCP::CServerTCP(AliasType& alias_list)
     }
 }
 
-CServerTCP::~CServerTCP(void) {
+CPVD_TCP::~CPVD_TCP(void) {
     CAliasAddr<int>::AddrIterator itor;
     _mode_ = ProviderMode::E_PVDM_NONE;
     set_provider_type(enum_c::ProviderType::E_PVDT_NOT_DEFINE);
@@ -109,7 +109,7 @@ CServerTCP::~CServerTCP(void) {
     bzero(&cliaddr, sizeof(cliaddr));
 }
 
-bool CServerTCP::init(std::string id, unsigned int port, const char* ip, ProviderMode mode) {
+bool CPVD_TCP::init(std::string id, unsigned int port, const char* ip, ProviderMode mode) {
     set_id(id);
 
     if (inited == true) {
@@ -154,7 +154,7 @@ bool CServerTCP::init(std::string id, unsigned int port, const char* ip, Provide
     return inited;
 }
 
-bool CServerTCP::start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
+bool CPVD_TCP::start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
     started = false;
 
     if (inited != true) {
@@ -210,7 +210,7 @@ bool CServerTCP::start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProt
     return started;
 }
 
-bool CServerTCP::accept(void) {
+bool CPVD_TCP::accept(void) {
     try {
         if(started) {
             switch(_mode_) {
@@ -237,7 +237,7 @@ bool CServerTCP::accept(void) {
     return false;
 }
 
-int CServerTCP::make_connection(std::string alias) {
+int CPVD_TCP::make_connection(std::string alias) {
     bool is_new = false;
     int new_sockfd = -1;
     struct sockaddr_in *destaddr = NULL;
@@ -287,7 +287,7 @@ int CServerTCP::make_connection(std::string alias) {
             assert( is_new == true );
             
             // create thread with PROTOCOL for new-sesseion by new-user.
-            if (thread_create(alias, std::bind(&CServerTCP::run_receiver, this, _1, _2)) == false) {
+            if (thread_create(alias, std::bind(&CPVD_TCP::run_receiver, this, _1, _2)) == false) {
                 LOGERR("%d: Thread Create failed: %s", errno, strerror(errno));
                 disconnection(alias);
                 throw CException(E_ERROR::E_TCP_CREATE_THREAD_FAILED);
@@ -320,7 +320,7 @@ int CServerTCP::make_connection(std::string alias) {
     return new_sockfd;
 }
 
-void CServerTCP::disconnection(std::string alias) {
+void CPVD_TCP::disconnection(std::string alias) {
     int u_sockfd = -1;
 
     if ( m_alias2socket.is_there(alias) == false) {
@@ -346,7 +346,7 @@ void CServerTCP::disconnection(std::string alias) {
     }
 }
 
-CServerTCP::MessageType CServerTCP::read_msg(int u_sockfd, bool &is_new) {
+CPVD_TCP::MessageType CPVD_TCP::read_msg(int u_sockfd, bool &is_new) {
     ssize_t msg_size = read_bufsize;
     assert(u_sockfd > 0 && read_buf != NULL && read_bufsize > 0);
     MessageType msg = std::make_shared<CRawMessage>();
@@ -384,7 +384,7 @@ CServerTCP::MessageType CServerTCP::read_msg(int u_sockfd, bool &is_new) {
     return msg;
 }
 
-bool CServerTCP::write_msg(std::string alias, MessageType msg) {
+bool CPVD_TCP::write_msg(std::string alias, MessageType msg) {
     assert( msg.get() != NULL );
     using RawDataType = CRawMessage::MsgDataType;
 
@@ -428,7 +428,7 @@ bool CServerTCP::write_msg(std::string alias, MessageType msg) {
 /************************************
  * Definition of Protected Function.
  */
-int CServerTCP::enable_keepalive(int sock) {
+int CPVD_TCP::enable_keepalive(int sock) {
     int yes = 1;
 
     if(setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &yes, sizeof(int)) == -1) {
@@ -460,7 +460,7 @@ int CServerTCP::enable_keepalive(int sock) {
     return 0;
 }
 
-void CServerTCP::update_alias_mapper(AliasType& alias_list, 
+void CPVD_TCP::update_alias_mapper(AliasType& alias_list, 
                                      std::string &res_alias_name) {
     using AddressType = struct sockaddr_in;
 
@@ -501,7 +501,7 @@ void CServerTCP::update_alias_mapper(AliasType& alias_list,
     }
 }
 
-bool CServerTCP::update_alias_mapper(AliasType& alias_list) {
+bool CPVD_TCP::update_alias_mapper(AliasType& alias_list) {
     LOGD("Called.");
     bool res = true;
     bool is_new = false;
@@ -543,7 +543,7 @@ bool CServerTCP::update_alias_mapper(AliasType& alias_list) {
     return res;
 }
 
-void CServerTCP::run_receiver(std::string alias, bool *is_continue) {
+void CPVD_TCP::run_receiver(std::string alias, bool *is_continue) {
     LOGI("Called with alias(%s)", alias.c_str());
     int socket_fd = -1;
     bool is_new = false;
@@ -616,7 +616,7 @@ void CServerTCP::run_receiver(std::string alias, bool *is_continue) {
 /******************************************
  * Definition of Private Function.
  */ 
-int CServerTCP::make_socket(int opt_flag) {
+int CPVD_TCP::make_socket(int opt_flag) {
     int new_sockfd = -1;
 
     // make TCP-Socket
@@ -635,7 +635,7 @@ int CServerTCP::make_socket(int opt_flag) {
     return new_sockfd;
 }
 
-int CServerTCP::get_connected_socket(std::string alias, MessageType &msg) {
+int CPVD_TCP::get_connected_socket(std::string alias, MessageType &msg) {
     int u_sockfd = -1;
 
     try {
@@ -669,7 +669,7 @@ int CServerTCP::get_connected_socket(std::string alias, MessageType &msg) {
     return u_sockfd;
 }
 
-std::string CServerTCP::make_client_id(const int addr_type, const struct sockaddr_in& new_cliaddr) {
+std::string CPVD_TCP::make_client_id(const int addr_type, const struct sockaddr_in& new_cliaddr) {
     std::string client_id;
     char client_addr[peer_name_bufsize] = {0,};
     int port_num = -1;
@@ -703,7 +703,7 @@ std::string CServerTCP::make_client_id(const int addr_type, const struct sockadd
     return client_id;
 }
 
-void CServerTCP::make_sockaddr_in( struct sockaddr_in &addr, const char* ip, unsigned int port ) {
+void CPVD_TCP::make_sockaddr_in( struct sockaddr_in &addr, const char* ip, unsigned int port ) {
 
     try {
         bzero(&addr, sizeof(addr));
@@ -723,7 +723,7 @@ void CServerTCP::make_sockaddr_in( struct sockaddr_in &addr, const char* ip, uns
     }
 }
 
-void CServerTCP::server_accept(void) {
+void CPVD_TCP::server_accept(void) {
     bool is_new = false;
     std::string client_id;
     struct sockaddr_in new_cliaddr;
@@ -745,7 +745,7 @@ void CServerTCP::server_accept(void) {
 
         if ( client_id.empty() == false ) {
             // create thread with PROTOCOL for new-sesseion by new-user.
-            if (thread_create(client_id, std::bind(&CServerTCP::run_receiver, this, _1, _2)) == false) {
+            if (thread_create(client_id, std::bind(&CPVD_TCP::run_receiver, this, _1, _2)) == false) {
                 LOGERR("%d: Thread Create failed: %s", errno, strerror(errno));
                 disconnection(client_id);
                 throw CException(E_ERROR::E_TCP_CREATE_THREAD_FAILED);
@@ -758,13 +758,13 @@ void CServerTCP::server_accept(void) {
     }
 }
 
-int CServerTCP::get_self_sockfd(void) {              // for only Client-Mode.
+int CPVD_TCP::get_self_sockfd(void) {              // for only Client-Mode.
     int temp_sockfd = _available_sockfd_;
     _available_sockfd_ = 0;
     return temp_sockfd;
 }
 
-void CServerTCP::release_self_sockfd(int release_sockfd) {    // for only Client-Mode.
+void CPVD_TCP::release_self_sockfd(int release_sockfd) {    // for only Client-Mode.
     if (release_sockfd == sockfd) {
         _available_sockfd_ = sockfd;
     }
