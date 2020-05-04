@@ -6,7 +6,7 @@
  * This file is part of the Common-Communicator framework.
  */
 #ifndef C_PROVIDER_TCP_H_
-#define C_SERVER_TCP_H_
+#define C_PROVIDER_TCP_H_
 
 #include <map>
 #include <string>
@@ -74,4 +74,4 @@ private:
 
 };
 
-#endif // C_SERVER_TCP_H_
+#endif // C_PROVIDER_TCP_H_
