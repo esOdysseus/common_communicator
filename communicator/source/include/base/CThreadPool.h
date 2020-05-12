@@ -98,9 +98,9 @@ protected:
                     wake(STATE::E_STATE_BUSY);
                     ret = true;
                 }
-			}
+            }
 
-			return ret;
+            return ret;
         }
 
         bool try_run_func(RunFunc_Type func, ARGS_TYPES&&... args) {
@@ -110,35 +110,35 @@ protected:
 
             std::unique_lock<std::mutex> quard(_mtx_wake_);
             if( _state_ != STATE::E_STATE_IDLE ) {
-				return false;
-			}
+                return false;
+            }
 
             // binding function
-			_run_func_ = std::bind( func, std::forward<ARGS_TYPES>(args)... );
-			_is_job_ = true;
+            _run_func_ = std::bind( func, std::forward<ARGS_TYPES>(args)... );
+            _is_job_ = true;
 
-			wake(STATE::E_STATE_BUSY);
+            wake(STATE::E_STATE_BUSY);
             return true;
         }
 
     private:
         void clear(void) {
-        	_state_ = STATE::E_STATE_NOT_CREATED;
-        	{
-				std::unique_lock<std::mutex> quard(_mtx_wake_);
-				_run_func_ = NULL;
-				_is_job_ = false;
-        	}
+            _state_ = STATE::E_STATE_NOT_CREATED;
+            {
+                std::unique_lock<std::mutex> quard(_mtx_wake_);
+                _run_func_ = NULL;
+                _is_job_ = false;
+            }
         }
 
         void wake(STATE wanted) {
             std::thread::id thr_id = _thr_h_.get_id();
 
-			_state_ = wanted;
-			if(_state_ != STATE::E_STATE_IDLE) {
-			    _p_thr_pool_->_idles_list_.remove(thr_id);
-			}
-			_wake_thread_.notify_one();
+            _state_ = wanted;
+            if(_state_ != STATE::E_STATE_IDLE) {
+                _p_thr_pool_->_idles_list_.remove(thr_id);
+            }
+            _wake_thread_.notify_one();
         }
 
         void run_routin(void) {
@@ -147,10 +147,9 @@ protected:
             _state_ = STATE::E_STATE_BUSY;
 
             while( _state_ > STATE::E_STATE_EXIT ) {
-
-            	switch(_state_) {
-            	case STATE::E_STATE_IDLE:
-            	    LOGD("State is E_STATE_IDLE.(0x%X)", thr_id);
+                switch(_state_) {
+                case STATE::E_STATE_IDLE:
+                    LOGD("State is E_STATE_IDLE.(0x%X)", thr_id);
 
                     _p_thr_pool_->_idles_list_.push_back(thr_id);
 
@@ -164,9 +163,9 @@ protected:
                     else {
                         _wake_thread_.wait(wake_lock);
                     }
-					break;
-            	case STATE::E_STATE_BUSY:
-            	    LOGD("State is E_STATE_BUSY.(0x%X)", thr_id);
+                    break;
+                case STATE::E_STATE_BUSY:
+                    LOGD("State is E_STATE_BUSY.(0x%X)", thr_id);
                     {
                         while(_is_job_) {
                             _run_func_();   // do process
@@ -180,14 +179,14 @@ protected:
                         }
                         _state_=STATE::E_STATE_IDLE;
                     }
-					break;
-            	case STATE::E_STATE_EXIT:
-            	    LOGD("State is E_STATE_EXIT.(0x%X)", thr_id);
-            	    break;
-            	case STATE::E_STATE_NOT_CREATED:
-            	    LOGERR("State is E_STATE_NOT_CREATED.(0x%X)", thr_id);
-            	    break;
-            	}
+                    break;
+                case STATE::E_STATE_EXIT:
+                    LOGD("State is E_STATE_EXIT.(0x%X)", thr_id);
+                    break;
+                case STATE::E_STATE_NOT_CREATED:
+                    LOGERR("State is E_STATE_NOT_CREATED.(0x%X)", thr_id);
+                    break;
+                }
             }
 
             _state_ = STATE::E_STATE_EXIT;
