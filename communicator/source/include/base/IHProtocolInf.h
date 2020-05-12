@@ -19,6 +19,7 @@
 #include <CPayload.h>
 #include <IProtocolInf.h>
 #include <CConfigProtocols.h>
+#include <CThreadPool.h>
 
 class IHProtocolInf {
 public:
