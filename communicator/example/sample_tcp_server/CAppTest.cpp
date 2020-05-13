@@ -62,12 +62,19 @@ void CAppTest::cb_receive_msg_handle(std::string client_id, std::shared_ptr<payl
 
     // Send Message
     std::string new_msg = "Echo: " + std::string((const char*)data) + " : RcvCNT=" + std::to_string(rcv_count);
-    std::shared_ptr<payload::CPayload> new_payload = h_communicator->create_payload();
+    payload->set_op_flag(payload::E_PAYLOAD_FLAG::E_KEEP_PAYLOAD_AFTER_TX, true);
+
+    payload->set_payload(new_msg.c_str(), new_msg.length());
+    assert(h_communicator->send(client_id, payload) == true);
+
+    // Other method to send message
+    // std::string new_msg = "Echo: " + std::string((const char*)data) + " : RcvCNT=" + std::to_string(rcv_count);
+    // std::shared_ptr<payload::CPayload> new_payload = h_communicator->create_payload();
     // new_payload->set_op_flag(payload::E_PAYLOAD_FLAG::E_KEEP_PAYLOAD_AFTER_TX, true);
 
-    std::shared_ptr<IProtocolInf> new_protocol = new_payload->get(PBigEdian);
-    assert( new_protocol->set_property("msg_id", protocol->get_property("msg_id")) == true );
-    new_protocol->set_payload(new_msg.c_str(), new_msg.length());
-    assert(h_communicator->send(client_id, new_payload) == true);
+    // std::shared_ptr<IProtocolInf> new_protocol = new_payload->get(PBigEdian);
+    // assert( new_protocol->set_property("msg_id", protocol->get_property("msg_id")) == true );
+    // new_protocol->set_payload(new_msg.c_str(), new_msg.length());
+    // assert(h_communicator->send(client_id, new_payload) == true);
 
 }

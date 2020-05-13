@@ -53,7 +53,11 @@ protected:
 
     bool unpack(const void* msg_raw, size_t msg_size) override;
 
+    void clean_head_tail(void) override;
+
     bool set_property_raw(const std::string key, const std::string value) override;
+
+    size_t get_msg_size(const void* data, size_t data_size) override;
 
 private:
     MsgID_Type get_msg_id(void);

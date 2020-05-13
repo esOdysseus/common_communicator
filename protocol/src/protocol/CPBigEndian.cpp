@@ -31,8 +31,7 @@ CPBigEndian::~CPBigEndian(void) {
 }
 
 void CPBigEndian::clear(void) {
-    protocol.header.msg_id = NULL;
-    protocol.header.length = NULL;
+    clean_head_tail();
 }
 
 std::shared_ptr<std::list<std::string>> CPBigEndian::get_keys(void) {
@@ -132,6 +131,12 @@ bool CPBigEndian::unpack(const void* msg_raw, size_t msg_size) {
     return true;
 }
 
+void CPBigEndian::clean_head_tail(void) {
+    LOGD("It's called.");
+    protocol.header.msg_id = NULL;
+    protocol.header.length = NULL;
+}
+
 bool CPBigEndian::set_property_raw(const std::string key, const std::string value) {
     bool ret = false;
 
@@ -150,6 +155,10 @@ bool CPBigEndian::set_property_raw(const std::string key, const std::string valu
     return ret;
 }
 
+size_t CPBigEndian::get_msg_size(const void* data, size_t data_size) {
+    LOGD("It's called.");
+    return data_size;
+}
 
 /**********************************
  * Private Function Definition
@@ -177,10 +186,7 @@ bool CPBigEndian::pack_raw_data(const void* msg_raw, size_t msg_size, UnitData_T
 
     try {
         UnitData_Type* src_buf = (UnitData_Type*)msg_raw;
-        if (protocol.header.length == 0) {
-            protocol.header.length = msg_size;
-        }
-        assert(protocol.header.length <= msg_size);
+        protocol.header.length = msg_size;
 
         MAKE_RAW_DATA(raw_data, protocol, 0);
         MAKE_RAW_DATA(raw_data, protocol, 1);
@@ -191,7 +197,7 @@ bool CPBigEndian::pack_raw_data(const void* msg_raw, size_t msg_size, UnitData_T
         MAKE_RAW_DATA(raw_data, protocol, 6);
         MAKE_RAW_DATA(raw_data, protocol, 7);
 
-        memcpy(raw_data+sizeof(protocol), src_buf, protocol.header.length);\
+        memcpy(raw_data+sizeof(protocol), src_buf, protocol.header.length);
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());

@@ -18,11 +18,13 @@
 IHProtocolInf::IHProtocolInf(AppCallerType &app,
                              std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
     this->s_app = app;
+    this->_rxthr_pool_ = std::make_shared<CThreadPool<RawMsgType>>(1);
     this->s_proto_config = proto_manager;
 }
 
 IHProtocolInf::~IHProtocolInf(void) {
     s_app.reset();
+    _rxthr_pool_.reset();
     s_proto_config.reset();
 }
 
@@ -109,17 +111,40 @@ void IHProtocolInf::handle_connection(std::string alias, bool flag) {
 }
 
 bool IHProtocolInf::handle_protocol_chain(RawMsgType msg_raw) {
-    try {
-        AppCallerType& app = get_app_instance();
-        assert(app.get() != NULL);
 
-        // message parsing with regard to PROTOCOL.
-        ProtocolType p_msg = decapsulation(msg_raw);
-        if(p_msg->is_empty() == false) {
-            app->get_cb_handlers().cb_message_payload_handle(msg_raw->get_source_alias(),
-                                                            p_msg);  // trig app-function.
+    auto lamda_func = [this](RawMsgType msg_raw)->void {
+        std::shared_ptr<payload::CPayload> payload;
+        ProtocolType protocol;
+        size_t msg_size = 0;
+        size_t data_size = 0;
+        AppCallerType& app = get_app_instance();
+        const void* data = msg_raw->get_msg_read_only(&data_size);
+        assert(app.get() != NULL);
+        assert(data != NULL);
+        assert(data_size > 0);
+
+        payload = s_proto_config->create_protocols_chain();
+        protocol = payload->get(payload::CPayload::Myself_Name);
+
+        while( data_size > 0 && (msg_size = protocol->get_msg_size(data, data_size)) > 0 ) {
+            // message parsing with regard to PROTOCOL.
+            assert( protocol->unpack_recurcive(data, msg_size) == true );
+            if(protocol->is_empty() == false) {
+                app->get_cb_handlers().cb_message_payload_handle(msg_raw->get_source_alias(),
+                                                                 protocol);  // trig app-function.
+            }
+
+            // move to next msg
+            protocol->clean_data();   // re-initialize proto_chain.
+            data = ((uint8_t*)data) + msg_size;
+            data_size -= msg_size;
         }
-        destroy_proto_chain(p_msg);
+
+        destroy_proto_chain(protocol);
+    };
+
+    try {
+        _rxthr_pool_->run_thread(lamda_func, msg_raw);
         return true;
     }
     catch (const std::exception &e) {

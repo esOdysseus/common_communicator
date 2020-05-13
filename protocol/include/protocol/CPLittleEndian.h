@@ -44,6 +44,8 @@ protected:
 
     bool unpack(const void* msg_raw, size_t msg_size) override;
 
+    void clean_head_tail(void) override;
+
     bool set_property_raw(const std::string key, const std::string value) override;
 
 private:

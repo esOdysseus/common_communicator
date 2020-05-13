@@ -60,6 +60,8 @@ protected:
 private:
     AppCallerType s_app;
 
+    std::shared_ptr<CThreadPool<RawMsgType>> _rxthr_pool_;
+
     std::shared_ptr<cf_proto::CConfigProtocols> s_proto_config;
 
 };

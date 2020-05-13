@@ -52,6 +52,7 @@ bool CHProtoBaseLan::write_payload(std::string alias, std::shared_ptr<payload::C
         }
         else {
             LOGW("E_KEEP_PAYLOAD_AFTER_TX == true");
+            pro_payload->clean_data(true, false);
         }
 
         return true;

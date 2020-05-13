@@ -129,6 +129,12 @@ bool CPLittleEndian::unpack(const void* msg_raw, size_t msg_size) {
     return true;
 }
 
+void CPLittleEndian::clean_head_tail(void) {
+    LOGD("It's called.");
+    protocol.header.msg_id = NULL;
+    protocol.header.length = NULL;
+}
+
 bool CPLittleEndian::set_property_raw(const std::string key, const std::string value) {
     bool ret = false;
 
@@ -188,10 +194,7 @@ bool CPLittleEndian::pack_raw_data(const void* msg_raw, size_t msg_size, UnitDat
 
     try {
         UnitData_Type* src_buf = (UnitData_Type*)msg_raw;
-        if (protocol.header.length == 0) {
-            protocol.header.length = msg_size;
-        }
-        assert(protocol.header.length <= msg_size);
+        protocol.header.length = msg_size;
 
         memcpy(raw_data, protocol.little_endian, sizeof(protocol));
         memcpy(raw_data+sizeof(protocol), src_buf, protocol.header.length);
