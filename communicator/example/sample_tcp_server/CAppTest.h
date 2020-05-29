@@ -14,8 +14,8 @@
 class CAppTest {
 public:
     using CommHandler = std::shared_ptr<ICommunicator>;
-    static constexpr char* PBigEdian = "CPBigEndian";
-    static constexpr char* PLittleEndian = "CPLittleEndian";
+    static constexpr const char* PBigEdian = "CPBigEndian";
+    static constexpr const char* PLittleEndian = "CPLittleEndian";
 
 public:
     CAppTest(CommHandler handler);

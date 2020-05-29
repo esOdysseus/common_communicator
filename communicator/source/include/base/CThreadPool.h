@@ -253,7 +253,7 @@ public:
             push_runfunc(func, std::forward<ARGS_TYPES>(args)...);
 
             // trig thread to wake-up.
-            LOGD("idle-thread cnt = %d", _idles_list_.size());
+            LOGD("idle-thread cnt = %lu", _idles_list_.size());
             if(_idles_list_.size() > 0) {
                 auto itor = _idles_list_.begin();
                 if( itor != _idles_list_.end() && _thr_map_.find(*itor) != _thr_map_.end() ) {
@@ -261,7 +261,7 @@ public:
                     looper->trig_run_func();
                 }
             }
-            LOGI("idle-thread cnt = %d", _idles_list_.size());
+            LOGI("idle-thread cnt = %lu", _idles_list_.size());
 
             return true;
         }
@@ -284,7 +284,7 @@ private:
             std::unique_lock<std::mutex> lock_queue(mtx_queue);
             _q_runfunc_.push(run_func);
         }
-        LOGI("queue size=%d", _q_runfunc_.size());
+        LOGI("queue size=%lu", _q_runfunc_.size());
     }
 
     IntFunc_Type pop_runfunc(void) {

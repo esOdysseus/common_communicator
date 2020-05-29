@@ -15,9 +15,9 @@ public:
     using MsgID_Type = uint32_t;
     using Length_Type = uint32_t;
     using UnitData_Type = uint8_t;
-    static constexpr char* Protocol_NAME = "CPBigEndian";
-    static constexpr char* MSG_ID = "msg_id";
-    static constexpr char* LENGTH = "length";
+    static constexpr const char* Protocol_NAME = "CPBigEndian";
+    static constexpr const char* MSG_ID = "msg_id";
+    static constexpr const char* LENGTH = "length";
 
     using UProtocol = union UProtocol {
         struct big_endian{

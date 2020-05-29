@@ -84,7 +84,7 @@ std::shared_ptr<payload::CPayload> CConfigProtocols::create_protocols_chain(void
         if( proto_chains_map.size() >= MAX_PROTOCOL_CHAIN_INSTANCES ) {
             throw CException(E_ERROR::E_OVERFLOW_MAX_ELEMENTS_COUNT);
         }
-        LOGI("Protocol-Chain instance is filled like [%d/%d].", proto_chains_map.size(), MAX_PROTOCOL_CHAIN_INSTANCES);
+        LOGI("Protocol-Chain instance is filled like [%lu/%u].", proto_chains_map.size(), MAX_PROTOCOL_CHAIN_INSTANCES);
 
         // make protocol-chain instance.
         auto proto_chain = std::make_shared<IProtocolInf::ProtoChainType>();
@@ -172,7 +172,7 @@ static bool biuld_protocol_struct(std::string &name,
         }
         res = true;
     } catch ( const std::exception &e ) {
-        LOGERR("%", e.what());
+        LOGERR("%s", e.what());
         throw e;
     }
 

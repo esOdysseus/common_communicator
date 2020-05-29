@@ -34,7 +34,7 @@ namespace payload
      */
     class CPayload : public std::enable_shared_from_this<CPayload> {
     public:
-        static constexpr char* Myself_Name = "_myself_";
+        static constexpr const char* Myself_Name = "_myself_";
 
     public:
         CPayload(std::string name);

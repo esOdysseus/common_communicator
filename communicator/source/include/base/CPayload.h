@@ -39,14 +39,14 @@ namespace payload
      */
     class CPayload : public std::enable_shared_from_this<CPayload> {
     public:
-        static constexpr char* Myself_Name = "_myself_";
+        static constexpr const char* Myself_Name = "_myself_";
         using FlagDataType = uint32_t;
 
     protected:
         using DataType = CRawMessage;
         using PayloadType = std::shared_ptr<CPayload>;
         using ProtoChainType = std::list<PayloadType>;
-        static constexpr char* Default_Name = "none";
+        static constexpr const char* Default_Name = "none";
 
     private:
         using SharedThisType = std::enable_shared_from_this<CPayload>;

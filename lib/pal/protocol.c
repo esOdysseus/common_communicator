@@ -8,8 +8,8 @@
 #include <unistd.h>
 #include <dlfcn.h>
 #include <errno.h>
+#include <string.h>
 
-#define LOGGER_TAG "PAL"
 #include <logger.h>
 #include <pal/protocol.h>
 

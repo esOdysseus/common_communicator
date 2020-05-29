@@ -27,13 +27,14 @@
 
 // Debug Logger mode setting.
 #ifdef LOG_DEBUG_MODE
+    #include <stdlib.h>
     #define LOG_EXIT(val)       exit(val)
     #define _FUNC_NAME_         __PRETTY_FUNCTION__
-    #define _FILE_NAME_         basename(__FILE__)
+    #define _FILE_NAME_         basename((char*)__FILE__)
 #else
     #define LOG_EXIT(val)
     #define _FUNC_NAME_         __FUNCTION__
-    #define _FILE_NAME_         basename(__FILE__)
+    #define _FILE_NAME_         basename((char*)__FILE__)
 #endif
 
 // Color-Setting of Text.
@@ -50,6 +51,9 @@
                 printf("[" LOGGER_TAG "]HEX: " "%s(%s:%d):length=%u, HEXOUTPUT:\n" fmt, _FUNC_NAME_, _FILE_NAME_, __LINE__, length);   \
                 for(_i_=0; _i_ < (length); _i_++)       \
                 {           \
+                    if(_i_ > 0 && _i_%20 == 0) {  \
+                        printf( "\n");   \
+                    }   \
                     printf(" %02X", (buf)[_i_]);   \
                 }           \
                 printf( "\n");   \

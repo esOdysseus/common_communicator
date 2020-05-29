@@ -133,8 +133,8 @@ bool CPBigEndian::unpack(const void* msg_raw, size_t msg_size) {
 
 void CPBigEndian::clean_head_tail(void) {
     LOGD("It's called.");
-    protocol.header.msg_id = NULL;
-    protocol.header.length = NULL;
+    protocol.header.msg_id = (MsgID_Type)NULL;
+    protocol.header.length = (Length_Type)NULL;
 }
 
 bool CPBigEndian::set_property_raw(const std::string key, const std::string value) {

@@ -328,7 +328,7 @@ int ICommunicator::run(void) {
     h_pvd.reset();
     pthread_cleanup_pop(0);     // Macro End of 'pthread_cleanup_push'
     LOGD("Soft-Exit of thread.");
-    return NULL;
+    return 0;
 }
 
 void ICommunicator::force_exit_thread(std::thread &h_thread) {

@@ -93,9 +93,9 @@ namespace cf_alias {
 
     class CConfigAliases {
     public:
-        static constexpr char* UDP = "udp";
-        static constexpr char* TCP = "tcp";
-        static constexpr char* VSOMEIP = "vsomeip";
+        static constexpr const char* UDP = "udp";
+        static constexpr const char* TCP = "tcp";
+        static constexpr const char* VSOMEIP = "vsomeip";
         using AliasType = std::list<std::shared_ptr<IAlias>>;
 
     private:

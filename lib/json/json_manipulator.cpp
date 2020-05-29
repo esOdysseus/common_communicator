@@ -107,7 +107,7 @@ bool CMjson::parse(std::string input_data, const E_PARSE arg_type) {
         }
     }
     catch( const std::exception &e) {
-        LOGERR("%", e.what());
+        LOGERR("%s", e.what());
         throw e;
     }
     return is_parsed;
@@ -122,7 +122,7 @@ bool CMjson::parse(const char* input_data, const ssize_t input_size) {
         is_parsed = parse(input_data);
     }
     catch( const std::exception &e) {
-        LOGERR("%", e.what());
+        LOGERR("%s", e.what());
         throw e;
     }
     return is_parsed;

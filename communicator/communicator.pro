@@ -50,13 +50,15 @@ INCLUDEPATH += \
     $$ROOT_PATH/lib/logger  \
     $$ROOT_PATH/lib/json    \
     $$ROOT_PATH/lib/exception   \
-    $$ROOT_PATH/lib/lock
+    $$ROOT_PATH/lib/lock    \
+    $$ROOT_PATH/lib/util
 
 SOURCES += \
     $$files($$_PRO_FILE_PWD_/source/src/base/*.cpp)  \
     $$files($$_PRO_FILE_PWD_/source/src/implement/provider/*.cpp)  \
     $$files($$ROOT_PATH/lib/json/*.cpp)     \
-    $$files($$ROOT_PATH/lib/pal/*.c)
+    $$files($$ROOT_PATH/lib/pal/*.c)        \
+    $$files($$ROOT_PATH/lib/util/*.cpp)
 
 # for installation.
 HEADERS += \

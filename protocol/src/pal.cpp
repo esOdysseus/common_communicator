@@ -12,7 +12,6 @@
 #include <memory.h>
 #include <malloc.h>
 
-#define LOGGER_TAG "PAL"
 #include <pal.h>
 #include <logger.h>
 #include <protocol/CPBigEndian.h>

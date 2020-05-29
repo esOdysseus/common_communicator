@@ -27,8 +27,7 @@ CPLittleEndian::~CPLittleEndian(void) {
 }
 
 void CPLittleEndian::clear(void) {
-    protocol.header.msg_id = NULL;
-    protocol.header.length = NULL;
+    clean_head_tail();
 }
 
 std::shared_ptr<std::list<std::string>> CPLittleEndian::get_keys(void) {
@@ -131,8 +130,8 @@ bool CPLittleEndian::unpack(const void* msg_raw, size_t msg_size) {
 
 void CPLittleEndian::clean_head_tail(void) {
     LOGD("It's called.");
-    protocol.header.msg_id = NULL;
-    protocol.header.length = NULL;
+    protocol.header.msg_id = (MsgID_Type)NULL;
+    protocol.header.length = (Length_Type)NULL;
 }
 
 bool CPLittleEndian::set_property_raw(const std::string key, const std::string value) {
