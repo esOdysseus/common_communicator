@@ -11,16 +11,19 @@
 #include <string>
 #include <IPVDInf.h>
 #include <IAppInf.h>
+#include <Cinet_uds.h>
 
-class CPVD_UDP : public IPVDInf {
+class CPVD_UDP : public IPVDInf, Cinet_uds {
 public:
     CPVD_UDP(AliasType& alias_list);
 
     ~CPVD_UDP(void);
 
-    bool init(std::string id, unsigned int port=0, const char* ip=NULL, ProviderMode mode=ProviderMode::E_PVDM_BOTH) override;
+    bool init(std::string id, uint16_t port=0, const char* ip=NULL, ProviderMode mode=ProviderMode::E_PVDM_BOTH) override;
 
     bool start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) override;
+
+    bool stop(void) override;
 
     bool accept(void) override;
 

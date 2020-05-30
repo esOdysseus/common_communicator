@@ -49,9 +49,11 @@ public:
 
     ~IPVDInf(void);
 
-    virtual bool init(std::string id, unsigned int port=0, const char* ip=NULL, ProviderMode mode=ProviderMode::E_PVDM_BOTH) = 0;
+    virtual bool init(std::string id, uint16_t port=0, const char* ip=NULL, ProviderMode mode=ProviderMode::E_PVDM_BOTH) = 0;
 
     virtual bool start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) = 0;
+
+    virtual bool stop(void) = 0;
 
     virtual bool accept(void) = 0;
 
@@ -65,13 +67,11 @@ public:
 
     bool register_new_alias(const char* peer_ip, uint16_t peer_port, std::string &wanted_name);
 
-    bool stop(void);
+    bool quit(void);
 
     std::string get_id(void) { return id; }
 
     enum_c::ProviderType get_provider_type(void) { return provider_type; }
-
-    int gen_random_portnum(void);
 
 protected:
     virtual int enable_keepalive(int sock) = 0;

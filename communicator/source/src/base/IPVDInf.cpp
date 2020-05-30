@@ -5,8 +5,6 @@
  * 
  * This file is part of the Common-Communicator framework.
  */
-#include <random>
-#include <ctime>
 
 #include <unistd.h>
 #include <string.h> 
@@ -78,13 +76,13 @@ IPVDInf::IPVDInf(AliasType& alias_list) {
     }
     catch (const std::exception &e) {
         LOGERR("%s", e.what());
-        stop();
+        quit();
         throw e;
     }
 }
 
 IPVDInf::~IPVDInf(void) {
-    stop();
+    quit();
 }
 
 bool IPVDInf::register_new_alias(const char* peer_ip, uint16_t peer_port, 
@@ -123,20 +121,12 @@ bool IPVDInf::register_new_alias(const char* peer_ip, uint16_t peer_port,
     return false;
 }
 
-bool IPVDInf::stop(void) {
-    int res = 0;
-
+bool IPVDInf::quit(void) {
     // close socket.
     started = false;
     usleep(10000);       // wait 10 msec
 
-    if (sockfd) {
-        res = close(sockfd);
-        if(res < 0) {
-            LOGW("socket closing is failed.");
-        }
-        sockfd = 0;
-    }
+    assert( stop() == true );
 
     // mLooperPool remove
     {
@@ -152,25 +142,6 @@ bool IPVDInf::stop(void) {
     // clear variables.
     clear();
     return true;
-}
-
-int IPVDInf::gen_random_portnum(void) {
-    int port = -1;
-    int port_min = 10000;
-    int port_max = 60000;
-    // std::random_device rd;  //Will be used to obtain a seed for the random number engine
-    // std::mt19937 gen( rd() ); 
-    std::mt19937 gen( (uint32_t)time(NULL) ); 
-    std::uniform_int_distribution<> dist(port_min, port_max); 
-    
-    LOGD("Random Port-Min : %d", dist.min());
-    LOGD("Random Port-Max : %d", dist.max());
-
-    port = dist( gen );
-    assert(port_min <= port && port <= port_max);
-    LOGI("Generated Port-Number=%d", port);
-
-    return port;
 }
 
 void IPVDInf::clear(void) {

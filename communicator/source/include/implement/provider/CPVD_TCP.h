@@ -14,16 +14,19 @@
 #include <IAppInf.h>
 #include <IProtocolInf.h>
 #include <CAliasAddr.h>
+#include <Cinet_uds.h>
 
-class CPVD_TCP : public IPVDInf {
+class CPVD_TCP : public IPVDInf, Cinet_uds {
 public:
     CPVD_TCP(AliasType& alias_list);
 
     ~CPVD_TCP(void);
 
-    bool init(std::string id, unsigned int port=0, const char* ip=NULL, ProviderMode mode=ProviderMode::E_PVDM_BOTH) override;
+    bool init(std::string id, uint16_t port=0, const char* ip=NULL, ProviderMode mode=ProviderMode::E_PVDM_BOTH) override;
 
     bool start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) override;
+
+    bool stop(void) override;
 
     bool accept(void) override;
 
@@ -50,8 +53,6 @@ private:
     int get_connected_socket(std::string alias, MessageType &msg);
 
     std::string make_client_id(const int addr_type, const struct sockaddr_in& cliaddr);
-
-    void make_sockaddr_in(struct sockaddr_in &addr, const char* ip, unsigned int port);
 
     void server_accept(void);
 

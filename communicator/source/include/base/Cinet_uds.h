@@ -16,6 +16,8 @@
 #include <netinet/in.h>     /* for sockaddr_in */
 #include <sys/un.h>         /* for sockaddr_un */
 
+#include <Enum_common.h>
+
 
 #define UDS_DIR			"/tmp/cmcomm/uds/"	// Max=42 byte
 #define UDS_PATH_MAXSIZE	108U
@@ -56,40 +58,40 @@ private:
 
 };
 
-
+/**************
+ * INET/UDS manager
+ */
 class Cinet_uds {
 public:
-    enum class E_PVDM : uint32_t {
-        E_PVDM_NONE = 0,
-        E_PVDM_SERVER = 1,
-        E_PVDM_CLIENT = 2
-    };
+    using PVDM = enum_c::ProviderMode;
 
 public:
     Cinet_uds(int domain, int sock_type, sa_family_t addr_type);
 
     ~Cinet_uds(void);
 
-    std::shared_ptr<Cipport> get_ip_port(struct sockaddr_in &addr);
+    std::shared_ptr<Cipport> get_ip_port(const struct sockaddr_in &addr);
 
-    std::shared_ptr<Cipport> get_ip_port(struct sockaddr_un &addr);
+    std::shared_ptr<Cipport> get_ip_port(const struct sockaddr_un &addr);
 
     void set_ip_port(struct sockaddr_in &addr, 
-                     const char* ip=NULL, uint16_t port=0, 
-                     E_PVDM mode=E_PVDM::E_PVDM_CLIENT);
+                     const char* ip, uint16_t &port, 
+                     PVDM mode=PVDM::E_PVDM_CLIENT);
 
     void set_ip_port(struct sockaddr_un &addr, 
-                     const char* ip=NULL, uint16_t port=0, 
-                     E_PVDM mode=E_PVDM::E_PVDM_CLIENT);
+                     const char* ip, uint16_t &port, 
+                     PVDM mode=PVDM::E_PVDM_CLIENT);
 
     /** socket processing */
-    int Socket(void);
+    int Socket(int opt_flag=1);
 
     void Close(int sock_fd);
 
     int Bind(int sock_fd, struct sockaddr_in &addr);
 
     int Bind(int sock_fd, struct sockaddr_un &addr);
+
+    int Bind_uds_client(int sock_fd, const char* ip=NULL, uint16_t port=0);
 
     int Listen(int sock_fd, int concurrent_peer);
 
@@ -122,8 +124,6 @@ private:
     std::mutex _mtx_uds_map_;   // for _uds_map_
 
     std::map<int /*socket-fd*/, std::string /*uds-path*/> _uds_map_;
-
-    static constexpr const char* DEF_SELF_IP = "127.0.0.1";
 
     static constexpr const char* DEF_UDS_ID =	"localhost";
 

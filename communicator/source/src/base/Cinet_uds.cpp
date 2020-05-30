@@ -15,7 +15,6 @@
 #include <util.h>
 #include <Cinet_uds.h>
 
-constexpr const char* Cinet_uds::DEF_SELF_IP;
 constexpr const char* Cinet_uds::DEF_UDS_ID;
 
 /**************************
@@ -43,18 +42,25 @@ Cinet_uds::~Cinet_uds(void) {
     clear();
 }
 
-std::shared_ptr<Cipport> Cinet_uds::get_ip_port(struct sockaddr_in &addr) {
-	std::shared_ptr<Cipport> res = std::make_shared<Cipport>();
+std::shared_ptr<Cipport> Cinet_uds::get_ip_port(const struct sockaddr_in &addr) {
+	std::shared_ptr<Cipport> res;
 
-	res->port = ntohs(addr.sin_port);
-	inet_ntop(_addr_type_, &addr.sin_addr.s_addr, res->ip, res->IP_SIZE);
-	LOGD("IP/PORT=%s/%d\n", res->ip, res->port);
+	try {
+		res = std::make_shared<Cipport>();
+		res->port = ntohs(addr.sin_port);
+		inet_ntop(_addr_type_, &addr.sin_addr.s_addr, res->ip, res->IP_SIZE);
+		LOGD("IP/PORT=%s/%d\n", res->ip, res->port);
+	}
+	catch( const std::exception &e ) {
+		LOGERR("%s", e.what());
+		res.reset();
+	}
 
 	return res;
 }
 
-std::shared_ptr<Cipport> Cinet_uds::get_ip_port(struct sockaddr_un &addr) {
-	char* start_pos = NULL;
+std::shared_ptr<Cipport> Cinet_uds::get_ip_port(const struct sockaddr_un &addr) {
+	const char* start_pos = NULL;
 	char* substr = NULL;
 	std::shared_ptr<Cipport> res;
 
@@ -66,38 +72,50 @@ std::shared_ptr<Cipport> Cinet_uds::get_ip_port(struct sockaddr_un &addr) {
 	 * Assumption
 	 * addr.sun_path ==> /xxx/xxx/xxx/${IP}:${Port}_xxxx
 	 */
-	LOGD("Client socket file-path: len=%lu, %s\n", strlen(addr.sun_path), addr.sun_path);
-	start_pos = strrchr(addr.sun_path, '/') + 1;
-	assert( (uint8_t)(*start_pos) != (uint8_t)NULL );
+	try {
+		LOGD("Client socket file-path: len=%lu, %s\n", strlen(addr.sun_path), addr.sun_path);
+		start_pos = strrchr(addr.sun_path, '/') + 1;
+		assert( (uint8_t)(*start_pos) != (uint8_t)NULL );
 
-	// make Cipport
-	res = std::make_shared<Cipport>();
-	strcpy(res->ip, start_pos);
-	strtok_r(res->ip, "_", &substr);
-	strtok_r(res->ip, ":", &substr);	// substr -> Port
-	res->port = atoi(substr);
-	LOGD("IP/PORT=%s/%d\n", res->ip, res->port);
+		// make Cipport
+		res = std::make_shared<Cipport>();
+		strcpy(res->ip, start_pos);
+		strtok_r(res->ip, "_", &substr);
+		strtok_r(res->ip, ":", &substr);	// substr -> Port
+		res->port = atoi(substr);
+		LOGD("IP/PORT=%s/%d\n", res->ip, res->port);
+	}
+	catch( const std::exception &e ) {
+		LOGERR("%s", e.what());
+		res.reset();
+	}
 
 	return res;
 }
 
-void Cinet_uds::set_ip_port(struct sockaddr_in &addr, const char* ip, uint16_t port, E_PVDM mode) {
-	if( ip == NULL ) {
-        ip = DEF_SELF_IP;
-    }
+void Cinet_uds::set_ip_port(struct sockaddr_in &addr, const char* ip, uint16_t &port, PVDM mode) {
+	try {
+		if( port == 0 ) {
+			port = gen_random_num(1025, 65534);
+		}
 
-	if( port == 0 ) {
-		port = gen_random_num(1025, 65534);
+		addr.sin_family = _addr_type_;
+		addr.sin_port = htons(port);
+		if( ip == NULL ) {
+			addr.sin_addr.s_addr = htonl(INADDR_ANY);
+		} else {
+			addr.sin_addr.s_addr = inet_addr(ip);
+		}
+		// set all bits of the padding field to 0
+		memset(addr.sin_zero, '\0', sizeof(addr.sin_zero));
 	}
-
-	addr.sin_family = _addr_type_;
-	addr.sin_addr.s_addr = inet_addr(ip);
-	addr.sin_port = htons(port);
-	// set all bits of the padding field to 0
-	memset(addr.sin_zero, '\0', sizeof(addr.sin_zero));
+	catch( const std::exception &e ) {
+		LOGERR("%s", e.what());
+		throw ;
+	}
 }
 
-void Cinet_uds::set_ip_port(struct sockaddr_un &addr, const char* ip, uint16_t port, E_PVDM mode) {	// for UDS
+void Cinet_uds::set_ip_port(struct sockaddr_un &addr, const char* ip, uint16_t &port, PVDM mode) {	// for UDS
     if( ip == NULL ) {
         ip = DEF_UDS_ID;
     }
@@ -111,10 +129,11 @@ void Cinet_uds::set_ip_port(struct sockaddr_un &addr, const char* ip, uint16_t p
 		memset( &addr, '\0', sizeof( addr));
 		addr.sun_family  = _addr_type_;
 		switch( mode ) {
-		case E_PVDM::E_PVDM_CLIENT:
+		case PVDM::E_PVDM_CLIENT:
 			snprintf( addr.sun_path, UDS_PATH_MAXSIZE, UDS_CLIENT_FORM, ip, port, gen_random_num());
 			break;
-		case E_PVDM::E_PVDM_SERVER:
+		case PVDM::E_PVDM_BOTH:
+		case PVDM::E_PVDM_SERVER:
 			snprintf( addr.sun_path, UDS_PATH_MAXSIZE, UDS_SERVER_FORM, ip, port);
 			break;
 		default:
@@ -134,9 +153,8 @@ void Cinet_uds::set_ip_port(struct sockaddr_un &addr, const char* ip, uint16_t p
 	}
 }
 
-int Cinet_uds::Socket(void) {
+int Cinet_uds::Socket(int opt_flag) {
 	int sock_fd = 0;
-	int opt_flag = 1;
 
 	sock_fd = socket( _sock_domain_, _sock_type_, 0);
 	if( -1 == sock_fd)
@@ -180,6 +198,13 @@ int Cinet_uds::Bind(int sock_fd, struct sockaddr_un &addr) {
 	std::unique_lock<std::mutex> guard(_mtx_uds_map_);
     _uds_map_.insert({sock_fd, std::string(addr.sun_path)});
 	return bind( sock_fd, (struct sockaddr*)&addr, sizeof(addr) );
+}
+
+int Cinet_uds::Bind_uds_client(int sock_fd, const char* ip, uint16_t port) {
+    struct sockaddr_un cliaddr;
+
+    set_ip_port(cliaddr, ip, port);
+    return Bind(sock_fd, cliaddr);
 }
 
 int Cinet_uds::Listen(int sock_fd, int concurrent_peer) {
@@ -241,21 +266,23 @@ bool Cinet_uds::check_port_available(struct sockaddr *addr, socklen_t length, co
 	int clisock = -1;
 	assert(uds_file_path != NULL);
 
-	clisock  = socket( _sock_domain_, _sock_type_, 0);
-	if( -1 == clisock)
-	{
-		LOGERR("%d: %s\n", errno, strerror(errno));
-        return false;
-	}
+	if ( _sock_type_ == SOCK_STREAM ) {
+		clisock  = socket( _sock_domain_, _sock_type_, 0);
+		if( -1 == clisock)
+		{
+			LOGERR("%d: %s\n", errno, strerror(errno));
+			return false;
+		}
 
-	if( -1 != connect( clisock, addr, length ) )
-	{
-		close( clisock);
-		return false;
-	}
+		if( -1 != connect( clisock, addr, length ) )
+		{
+			close( clisock);
+			return false;
+		}
 
-	shutdown(clisock, SHUT_RDWR);	// Rx,Tx pending.
-	close( clisock);	// socket destroy.
+		shutdown(clisock, SHUT_RDWR);	// Rx,Tx pending.
+		close( clisock);	// socket destroy.
+	}
 
     unlink_uds_file( uds_file_path );
 	return true;

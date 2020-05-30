@@ -7,9 +7,6 @@
  */
 #include <cassert>
 #include <string.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <netdb.h>
 #include <unistd.h>
@@ -48,7 +45,7 @@ using namespace std::placeholders;
  * Definition of Public Function.
  */ 
 CPVD_UDP::CPVD_UDP(AliasType& alias_list)
-: IPVDInf(alias_list) {
+: IPVDInf(alias_list), Cinet_uds(PROTO_TYPE, SOCKET_TYPE, ADDR_TYPE) {
     try{
         LOGD("Called.");
         set_provider_type(enum_c::ProviderType::E_PVDT_TRANS_UDP);
@@ -67,7 +64,7 @@ CPVD_UDP::~CPVD_UDP(void) {
     bzero(&servaddr, sizeof(servaddr));
 }
 
-bool CPVD_UDP::init(std::string id, unsigned int port, const char* ip, ProviderMode mode) {
+bool CPVD_UDP::init(std::string id, uint16_t port, const char* ip, ProviderMode mode) {
     /** UDP don't car about mode. Because, UDP has not classification of SERVER/CLIENT. */ 
 
     set_id(id);
@@ -77,14 +74,8 @@ bool CPVD_UDP::init(std::string id, unsigned int port, const char* ip, ProviderM
         return inited;
     }
 
-    // Input data checking.
-    if(port < 0 || port >= 65535) {
-        LOGERR("No port defined to listen to");
-        return false;
-    }
-
     // make UDP-Socket
-    sockfd = socket(PROTO_TYPE, SOCKET_TYPE, 0);
+    sockfd = Socket(1);
     if (sockfd < 0) {
         LOGERR("%d: %s", errno, strerror(errno));
         return false;
@@ -94,20 +85,8 @@ bool CPVD_UDP::init(std::string id, unsigned int port, const char* ip, ProviderM
     // enable_keepalive(sockfd);
 
     // make serveraddr struct
+    set_ip_port(servaddr, ip, port, ProviderMode::E_PVDM_SERVER);
     listeningPort = port;
-    if (listeningPort == 0) {
-        listeningPort = gen_random_portnum();
-    }
-
-    servaddr.sin_family = ADDR_TYPE;
-    if ( ip == NULL ) {
-        servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    }else {
-        servaddr.sin_addr.s_addr = inet_addr(ip);
-    }
-    servaddr.sin_port = htons(listeningPort);
-    //Set all bits of the padding field to 0 
-    memset(servaddr.sin_zero, '\0', sizeof(servaddr.sin_zero));
 
     // tag flag
     started = false;
@@ -123,7 +102,7 @@ bool CPVD_UDP::start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtoc
     }
 
     // bind socket & server-address.
-    if(bind(sockfd, (struct sockaddr*) &servaddr, sizeof(servaddr)) < 0) {
+    if( Bind(sockfd, servaddr) < 0 ) {
         LOGERR("%d: %s", errno, strerror(errno));
         return false;
     }
@@ -133,6 +112,15 @@ bool CPVD_UDP::start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtoc
 
     started = true;
     return started;
+}
+
+bool CPVD_UDP::stop(void) {
+    if (sockfd) {
+        Close(sockfd);
+        sockfd = 0;
+    }
+
+    return true;
 }
 
 bool CPVD_UDP::accept(void) {
@@ -321,6 +309,7 @@ void CPVD_UDP::update_alias_mapper(AliasType& alias_list,
     using AddressType = struct sockaddr_in;
     LOGD("Called.");
     bool is_new = false;
+    uint16_t port_num = 0;
     AliasType::iterator itor;
     std::string alias_name;
     std::shared_ptr<cf_alias::CAliasTrans> alias;
@@ -338,11 +327,9 @@ void CPVD_UDP::update_alias_mapper(AliasType& alias_list,
             destaddr = std::make_shared<struct sockaddr_in>();
             assert( alias->pvd_type == get_provider_type());
 
-            destaddr->sin_family = ADDR_TYPE;
-            destaddr->sin_addr.s_addr = inet_addr(alias->ip.c_str());
-            destaddr->sin_port = htons(alias->port_num);
-            // set all bits of the padding field to 0
-            memset(destaddr->sin_zero, '\0', sizeof(destaddr->sin_zero));
+            // make sockaddr_in variables.
+            port_num = alias->port_num;
+            set_ip_port(*destaddr.get(), alias->ip.c_str(), port_num, ProviderMode::E_PVDM_SERVER);
 
             // append pair(alias & address) to mapper.
             mAddr.insert(alias->alias, destaddr, alias->pvd_type, is_new);
@@ -359,6 +346,7 @@ bool CPVD_UDP::update_alias_mapper(AliasType& alias_list) {
     LOGD("Called.");
     bool res = true;
     bool is_new = false;
+    uint16_t port_num = 0;
     AliasType::iterator itor;
     std::string alias_name;
     std::shared_ptr<cf_alias::CAliasTrans> alias;
@@ -375,11 +363,9 @@ bool CPVD_UDP::update_alias_mapper(AliasType& alias_list) {
             destaddr = std::make_shared<struct sockaddr_in>();
             assert( alias->pvd_type == get_provider_type());
 
-            destaddr->sin_family = ADDR_TYPE;
-            destaddr->sin_addr.s_addr = inet_addr(alias->ip.c_str());
-            destaddr->sin_port = htons(alias->port_num);
-            // set all bits of the padding field to 0
-            memset(destaddr->sin_zero, '\0', sizeof(destaddr->sin_zero));
+            // make sockaddr_in variables.
+            port_num = alias->port_num;
+            set_ip_port(*destaddr.get(), alias->ip.c_str(), port_num, ProviderMode::E_PVDM_SERVER);
 
             // append pair(alias & address) to mapper.
             mAddr.insert(alias->alias, destaddr, alias->pvd_type, is_new);
@@ -433,8 +419,6 @@ void CPVD_UDP::run_receiver(std::string alias, bool *is_continue) {
  */ 
 std::string CPVD_UDP::make_client_id(const int addr_type, const struct sockaddr_in& cliaddr) {
     std::string client_id;
-    char client_addr[peer_name_bufsize] = {0,};
-    int port_num = -1;
 
     // Only support TCP/UDP M2M communication.
     assert( get_provider_type() == enum_c::ProviderType::E_PVDT_TRANS_TCP || 
@@ -448,12 +432,11 @@ std::string CPVD_UDP::make_client_id(const int addr_type, const struct sockaddr_
         }
         else {
             // If unknown destination, then make new alias.
-            port_num = ntohs(cliaddr.sin_port);
-            inet_ntop(addr_type, &cliaddr.sin_addr.s_addr, client_addr, sizeof(client_addr));
+            auto ipport = get_ip_port(cliaddr);
 
-            if (strcmp(client_addr, "0.0.0.0") != 0) {
-                client_id = client_addr;
-                client_id += ':' + std::to_string(port_num);
+            if (strcmp(ipport->ip, "0.0.0.0") != 0) {
+                client_id = ipport->ip;
+                client_id += ':' + std::to_string(ipport->port);
             }
         }
     }
