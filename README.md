@@ -109,7 +109,7 @@ Date | Commit-ID | Version | Description
 `2020-05-01` | `0af060ee849e937e9392308efcac3780e498d47f` | Ver 0.1.8 | 1. Bug-Fix: TCP disconn & re-connect bug.<br> 2. Bug-Fix: Protocol-Chain buf.<br> 3. Bug-Fix: Random-Device bug.<br> 4. API-chang: connect --> connect_try.
 `2020-05-13` | `fc851b1a0e776749c6ac4e79b3e67df42c6883bc` | Ver 0.1.9 | 1. Buf-Fix: Unintended multiple sending by E_KEEP_PAYLOAD_AFTER_TX option.<br> 2. Apply ThreadPool & queue for Rx.<br> 3. Upgrade Protocol API for receiving of multiple message.
 `2020-05-29` | `0de9a9ff379ae6606f6faf1073971ad934de9863` | Ver 0.1.9 | 1. Add Cinet_uds class.<br> 2. Clean warning message.
-`2020-05-30` | `` | Ver 0.1.9 | Apply Cinet_uds class to TCP/UDP provider class.
+`2020-05-30` | `8988dddf8927b48923a1a257130cf681ee66947b` | Ver 0.1.9 | Apply Cinet_uds class to TCP/UDP provider class.
 
 ### TBD-list
 - Build Routing-Manager.
