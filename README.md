@@ -110,7 +110,7 @@ Date | Commit-ID | Version | Description
 `2020-05-13` | `fc851b1a0e776749c6ac4e79b3e67df42c6883bc` | Ver 0.1.9 | 1. Buf-Fix: Unintended multiple sending by E_KEEP_PAYLOAD_AFTER_TX option.<br> 2. Apply ThreadPool & queue for Rx.<br> 3. Upgrade Protocol API for receiving of multiple message.
 `2020-05-29` | `0de9a9ff379ae6606f6faf1073971ad934de9863` | Ver 0.1.9 | 1. Add Cinet_uds class.<br> 2. Clean warning message.
 `2020-05-30` | `8988dddf8927b48923a1a257130cf681ee66947b` | Ver 0.1.9 | Apply Cinet_uds class to TCP/UDP provider class.
-`2020-05-31` | `` | Ver 0.1.9 | Implement UDS TCP/UDP provider frame, but not yet test it.
+`2020-05-31` | `a4d06f4a21eadf17f6d50f5fd14e45f12d4f363d` | Ver 0.1.9 | Implement UDS TCP/UDP provider frame, but not yet test it.
 
 ### TBD-list
 - Build Routing-Manager.
