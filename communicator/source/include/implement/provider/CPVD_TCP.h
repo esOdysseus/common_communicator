@@ -16,6 +16,7 @@
 #include <CAliasAddr.h>
 #include <Cinet_uds.h>
 
+template <typename ADDR_TYPE=struct sockaddr_in>
 class CPVD_TCP : public IPVDInf, Cinet_uds {
 public:
     CPVD_TCP(AliasType& alias_list);
@@ -52,7 +53,7 @@ private:
 
     int get_connected_socket(std::string alias, MessageType &msg);
 
-    std::string make_client_id(const int addr_type, const struct sockaddr_in& cliaddr);
+    std::string make_client_id(const ADDR_TYPE& cliaddr);
 
     void server_accept(void);
 
@@ -63,13 +64,13 @@ private:
 private:
     ProviderMode _mode_;
 
-    struct sockaddr_in servaddr;    // server-side address
+    ADDR_TYPE servaddr;    // server-side address
 
-    struct sockaddr_in cliaddr;    // server-side address
+    ADDR_TYPE cliaddr;    // server-side address
 
     int _available_sockfd_;         // it's only for client-Mode. (Announce now-available sockfd)
 
-    CAliasAddr<struct sockaddr_in, CALIAS_CMPFUNC_for_sockaddr_in> mAddr;   // alias : essential-address
+    CAliasAddr<ADDR_TYPE, CALIAS_CMPFUNC<ADDR_TYPE>> mAddr;   // alias : essential-address
 
     CAliasAddr<int> m_alias2socket;      // alias => socket
 

@@ -21,6 +21,9 @@
 
 using namespace std::placeholders;
 
+template class CPVD_TCP<struct sockaddr_in>;
+template class CPVD_TCP<struct sockaddr_un>;
+
 // ***** Socket Type ****
 // SOCK_STREAM :    TCP socket
 // SOCK_DGRAM :     UDP socket
@@ -28,16 +31,15 @@ using namespace std::placeholders;
 // **** Protocol Type ****
 // PF_INET : IPv4
 // PF_INET6 : IPv6
+// PF_FILE : UNIX domain socket protocol
 // PF_LOCAL : Local UNIX protocol
 // PF_PACKET : Low-level-socket protocol
 // PF_IPX : IPX novel protocol
 // **** Address Type ****
 // AF_INET : IPv4
 // AF_INET6 : IPv6
+// AF_UNIX  : UNIX domain socket address
 // AF_LOCAL : Local UNIX address
-#define SOCKET_TYPE     SOCK_STREAM
-#define PROTO_TYPE      PF_INET
-#define ADDR_TYPE       AF_INET
 
 typedef enum E_ERROR {
     E_TCP_NO_ERROR = 0,
@@ -76,8 +78,9 @@ static const char* exception_switch(E_ERROR err_num) {
 #include <CException.h>
 
 
-CPVD_TCP::CPVD_TCP(AliasType& alias_list)
-: IPVDInf(alias_list), Cinet_uds(PROTO_TYPE, SOCKET_TYPE, ADDR_TYPE) {
+template <>
+CPVD_TCP<struct sockaddr_in>::CPVD_TCP(AliasType& alias_list)
+: IPVDInf(alias_list), Cinet_uds(PF_INET, SOCK_STREAM, AF_INET) {
     try{
         _mode_ = ProviderMode::E_PVDM_NONE;
         set_provider_type(enum_c::ProviderType::E_PVDT_TRANS_TCP);
@@ -90,7 +93,23 @@ CPVD_TCP::CPVD_TCP(AliasType& alias_list)
     }
 }
 
-CPVD_TCP::~CPVD_TCP(void) {
+template <>
+CPVD_TCP<struct sockaddr_un>::CPVD_TCP(AliasType& alias_list)
+: IPVDInf(alias_list), Cinet_uds(PF_FILE, SOCK_STREAM, AF_UNIX) {
+    try{
+        _mode_ = ProviderMode::E_PVDM_NONE;
+        set_provider_type(enum_c::ProviderType::E_PVDT_TRANS_UDS_TCP);
+        assert( update_alias_mapper(alias_list) == true );
+        m_alias2socket.clear();
+    }
+    catch (const std::exception &e) {
+        LOGERR("%s", e.what());
+        throw ;
+    }
+}
+
+template <typename ADDR_TYPE>
+CPVD_TCP<ADDR_TYPE>::~CPVD_TCP(void) {
     CAliasAddr<int>::AddrIterator itor;
     _mode_ = ProviderMode::E_PVDM_NONE;
     set_provider_type(enum_c::ProviderType::E_PVDT_NOT_DEFINE);
@@ -106,7 +125,8 @@ CPVD_TCP::~CPVD_TCP(void) {
     bzero(&cliaddr, sizeof(cliaddr));
 }
 
-bool CPVD_TCP::init(std::string id, uint16_t port, const char* ip, ProviderMode mode) {
+template <typename ADDR_TYPE>
+bool CPVD_TCP<ADDR_TYPE>::init(std::string id, uint16_t port, const char* ip, ProviderMode mode) {
     set_id(id);
 
     if (inited == true) {
@@ -140,7 +160,8 @@ bool CPVD_TCP::init(std::string id, uint16_t port, const char* ip, ProviderMode 
     return inited;
 }
 
-bool CPVD_TCP::start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
+template <typename ADDR_TYPE>
+bool CPVD_TCP<ADDR_TYPE>::start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
     started = false;
 
     if (inited != true) {
@@ -194,7 +215,8 @@ bool CPVD_TCP::start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtoc
     return started;
 }
 
-bool CPVD_TCP::stop(void) {
+template <typename ADDR_TYPE>
+bool CPVD_TCP<ADDR_TYPE>::stop(void) {
     if (sockfd) {
         Close(sockfd);
         sockfd = 0;
@@ -203,7 +225,8 @@ bool CPVD_TCP::stop(void) {
     return true;
 }
 
-bool CPVD_TCP::accept(void) {
+template <typename ADDR_TYPE>
+bool CPVD_TCP<ADDR_TYPE>::accept(void) {
     try {
         if(started) {
             switch(_mode_) {
@@ -230,10 +253,11 @@ bool CPVD_TCP::accept(void) {
     return false;
 }
 
-int CPVD_TCP::make_connection(std::string alias) {
+template <typename ADDR_TYPE>
+int CPVD_TCP<ADDR_TYPE>::make_connection(std::string alias) {
     bool is_new = false;
     int new_sockfd = -1;
-    struct sockaddr_in *destaddr = NULL;
+    ADDR_TYPE *destaddr = NULL;
     std::shared_ptr<int> address = std::make_shared<int>();
 
     try{
@@ -243,11 +267,13 @@ int CPVD_TCP::make_connection(std::string alias) {
         case ProviderMode::E_PVDM_SERVER:
             assert( (new_sockfd = make_socket(1)) > 0 );
             
-            // // for UDS client-socket setting.
-            // if( Bind_uds_client(new_sockfd) < 0 ) {
-            //     std::string err_str = "ClientAddr binding failed: "+ std::to_string(errno) +": "+ std::string(strerror(errno));
-            //     throw std::runtime_error(err_str);
-            // }
+            if( get_provider_type() == enum_c::ProviderType::E_PVDT_TRANS_UDS_TCP ) {
+                // for UDS client-socket setting.
+                if( Bind_uds_client(new_sockfd) < 0 ) {
+                    std::string err_str = "ClientAddr binding failed: "+ std::to_string(errno) +": "+ std::string(strerror(errno));
+                    throw std::runtime_error(err_str);
+                }
+            }
             break;
         case ProviderMode::E_PVDM_CLIENT:
             new_sockfd = get_self_sockfd();
@@ -271,7 +297,7 @@ int CPVD_TCP::make_connection(std::string alias) {
             throw CException(E_ERROR::E_TCP_NOT_SUPPORT_CLOUD_CONNECTION);
         }
         else if( mAddr.is_there(alias) == true ) {
-            destaddr = (struct sockaddr_in*)mAddr.get(alias).get();
+            destaddr = (ADDR_TYPE*)mAddr.get(alias).get();
         }
         else {
             throw CException(E_ERROR::E_TCP_UNKNOWN_ALIAS);
@@ -322,7 +348,8 @@ int CPVD_TCP::make_connection(std::string alias) {
     return new_sockfd;
 }
 
-void CPVD_TCP::disconnection(std::string alias) {
+template <typename ADDR_TYPE>
+void CPVD_TCP<ADDR_TYPE>::disconnection(std::string alias) {
     int u_sockfd = -1;
 
     if ( m_alias2socket.is_there(alias) == false) {
@@ -348,7 +375,8 @@ void CPVD_TCP::disconnection(std::string alias) {
     }
 }
 
-CPVD_TCP::MessageType CPVD_TCP::read_msg(int u_sockfd, bool &is_new) {
+template <typename ADDR_TYPE>
+typename CPVD_TCP<ADDR_TYPE>::MessageType CPVD_TCP<ADDR_TYPE>::read_msg(int u_sockfd, bool &is_new) {
     ssize_t msg_size = read_bufsize;
     assert(u_sockfd > 0 && read_buf != NULL && read_bufsize > 0);
     MessageType msg = std::make_shared<CRawMessage>();
@@ -386,7 +414,8 @@ CPVD_TCP::MessageType CPVD_TCP::read_msg(int u_sockfd, bool &is_new) {
     return msg;
 }
 
-bool CPVD_TCP::write_msg(std::string alias, MessageType msg) {
+template <typename ADDR_TYPE>
+bool CPVD_TCP<ADDR_TYPE>::write_msg(std::string alias, MessageType msg) {
     assert( msg.get() != NULL );
     using RawDataType = CRawMessage::MsgDataType;
 
@@ -430,7 +459,8 @@ bool CPVD_TCP::write_msg(std::string alias, MessageType msg) {
 /************************************
  * Definition of Protected Function.
  */
-int CPVD_TCP::enable_keepalive(int sock) {
+template <typename ADDR_TYPE>
+int CPVD_TCP<ADDR_TYPE>::enable_keepalive(int sock) {
     int yes = 1;
 
     if(setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &yes, sizeof(int)) == -1) {
@@ -462,17 +492,16 @@ int CPVD_TCP::enable_keepalive(int sock) {
     return 0;
 }
 
-void CPVD_TCP::update_alias_mapper(AliasType& alias_list, 
+template <typename ADDR_TYPE>
+void CPVD_TCP<ADDR_TYPE>::update_alias_mapper(AliasType& alias_list, 
                                      std::string &res_alias_name) {
-    using AddressType = struct sockaddr_in;
-
     LOGD("Called.");
     bool is_new = false;
     uint16_t port_num = 0;
     AliasType::iterator itor;
     std::string alias_name;
     std::shared_ptr<cf_alias::CAliasTrans> alias;
-    std::shared_ptr<AddressType> destaddr;
+    std::shared_ptr<ADDR_TYPE> destaddr;
     assert(alias_list.size() == 1);
     
     try {
@@ -484,7 +513,7 @@ void CPVD_TCP::update_alias_mapper(AliasType& alias_list,
             // get alias info & alloc memory
             alias = std::static_pointer_cast<cf_alias::CAliasTrans>(*itor);
             assert(alias.get() != NULL);
-            destaddr = std::make_shared<AddressType>();
+            destaddr = std::make_shared<ADDR_TYPE>();
             assert( alias->pvd_type == get_provider_type());
 
             // make sockaddr_in variables.
@@ -493,7 +522,7 @@ void CPVD_TCP::update_alias_mapper(AliasType& alias_list,
 
             // append pair(alias & address) to mapper.
             mAddr.insert(alias->alias, destaddr, alias->pvd_type, is_new);
-            res_alias_name = mAddr.get( std::forward<const AddressType>(*destaddr.get()) );
+            res_alias_name = mAddr.get( std::forward<const ADDR_TYPE>(*destaddr.get()) );
         }
     }
     catch(const std::exception &e) {
@@ -502,7 +531,8 @@ void CPVD_TCP::update_alias_mapper(AliasType& alias_list,
     }
 }
 
-bool CPVD_TCP::update_alias_mapper(AliasType& alias_list) {
+template <typename ADDR_TYPE>
+bool CPVD_TCP<ADDR_TYPE>::update_alias_mapper(AliasType& alias_list) {
     LOGD("Called.");
     bool res = true;
     bool is_new = false;
@@ -510,7 +540,7 @@ bool CPVD_TCP::update_alias_mapper(AliasType& alias_list) {
     AliasType::iterator itor;
     std::string alias_name;
     std::shared_ptr<cf_alias::CAliasTrans> alias;
-    std::shared_ptr<struct sockaddr_in> destaddr;
+    std::shared_ptr<ADDR_TYPE> destaddr;
 
     try {
         for ( itor = alias_list.begin(); itor != alias_list.end(); itor++ ) {
@@ -521,7 +551,7 @@ bool CPVD_TCP::update_alias_mapper(AliasType& alias_list) {
             // get alias info & alloc memory
             alias = std::static_pointer_cast<cf_alias::CAliasTrans>(*itor);
             assert(alias.get() != NULL);
-            destaddr = std::make_shared<struct sockaddr_in>();
+            destaddr = std::make_shared<ADDR_TYPE>();
             assert( alias->pvd_type == get_provider_type());
 
             // make sockaddr_in variables.
@@ -541,7 +571,8 @@ bool CPVD_TCP::update_alias_mapper(AliasType& alias_list) {
     return res;
 }
 
-void CPVD_TCP::run_receiver(std::string alias, bool *is_continue) {
+template <typename ADDR_TYPE>
+void CPVD_TCP<ADDR_TYPE>::run_receiver(std::string alias, bool *is_continue) {
     LOGI("Called with alias(%s)", alias.c_str());
     int socket_fd = -1;
     bool is_new = false;
@@ -568,7 +599,7 @@ void CPVD_TCP::run_receiver(std::string alias, bool *is_continue) {
                 msg_raw = read_msg(socket_fd, is_new);     // get raw message. (Blocking)
 
                 if( msg_raw->get_msg_size() > 0 ) {
-                    msg_raw->set_source(socket, alias.c_str());
+                    msg_raw->set_source(socket, alias.c_str(), get_provider_type());
                     // trig handling of protocol & Call-back to app
                     assert( hHprotocol->handle_protocol_chain(msg_raw) == true );
                 }
@@ -614,7 +645,8 @@ void CPVD_TCP::run_receiver(std::string alias, bool *is_continue) {
 /******************************************
  * Definition of Private Function.
  */ 
-int CPVD_TCP::make_socket(int opt_flag) {
+template <typename ADDR_TYPE>
+int CPVD_TCP<ADDR_TYPE>::make_socket(int opt_flag) {
     int new_sockfd = -1;
 
     // make TCP-Socket
@@ -629,7 +661,8 @@ int CPVD_TCP::make_socket(int opt_flag) {
     return new_sockfd;
 }
 
-int CPVD_TCP::get_connected_socket(std::string alias, MessageType &msg) {
+template <typename ADDR_TYPE>
+int CPVD_TCP<ADDR_TYPE>::get_connected_socket(std::string alias, MessageType &msg) {
     int u_sockfd = -1;
 
     try {
@@ -663,13 +696,13 @@ int CPVD_TCP::get_connected_socket(std::string alias, MessageType &msg) {
     return u_sockfd;
 }
 
-std::string CPVD_TCP::make_client_id(const int addr_type, const struct sockaddr_in& new_cliaddr) {
+template <typename ADDR_TYPE>
+std::string CPVD_TCP<ADDR_TYPE>::make_client_id(const ADDR_TYPE& new_cliaddr) {
     std::string client_id;
 
-    // Only support TCP/UDP M2M communication.
+    // Only support TCP/UDS_TCP M2M communication.
     assert( get_provider_type() == enum_c::ProviderType::E_PVDT_TRANS_TCP || 
-            get_provider_type() == enum_c::ProviderType::E_PVDT_TRANS_UDP || 
-            get_provider_type() == enum_c::ProviderType::E_PVDT_TRANS_UDS );
+            get_provider_type() == enum_c::ProviderType::E_PVDT_TRANS_UDS_TCP );
 
     try{
         if ( mAddr.is_there(new_cliaddr) == true ) {
@@ -694,10 +727,11 @@ std::string CPVD_TCP::make_client_id(const int addr_type, const struct sockaddr_
     return client_id;
 }
 
-void CPVD_TCP::server_accept(void) {
+template <typename ADDR_TYPE>
+void CPVD_TCP<ADDR_TYPE>::server_accept(void) {
     bool is_new = false;
     std::string client_id;
-    struct sockaddr_in new_cliaddr;
+    ADDR_TYPE new_cliaddr;
     socklen_t clilen = sizeof(new_cliaddr);
     std::shared_ptr<int> address = std::make_shared<int>();
 
@@ -710,7 +744,7 @@ void CPVD_TCP::server_accept(void) {
         }
 
         // Get client-ID
-        client_id = make_client_id(ADDR_TYPE, new_cliaddr);
+        client_id = make_client_id(new_cliaddr);
         *(address.get()) = newsockfd;
         assert( m_alias2socket.insert(client_id, address, get_provider_type(), is_new, true) == true );
 
@@ -729,13 +763,15 @@ void CPVD_TCP::server_accept(void) {
     }
 }
 
-int CPVD_TCP::get_self_sockfd(void) {              // for only Client-Mode.
+template <typename ADDR_TYPE>
+int CPVD_TCP<ADDR_TYPE>::get_self_sockfd(void) {              // for only Client-Mode.
     int temp_sockfd = _available_sockfd_;
     _available_sockfd_ = 0;
     return temp_sockfd;
 }
 
-void CPVD_TCP::release_self_sockfd(int release_sockfd) {    // for only Client-Mode.
+template <typename ADDR_TYPE>
+void CPVD_TCP<ADDR_TYPE>::release_self_sockfd(int release_sockfd) {    // for only Client-Mode.
     if (release_sockfd == sockfd) {
         _available_sockfd_ = sockfd;
     }

@@ -72,7 +72,7 @@ public:
 
     std::shared_ptr<Cipport> get_ip_port(const struct sockaddr_in &addr);
 
-    std::shared_ptr<Cipport> get_ip_port(const struct sockaddr_un &addr);
+    static std::shared_ptr<Cipport> get_ip_port(const struct sockaddr_un &addr);
 
     void set_ip_port(struct sockaddr_in &addr, 
                      const char* ip, uint16_t &port, 

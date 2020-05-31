@@ -14,9 +14,10 @@ namespace enum_c
         E_PVDT_NOT_DEFINE = 0,
         E_PVDT_TRANS_TCP = 1,
         E_PVDT_TRANS_UDP = 2,
-        E_PVDT_TRANS_UDS = 3,
-        E_PVDT_SERVICE_VSOMEIP = 4,
-        E_PVDT_RSC_IOTIVITY = 5
+        E_PVDT_TRANS_UDS_TCP = 3,
+        E_PVDT_TRANS_UDS_UDP = 4,
+        E_PVDT_SERVICE_VSOMEIP = 5,
+        E_PVDT_RSC_IOTIVITY = 6
     } ProviderType;
 
     enum class ProviderMode {

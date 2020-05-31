@@ -14,7 +14,9 @@
 namespace cf_alias {
 
 const char* CConfigAliases::pvd_types[] = { CConfigAliases::UDP, 
+                                            CConfigAliases::UDP_UDS, 
                                             CConfigAliases::TCP, 
+                                            CConfigAliases::TCP_UDS, 
                                             CConfigAliases::VSOMEIP, 
                                             NULL};
 
@@ -137,7 +139,10 @@ static std::shared_ptr<IAlias> make_alias(std::string alias,
         auto addr = obj_value->get_member<json_mng::CMjson>(CONFIG_ALIAS_ADDR);
 
         LOGD("= pvd_type=%s", pvd_type.c_str());
-        if ( pvd_type == CConfigAliases::UDP || pvd_type == CConfigAliases::TCP ) {
+        if ( pvd_type == CConfigAliases::UDP || 
+             pvd_type == CConfigAliases::UDP_UDS || 
+             pvd_type == CConfigAliases::TCP ||
+             pvd_type == CConfigAliases::TCP_UDS ) {
             res = make_alias_trans(alias, pvd_type, addr);
         }
         else if ( pvd_type == CConfigAliases::VSOMEIP ) {
@@ -259,8 +264,14 @@ enum_c::ProviderType IAlias::cvt_str2pvdtype(std::string pvd_type_str) {
     if(pvd_type_str == CConfigAliases::UDP) {
         return enum_c::ProviderType::E_PVDT_TRANS_UDP;
     }
+    else if(pvd_type_str == CConfigAliases::UDP_UDS) {
+        return enum_c::ProviderType::E_PVDT_TRANS_UDS_UDP;
+    }
     else if(pvd_type_str == CConfigAliases::TCP) {
         return enum_c::ProviderType::E_PVDT_TRANS_TCP;
+    }
+    else if(pvd_type_str == CConfigAliases::TCP_UDS) {
+        return enum_c::ProviderType::E_PVDT_TRANS_UDS_TCP;
     }
     else if(pvd_type_str == CConfigAliases::VSOMEIP) {
         return enum_c::ProviderType::E_PVDT_SERVICE_VSOMEIP;
@@ -275,13 +286,19 @@ std::string IAlias::get_pvd_type(enum_c::ProviderType pvd_type) {
 
     switch( pvd_type ) {
     case enum_c::ProviderType::E_PVDT_TRANS_UDP:
-        res = CConfigAliases::UDP;
+        res = std::string(CConfigAliases::UDP);
+        break;
+    case enum_c::ProviderType::E_PVDT_TRANS_UDS_UDP:
+        res = std::string(CConfigAliases::UDP_UDS);
         break;
     case enum_c::ProviderType::E_PVDT_TRANS_TCP:
-        res = CConfigAliases::TCP;
+        res = std::string(CConfigAliases::TCP);
+        break;
+    case enum_c::ProviderType::E_PVDT_TRANS_UDS_TCP:
+        res = std::string(CConfigAliases::TCP_UDS);
         break;
     case enum_c::ProviderType::E_PVDT_SERVICE_VSOMEIP:
-        res = CConfigAliases::VSOMEIP;
+        res = std::string(CConfigAliases::VSOMEIP);
         break;
     default:
         {

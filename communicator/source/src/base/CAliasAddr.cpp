@@ -7,6 +7,7 @@
  */
 #include <cassert>
 #include <netinet/in.h>
+#include <sys/un.h>
 #include <memory.h>
 #include <mutex>
 
@@ -14,7 +15,8 @@
 #include <CAliasAddr.h>
 #include <CAliasCompare.h>
 
-template class CAliasAddr<struct sockaddr_in, CALIAS_CMPFUNC_for_sockaddr_in>;
+template class CAliasAddr<struct sockaddr_in, CALIAS_CMPFUNC<struct sockaddr_in>>;
+template class CAliasAddr<struct sockaddr_un, CALIAS_CMPFUNC<struct sockaddr_un>>;
 template class CAliasAddr<int>;
 
 

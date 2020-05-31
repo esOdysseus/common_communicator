@@ -22,6 +22,9 @@
 
 using namespace std::placeholders;
 
+template class CPVD_UDP<struct sockaddr_in>;
+template class CPVD_UDP<struct sockaddr_un>;
+
 // ***** Socket Type ****
 // SOCK_STREAM :    TCP socket
 // SOCK_DGRAM :     UDP socket
@@ -29,23 +32,22 @@ using namespace std::placeholders;
 // **** Protocol Type ****
 // PF_INET : IPv4
 // PF_INET6 : IPv6
+// PF_FILE : UNIX domain socket protocol
 // PF_LOCAL : Local UNIX protocol
 // PF_PACKET : Low-level-socket protocol
 // PF_IPX : IPX novel protocol
 // **** Address Type ****
 // AF_INET : IPv4
 // AF_INET6 : IPv6
+// AF_UNIX  : UNIX domain socket address
 // AF_LOCAL : Local UNIX address
-#define SOCKET_TYPE     SOCK_DGRAM
-#define PROTO_TYPE      PF_INET
-#define ADDR_TYPE       AF_INET
-
 
 /******************************************
  * Definition of Public Function.
  */ 
-CPVD_UDP::CPVD_UDP(AliasType& alias_list)
-: IPVDInf(alias_list), Cinet_uds(PROTO_TYPE, SOCKET_TYPE, ADDR_TYPE) {
+template <>
+CPVD_UDP<struct sockaddr_in>::CPVD_UDP(AliasType& alias_list)
+: IPVDInf(alias_list), Cinet_uds(PF_INET, SOCK_DGRAM, AF_INET) {
     try{
         LOGD("Called.");
         set_provider_type(enum_c::ProviderType::E_PVDT_TRANS_UDP);
@@ -58,13 +60,30 @@ CPVD_UDP::CPVD_UDP(AliasType& alias_list)
     }
 }
 
-CPVD_UDP::~CPVD_UDP(void) {
+template <>
+CPVD_UDP<struct sockaddr_un>::CPVD_UDP(AliasType& alias_list)
+: IPVDInf(alias_list), Cinet_uds(PF_FILE, SOCK_DGRAM, AF_UNIX) {
+    try{
+        LOGD("Called.");
+        set_provider_type(enum_c::ProviderType::E_PVDT_TRANS_UDS_UDP);
+        assert( update_alias_mapper(alias_list) == true );
+        _is_continue_ = false;
+    }
+    catch (const std::exception &e) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+}
+
+template <typename ADDR_TYPE>
+CPVD_UDP<ADDR_TYPE>::~CPVD_UDP(void) {
     set_provider_type(enum_c::ProviderType::E_PVDT_NOT_DEFINE);
     _is_continue_ = false;
     bzero(&servaddr, sizeof(servaddr));
 }
 
-bool CPVD_UDP::init(std::string id, uint16_t port, const char* ip, ProviderMode mode) {
+template <typename ADDR_TYPE>
+bool CPVD_UDP<ADDR_TYPE>::init(std::string id, uint16_t port, const char* ip, ProviderMode mode) {
     /** UDP don't car about mode. Because, UDP has not classification of SERVER/CLIENT. */ 
 
     set_id(id);
@@ -94,7 +113,8 @@ bool CPVD_UDP::init(std::string id, uint16_t port, const char* ip, ProviderMode 
     return inited;
 }
 
-bool CPVD_UDP::start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
+template <typename ADDR_TYPE>
+bool CPVD_UDP<ADDR_TYPE>::start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
     
     if (inited != true) {
         LOGERR("We need to init ServerTCP. Please check it.");
@@ -114,7 +134,8 @@ bool CPVD_UDP::start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtoc
     return started;
 }
 
-bool CPVD_UDP::stop(void) {
+template <typename ADDR_TYPE>
+bool CPVD_UDP<ADDR_TYPE>::stop(void) {
     if (sockfd) {
         Close(sockfd);
         sockfd = 0;
@@ -123,13 +144,14 @@ bool CPVD_UDP::stop(void) {
     return true;
 }
 
-bool CPVD_UDP::accept(void) {
+template <typename ADDR_TYPE>
+bool CPVD_UDP<ADDR_TYPE>::accept(void) {
     if(started) {
         std::string client_addr;
 
         // sockfd is not client-socket-fd so, We will insert value-Zero(0) to parameter-2.
         _is_continue_ = true;
-        if (thread_this_migrate(client_addr, std::bind(&CPVD_UDP::run_receiver, this, _1, _2), &_is_continue_) == false) {
+        if (thread_this_migrate(client_addr, std::bind(&CPVD_UDP<ADDR_TYPE>::run_receiver, this, _1, _2), &_is_continue_) == false) {
             LOGERR("%d: %s", errno, strerror(errno));
             return false;
         }
@@ -139,7 +161,8 @@ bool CPVD_UDP::accept(void) {
     return false;
 }
 
-int CPVD_UDP::make_connection(std::string alias) {
+template <typename ADDR_TYPE>
+int CPVD_UDP<ADDR_TYPE>::make_connection(std::string alias) {
     bool is_new = false;
     try{
         if( mAddr.is_there(alias) ) {
@@ -159,7 +182,8 @@ int CPVD_UDP::make_connection(std::string alias) {
     return false;
 }
 
-void CPVD_UDP::disconnection(std::string alias) {
+template <typename ADDR_TYPE>
+void CPVD_UDP<ADDR_TYPE>::disconnection(std::string alias) {
     bool had_connected = false;
 
     try{
@@ -178,7 +202,8 @@ void CPVD_UDP::disconnection(std::string alias) {
     }
 }
 
-CPVD_UDP::MessageType CPVD_UDP::read_msg(int u_sockfd, bool &is_new) {
+template <typename ADDR_TYPE>
+typename CPVD_UDP<ADDR_TYPE>::MessageType CPVD_UDP<ADDR_TYPE>::read_msg(int u_sockfd, bool &is_new) {
     size_t msg_size = read_bufsize;
     
     u_sockfd = this->sockfd;
@@ -187,8 +212,8 @@ CPVD_UDP::MessageType CPVD_UDP::read_msg(int u_sockfd, bool &is_new) {
     MessageType msg = std::make_shared<CRawMessage>();
 
     try {
-        auto cliaddr = std::make_shared<struct sockaddr_in>();
-        struct sockaddr_in * p_cliaddr = cliaddr.get();
+        auto cliaddr = std::make_shared<ADDR_TYPE>();
+        ADDR_TYPE * p_cliaddr = cliaddr.get();
         socklen_t clilen = sizeof( *p_cliaddr );
         std::string client_addr_str;
         std::lock_guard<std::mutex> guard(mtx_read);
@@ -208,7 +233,7 @@ CPVD_UDP::MessageType CPVD_UDP::read_msg(int u_sockfd, bool &is_new) {
             assert( msg_size >= 0 && msg_size <= read_bufsize);
 
             // Get client-ID
-            std::string client_id = make_client_id(ADDR_TYPE, *p_cliaddr);
+            std::string client_id = make_client_id(*p_cliaddr);
             assert( client_id.empty() == false );
             
             // Assumption : We will receive continuous-messages from identical-one-client.
@@ -221,7 +246,7 @@ CPVD_UDP::MessageType CPVD_UDP::read_msg(int u_sockfd, bool &is_new) {
         }
 
         assert( mAddr.insert(client_addr_str, cliaddr, get_provider_type(), is_new, true) == true );
-        msg->set_source(cliaddr, client_addr_str.c_str());
+        msg->set_source(cliaddr, client_addr_str.c_str(), get_provider_type());
     }
     catch(const std::exception &e) {
         LOGERR("%d: %s", errno, strerror(errno));
@@ -231,15 +256,16 @@ CPVD_UDP::MessageType CPVD_UDP::read_msg(int u_sockfd, bool &is_new) {
     return msg;
 }
 
-bool CPVD_UDP::write_msg(std::string alias, MessageType msg) {
+template <typename ADDR_TYPE>
+bool CPVD_UDP<ADDR_TYPE>::write_msg(std::string alias, MessageType msg) {
     assert( msg.get() != NULL );
     using RawDataType = CRawMessage::MsgDataType;
 
     int u_sockfd = this->sockfd;
     size_t msg_size = msg->get_msg_size();
     RawDataType* buffer = (RawDataType*)msg->get_msg_read_only();
-    struct sockaddr_in* p_cliaddr = NULL;
-    socklen_t clilen = sizeof( struct sockaddr_in );
+    ADDR_TYPE* p_cliaddr = NULL;
+    socklen_t clilen = sizeof( ADDR_TYPE );
 
     // soket check. if socket == 0, then we will copy default socket-number.
     assert(u_sockfd != 0 && buffer != NULL && msg_size > 0);
@@ -300,20 +326,21 @@ bool CPVD_UDP::write_msg(std::string alias, MessageType msg) {
 /******************************************
  * Definition of Protected Function.
  */ 
-int CPVD_UDP::enable_keepalive(int sock) {
+template <typename ADDR_TYPE>
+int CPVD_UDP<ADDR_TYPE>::enable_keepalive(int sock) {
     return 0;
 }
 
-void CPVD_UDP::update_alias_mapper(AliasType& alias_list, 
+template <typename ADDR_TYPE>
+void CPVD_UDP<ADDR_TYPE>::update_alias_mapper(AliasType& alias_list, 
                                      std::string &res_alias_name) {
-    using AddressType = struct sockaddr_in;
     LOGD("Called.");
     bool is_new = false;
     uint16_t port_num = 0;
     AliasType::iterator itor;
     std::string alias_name;
     std::shared_ptr<cf_alias::CAliasTrans> alias;
-    std::shared_ptr<struct sockaddr_in> destaddr;
+    std::shared_ptr<ADDR_TYPE> destaddr;
     assert(alias_list.size() == 1);
 
     try {
@@ -324,16 +351,16 @@ void CPVD_UDP::update_alias_mapper(AliasType& alias_list,
             
             alias = std::static_pointer_cast<cf_alias::CAliasTrans>(*itor);
             assert(alias.get() != NULL);
-            destaddr = std::make_shared<struct sockaddr_in>();
+            destaddr = std::make_shared<ADDR_TYPE>();
             assert( alias->pvd_type == get_provider_type());
 
-            // make sockaddr_in variables.
+            // make ADDR_TYPE variables.
             port_num = alias->port_num;
             set_ip_port(*destaddr.get(), alias->ip.c_str(), port_num, ProviderMode::E_PVDM_SERVER);
 
             // append pair(alias & address) to mapper.
             mAddr.insert(alias->alias, destaddr, alias->pvd_type, is_new);
-            res_alias_name = mAddr.get( std::forward<const AddressType>(*destaddr.get()) );
+            res_alias_name = mAddr.get( std::forward<const ADDR_TYPE>(*destaddr.get()) );
         }
     }
     catch(const std::exception &e) {
@@ -342,7 +369,8 @@ void CPVD_UDP::update_alias_mapper(AliasType& alias_list,
     }
 }
 
-bool CPVD_UDP::update_alias_mapper(AliasType& alias_list) {
+template <typename ADDR_TYPE>
+bool CPVD_UDP<ADDR_TYPE>::update_alias_mapper(AliasType& alias_list) {
     LOGD("Called.");
     bool res = true;
     bool is_new = false;
@@ -350,7 +378,7 @@ bool CPVD_UDP::update_alias_mapper(AliasType& alias_list) {
     AliasType::iterator itor;
     std::string alias_name;
     std::shared_ptr<cf_alias::CAliasTrans> alias;
-    std::shared_ptr<struct sockaddr_in> destaddr;
+    std::shared_ptr<ADDR_TYPE> destaddr;
     
     try {
         for ( itor = alias_list.begin(); itor != alias_list.end(); itor++ ) {
@@ -360,10 +388,10 @@ bool CPVD_UDP::update_alias_mapper(AliasType& alias_list) {
 
             alias = std::static_pointer_cast<cf_alias::CAliasTrans>(*itor);
             assert(alias.get() != NULL);
-            destaddr = std::make_shared<struct sockaddr_in>();
+            destaddr = std::make_shared<ADDR_TYPE>();
             assert( alias->pvd_type == get_provider_type());
 
-            // make sockaddr_in variables.
+            // make ADDR_TYPE variables.
             port_num = alias->port_num;
             set_ip_port(*destaddr.get(), alias->ip.c_str(), port_num, ProviderMode::E_PVDM_SERVER);
 
@@ -380,7 +408,8 @@ bool CPVD_UDP::update_alias_mapper(AliasType& alias_list) {
     return res;
 }
 
-void CPVD_UDP::run_receiver(std::string alias, bool *is_continue) {
+template <typename ADDR_TYPE>
+void CPVD_UDP<ADDR_TYPE>::run_receiver(std::string alias, bool *is_continue) {
     LOGI("Called with alias(%s)", alias.c_str());
 
     try {
@@ -417,13 +446,13 @@ void CPVD_UDP::run_receiver(std::string alias, bool *is_continue) {
 /******************************************
  * Definition of Private Function.
  */ 
-std::string CPVD_UDP::make_client_id(const int addr_type, const struct sockaddr_in& cliaddr) {
+template <typename ADDR_TYPE>
+std::string CPVD_UDP<ADDR_TYPE>::make_client_id(const ADDR_TYPE& cliaddr) {
     std::string client_id;
 
-    // Only support TCP/UDP M2M communication.
-    assert( get_provider_type() == enum_c::ProviderType::E_PVDT_TRANS_TCP || 
-            get_provider_type() == enum_c::ProviderType::E_PVDT_TRANS_UDP || 
-            get_provider_type() == enum_c::ProviderType::E_PVDT_TRANS_UDS );
+    // Only support UDP/UDS_UDP M2M communication.
+    assert( get_provider_type() == enum_c::ProviderType::E_PVDT_TRANS_UDP || 
+            get_provider_type() == enum_c::ProviderType::E_PVDT_TRANS_UDS_UDP );
 
     try{
         if ( mAddr.is_there(cliaddr) == true ) {

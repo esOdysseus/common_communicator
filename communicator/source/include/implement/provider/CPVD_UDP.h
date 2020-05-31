@@ -13,6 +13,7 @@
 #include <IAppInf.h>
 #include <Cinet_uds.h>
 
+template <typename ADDR_TYPE=struct sockaddr_in>
 class CPVD_UDP : public IPVDInf, Cinet_uds {
 public:
     CPVD_UDP(AliasType& alias_list);
@@ -45,12 +46,12 @@ protected:
     void run_receiver(std::string alias, bool *is_continue) override;
 
 private:
-    std::string make_client_id(const int addr_type, const struct sockaddr_in& cliaddr);
+    std::string make_client_id(const ADDR_TYPE& cliaddr);
 
 private:
-    struct sockaddr_in servaddr;    // server-side address
+    ADDR_TYPE servaddr;    // server-side address
 
-    CAliasAddr<struct sockaddr_in, CALIAS_CMPFUNC_for_sockaddr_in> mAddr;   // alias : essential-address
+    CAliasAddr<ADDR_TYPE, CALIAS_CMPFUNC<ADDR_TYPE>> mAddr;   // alias : essential-address
 
     bool _is_continue_;
 

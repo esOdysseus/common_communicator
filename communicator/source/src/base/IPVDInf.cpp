@@ -97,7 +97,8 @@ bool IPVDInf::register_new_alias(const char* peer_ip, uint16_t peer_port,
     try {
         if ( get_provider_type() != enum_c::ProviderType::E_PVDT_TRANS_TCP && 
             get_provider_type() != enum_c::ProviderType::E_PVDT_TRANS_UDP && 
-            get_provider_type() != enum_c::ProviderType::E_PVDT_TRANS_UDS ) {
+            get_provider_type() != enum_c::ProviderType::E_PVDT_TRANS_UDS_TCP &&
+            get_provider_type() != enum_c::ProviderType::E_PVDT_TRANS_UDS_UDP ) {
             throw std::domain_error("IP/Port is only allowed within TCP/UDP/UDS.");
         }
 

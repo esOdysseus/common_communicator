@@ -23,6 +23,7 @@ public:
     using MsgDataType = uint8_t;
     using LanAddrType = std::shared_ptr<struct sockaddr_in>;
     using LanSockType = std::shared_ptr<int>;
+    using PVDType = enum_c::ProviderType;
 
 public:
     CRawMessage(size_t capacity=0);
@@ -44,7 +45,7 @@ public:
 
     // With Regard to Source. (Client Address & Alias name)
     template <typename ADDR_TYPE>
-    bool set_source(std::shared_ptr<ADDR_TYPE> addr, const char* alias);
+    bool set_source(std::shared_ptr<ADDR_TYPE> addr, const char* alias, PVDType pvd_type);
 
     LanAddrType get_source_addr(std::string& alias, enum_c::ProviderType provider_type);
 
@@ -58,7 +59,7 @@ public:
 
 private:
     template <typename ADDR_TYPE>
-    enum_c::ProviderType policy_addr(void);
+    PVDType policy_addr(PVDType pvd_type);
 
     bool extend_capacity(size_t append_capacity);
 

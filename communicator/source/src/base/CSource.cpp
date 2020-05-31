@@ -5,12 +5,17 @@
  * 
  * This file is part of the Common-Communicator framework.
  */
+#include <netinet/in.h>
+#include <sys/un.h>
+
 #include <logger.h>
 #include <CSource.h>
 
 template void CSource::init(std::shared_ptr<struct sockaddr_in> addr, const char* alias, enum_c::ProviderType provider_type, bool connect_flag);
+template void CSource::init(std::shared_ptr<struct sockaddr_un> addr, const char* alias, enum_c::ProviderType provider_type, bool connect_flag);
 template void CSource::init(std::shared_ptr<int> addr, const char* alias, enum_c::ProviderType provider_type, bool connect_flag);
 template std::shared_ptr<struct sockaddr_in> CSource::get_address(void);
+template std::shared_ptr<struct sockaddr_un> CSource::get_address(void);
 template std::shared_ptr<int> CSource::get_address(void);
 
 /***********************************************************

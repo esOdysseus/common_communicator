@@ -8,8 +8,10 @@
 #ifndef _C_ALIAS_COMPARE_H_
 #define _C_ALIAS_COMPARE_H_
 
-typedef struct _func_compare_sockaddr_in_ {
-    bool operator()(const struct sockaddr_in &left, const struct sockaddr_in &right) const;
-} CALIAS_CMPFUNC_for_sockaddr_in;
+template <typename ADDR_TYPE=struct sockaddr_in>
+struct CALIAS_CMPFUNC {
+    bool operator()(const ADDR_TYPE &left, const ADDR_TYPE &right) const;
+};
+
 
 #endif // _C_ALIAS_COMPARE_H_

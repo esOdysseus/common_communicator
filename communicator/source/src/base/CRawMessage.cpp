@@ -14,8 +14,9 @@
 #include <CRawMessage.h>
 #include <type_traits>
 
-template bool CRawMessage::set_source(std::shared_ptr<struct sockaddr_in> addr, const char* addr_str);
-template bool CRawMessage::set_source(std::shared_ptr<int> addr, const char* addr_str);
+template bool CRawMessage::set_source(std::shared_ptr<struct sockaddr_in> addr, const char* addr_str, CRawMessage::PVDType pvd_type);
+template bool CRawMessage::set_source(std::shared_ptr<struct sockaddr_un> addr, const char* addr_str, CRawMessage::PVDType pvd_type);
+template bool CRawMessage::set_source(std::shared_ptr<int> addr, const char* addr_str, CRawMessage::PVDType pvd_type);
 
 /***********************************************************
  * Definition member-function of CRawMessage Class.
@@ -145,10 +146,10 @@ bool CRawMessage::append_msg(void* buf, size_t msize) {
 }
 
 template <typename ADDR_TYPE>
-bool CRawMessage::set_source(std::shared_ptr<ADDR_TYPE> addr, const char* addr_str) {
+bool CRawMessage::set_source(std::shared_ptr<ADDR_TYPE> addr, const char* addr_str, PVDType pvd_type) {
     try{
-        enum_c::ProviderType provider_type = policy_addr<ADDR_TYPE>();
-        source.init(addr,addr_str, provider_type);
+        pvd_type = policy_addr<ADDR_TYPE>(pvd_type);
+        source.init(addr,addr_str, pvd_type);
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
@@ -200,13 +201,19 @@ std::string CRawMessage::get_source_alias(void) {
 }
 
 template <typename ADDR_TYPE>
-enum_c::ProviderType CRawMessage::policy_addr(void) {
+CRawMessage::PVDType CRawMessage::policy_addr(PVDType pvd_type) {
     try{
         if( std::is_same<ADDR_TYPE, struct sockaddr_in>::value == true ) {
-            return enum_c::ProviderType::E_PVDT_TRANS_UDP;
+            assert( pvd_type == PVDType::E_PVDT_TRANS_UDP );
+            return pvd_type;
+        }
+        else if( std::is_same<ADDR_TYPE, struct sockaddr_un>::value == true ) {
+            assert( pvd_type == PVDType::E_PVDT_TRANS_UDS_UDP );
+            return pvd_type;
         }
         else if( std::is_same<ADDR_TYPE, int>::value == true ) {            // int Socket
-            return enum_c::ProviderType::E_PVDT_TRANS_TCP;
+            assert( pvd_type == PVDType::E_PVDT_TRANS_TCP || pvd_type == PVDType::E_PVDT_TRANS_UDS_TCP );
+            return pvd_type;
         }
         else {
             throw std::invalid_argument("Not Supported Address-Type.");
@@ -216,7 +223,7 @@ enum_c::ProviderType CRawMessage::policy_addr(void) {
         LOGERR("%s", e.what());
     }
 
-    return enum_c::ProviderType::E_PVDT_NOT_DEFINE;
+    return PVDType::E_PVDT_NOT_DEFINE;
 }
 
 bool CRawMessage::extend_capacity(size_t append_capacity) {
