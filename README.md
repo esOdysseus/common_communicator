@@ -8,8 +8,10 @@
 ### Features
 Feature-name | Support | Category | Description
 :---|:---:|:---:|:---
-`UDP` | O | `Server/Client` | **[_Transaction_]** Fundamental UDP server/client.
-`TCP` | O | `Server/Client` | **[_Transaction_]** Fundamental TCP server/client.
+`UDP` | O | `Provider` | **[_Transaction_]** Fundamental UDP server/client.
+`TCP` | O | `Provider` | **[_Transaction_]** Fundamental TCP server/client.
+`UDS-UDP` | O | `Provider` | **[_Transaction_]** Fundamental UDP server/client base on UDS.
+`UDS-TCP` | O | `Provider` | **[_Transaction_]** Fundamental TCP server/client base on UDS.
 `CPBigEndian` | O | `Protocol` | Sample protocol for Big-Endian type.
 `CPLittleEndian` | O | `Protocol` | Sample protocol for Little-Endian type.
 `Protocol-Chain` | O | `Protocol` | Chaining for Customized-Protocol cascading.
@@ -39,7 +41,7 @@ limitations under the License.
 - esOdysseus (email: es.odysseus@gmail.com)
 
 ### Latest Release
-- version 0.1.9 (Date: 2020-05-31)
+- version 0.2.0 (Date: 2020-06-01)
 ---
 ## Installation
 > Please refer following commands.
@@ -88,6 +90,28 @@ $ bash ./build.sh -m release -t example -arch x86
    ```
    - Attention : You have to set "LD_LIBRARY_PATH" with "${work}/release/lib".
 
+### Example (UDS with UDP protocol)
+- You can test the communicator SDK library by using following guide-line.
+   > If you want to make a application with common-API, then reference following guide-line.
+   ```shell
+   $ cd ${work}
+   $ bash ./build.sh -m release -t example -arch x86
+   $ ./release/bin/sample_uds_udp_server ${IP} ${Port} ${Path-of-desp-Protocol.json} ${Path-of-desp-Alias.json} &
+   $ ./release/bin/sample_uds_udp_client ${Path-of-desp-Protocol.json} ${Path-of-desp-Alias.json}
+   ```
+   - Attention : You have to set "LD_LIBRARY_PATH" with "${work}/release/lib".
+
+### Example (UDS with TCP protocol)
+- You can test the communicator SDK library by using following guide-line.
+   > If you want to make a application with common-API, then reference following guide-line.
+   ```shell
+   $ cd ${work}
+   $ bash ./build.sh -m release -t example -arch x86
+   $ ./release/bin/sample_uds_tcp_server ${IP} ${Port} ${Path-of-desp-Protocol.json} ${Path-of-desp-Alias.json} &
+   $ ./release/bin/sample_uds_tcp_client ${Path-of-desp-Protocol.json} ${Path-of-desp-Alias.json}
+   ```
+   - Attention : You have to set "LD_LIBRARY_PATH" with "${work}/release/lib".
+
 ---
 ## History
 Date | Commit-ID | Version | Description
@@ -111,10 +135,11 @@ Date | Commit-ID | Version | Description
 `2020-05-29` | `0de9a9ff379ae6606f6faf1073971ad934de9863` | Ver 0.1.9 | 1. Add Cinet_uds class.<br> 2. Clean warning message.
 `2020-05-30` | `8988dddf8927b48923a1a257130cf681ee66947b` | Ver 0.1.9 | Apply Cinet_uds class to TCP/UDP provider class.
 `2020-05-31` | `a4d06f4a21eadf17f6d50f5fd14e45f12d4f363d` | Ver 0.1.9 | Implement UDS TCP/UDP provider frame, but not yet test it.
+`2020-06-01` | `` | Ver 0.2.0 | Add Feature UDS TCP/UDP communication. & sample program to test UDS.
+
 
 ### TBD-list
 - Build Routing-Manager.
 - Support vSOME/IP.
 - Support IoTivity of OCF.
-- Support UDS for sharing state of communicator.
 - Common-API will be improved through review-processing & consideration variety of situation.
