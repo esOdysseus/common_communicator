@@ -135,7 +135,7 @@ Date | Commit-ID | Version | Description
 `2020-05-29` | `0de9a9ff379ae6606f6faf1073971ad934de9863` | Ver 0.1.9 | 1. Add Cinet_uds class.<br> 2. Clean warning message.
 `2020-05-30` | `8988dddf8927b48923a1a257130cf681ee66947b` | Ver 0.1.9 | Apply Cinet_uds class to TCP/UDP provider class.
 `2020-05-31` | `a4d06f4a21eadf17f6d50f5fd14e45f12d4f363d` | Ver 0.1.9 | Implement UDS TCP/UDP provider frame, but not yet test it.
-`2020-06-01` | `` | Ver 0.2.0 | Add Feature UDS TCP/UDP communication. & sample program to test UDS.
+`2020-06-01` | `4bf77dce9eb79a1c125be14bc32d48bd79c8960d` | Ver 0.2.0 | Add Feature UDS TCP/UDP communication. & sample program to test UDS.
 
 
 ### TBD-list
