@@ -1,5 +1,6 @@
 #!/bin/bash
-ROOT_PATH=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+CUR_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+ROOT_PATH=${CUR_DIR}/../..
 
 # set custom variables
 BUILD_MODE=debug

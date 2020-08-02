@@ -1,9 +1,10 @@
 #!/bin/bash
-ROOT_PATH=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+CUR_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+ROOT_PATH=${CUR_DIR}/../..
 
 # set custom variables
 BUILD_MODE=debug
-TARGET=sample_uds_tcp_server
+TARGET=sample_uds_udp_server
 DESP_PROTOCOL=${ROOT_PATH}/${BUILD_MODE}/config/desp_protocol.json
 DESP_ALIAS=${ROOT_PATH}/${BUILD_MODE}/config/desp_alias.json
 
