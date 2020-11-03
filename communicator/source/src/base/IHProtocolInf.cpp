@@ -144,7 +144,7 @@ bool IHProtocolInf::handle_protocol_chain(RawMsgType msg_raw) {
     };
 
     try {
-        _rxthr_pool_->run_thread(lamda_func, msg_raw);
+        _rxthr_pool_->run_thread(lamda_func, false, msg_raw);
         return true;
     }
     catch (const std::exception &e) {
