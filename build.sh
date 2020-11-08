@@ -56,6 +56,12 @@ function main() {
         "example")  # build example
             run_build_task  example  ${INSTALL_DIR}/bin
             ;;
+        "gtest")  # build gtest
+            run_build_gtest  gtest
+            ;;
+        "gtest-clean")  # build gtest
+            run_build_gtest  clean
+            ;;
         "none")
             echo -e "\e[1;31m [ERROR] We need BUILD_TARGET. Please, insert -t option. \e[0m"
             exit 0
@@ -95,6 +101,31 @@ function run_build_task() {
     # Build Target
     echo ">>>> Build ${BUILD_TARGET} & install"
     qmake ${ROOT_PATH} TARGET=${BUILD_TARGET} BUILD_MODE=${BUILD_MODE} DESTDIR=${DESTDIR} CPU_ARCH=${CPU_ARCH}
+    make
+    make install
+}
+
+function run_build_gtest() {
+    BUILD_TARGET=${1}
+    GTEST_ROOT=${ROOT_PATH}/test/gtest
+    BUILD_DIR=${GTEST_ROOT}/build
+
+    if [ "${BUILD_TARGET}" == "clean" ]; then
+        echo "Clean gtest build folder."
+        rm -rf ${BUILD_DIR}
+        rm -rf ${GTEST_ROOT}/debug
+        rm -rf ${GTEST_ROOT}/release
+        exit 0
+    fi
+
+    cd ${GTEST_ROOT}
+    if [ ! -d "${BUILD_DIR}" ]; then
+        mkdir -p ${BUILD_DIR}
+    fi
+
+    echo ">>>> Build ${BUILD_TARGET} & install"
+    cd ${BUILD_DIR}
+    cmake ../
     make
     make install
 }
