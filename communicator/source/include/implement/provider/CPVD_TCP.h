@@ -19,7 +19,7 @@
 template <typename ADDR_TYPE=struct sockaddr_in>
 class CPVD_TCP : public IPVDInf, Cinet_uds {
 public:
-    CPVD_TCP(AliasType& alias_list);
+    CPVD_TCP(AliasPVDsType& alias_list);
 
     ~CPVD_TCP(void);
 
@@ -42,9 +42,9 @@ public:
 protected:
     int enable_keepalive(int sock) override;
 
-    void update_alias_mapper(AliasType& alias_list, std::string &res_alias_name) override;
+    void update_alias_mapper(AliasPVDsType& alias_list, std::string &res_alias_name) override;
 
-    bool update_alias_mapper(AliasType& alias_list) override;
+    bool update_alias_mapper(AliasPVDsType& alias_list) override;
 
     void run_receiver(std::string alias, bool *is_continue) override;
 

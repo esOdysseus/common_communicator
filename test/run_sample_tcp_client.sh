@@ -16,7 +16,8 @@ export LD_LIBRARY_PATH=${ROOT_PATH}/${BUILD_MODE}/lib:${LD_LIBRARY_PATH}
 # for Valgrind debugging
 VAL_BIN=valgrind
 VAL_FILE=${ROOT_PATH}/${BUILD_MODE}/bin/valgrind_memcheck_${TARGET}.txt
-VAL_OPT="-v --leak-check=full --error-limit=no --trace-children=yes --show-reachable=yes"
+VAL_OPT="-v --leak-check=full --error-limit=no --trace-children=yes --show-reachable=yes --track-origins=yes"
+# VAL_OPT="-v --leak-check=full --error-limit=no --trace-children=yes --show-reachable=yes"
 touch ${VAL_FILE}
 
 

@@ -86,7 +86,7 @@ int CAppTest::run_period_send(void) {
         std::shared_ptr<IProtocolInf> new_protocol = new_payload->get(PBigEdian);
         assert( new_protocol->set_property("msg_id", 5678) == true );
         new_protocol->set_payload(msg.c_str(), msg.length());
-        assert(h_communicator->send("alias_uds_udp_01", new_payload) == true);
+        assert(h_communicator->send("uds_udp_01", new_payload) == true);
 
         usleep(100000);     // wait 100 ms
     }

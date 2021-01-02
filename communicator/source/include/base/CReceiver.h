@@ -19,6 +19,7 @@ public:
     using InitialCB_Type = std::function<void(enum_c::ProviderType provider_type, bool flag_init)>;
     using ConnectionCB_Type = std::function<void(std::string client_id, bool flag_connect)>;
     using MessagePayloadCB_Type = std::function<void(std::string client_id, std::shared_ptr<payload::CPayload> payload)>;
+    // using MessagePayloadCB_Type = std::function<void(std::string& client_id /*alias/svc-name or service-id_instance-id*/, std::string& sub_id/*sub-name or method-id or event-id*/, std::shared_ptr<payload::CPayload> payload)>;
     using QuitCB_Type = std::function<void(const std::exception &e)>;
 
 public:

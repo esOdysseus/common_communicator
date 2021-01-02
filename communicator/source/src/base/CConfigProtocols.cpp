@@ -148,13 +148,13 @@ static bool biuld_protocol_struct(std::string &name,
 
     try {
         json_mng::MemberIterator itor;
-        auto obj_members = pt_desp->get_member<json_mng::CMjson>(name);
+        auto obj_members = pt_desp->get_member< std::shared_ptr<json_mng::CMjson> >(name);
         auto index = obj_members->get_member<int>(CONFIG_PROTO_META_INDEX);
-        auto properties = obj_members->get_member<json_mng::CMjson>(CONFIG_PROTO_META_PROPERTY);
+        auto properties = obj_members->get_member< std::shared_ptr<json_mng::CMjson> >(CONFIG_PROTO_META_PROPERTY);
 
         // set meta-members of protocol struct.
         pt_dest.name = name;
-        pt_dest.meta.index = (*index.get());
+        pt_dest.meta.index = index;
         pt_dest.properties = std::make_shared<PropertyMap>();
         PropertyMap* property_map = pt_dest.properties.get();
         assert(property_map != NULL);
@@ -166,9 +166,9 @@ static bool biuld_protocol_struct(std::string &name,
         for( itor=properties->begin(); itor!=properties->end(); itor++ ) {
             auto key = json::get_first(itor);
             auto value = json::get_second(itor);
-            LOGD("properties key=%s, value=%s", key.c_str(), value->c_str());
+            LOGD("properties key=%s, value=%s", key.data(), value.data());
 
-            (*property_map)[key] = value->c_str();
+            (*property_map)[key] = value.data();
         }
         res = true;
     } catch ( const std::exception &e ) {
@@ -190,8 +190,8 @@ bool CConfigProtocols::init(const std::string config_file_path) {
 
         // set member-variables.
         this->config_full_path = config_file_path;
-        this->lib_path = json_manager->get_member(CONFIG_PROTO_LIB_PATH)->c_str();
-        this->lib_id = json_manager->get_member(CONFIG_PROTO_ID)->c_str();
+        this->lib_path = json_manager->get_member(CONFIG_PROTO_LIB_PATH);
+        this->lib_id = json_manager->get_member(CONFIG_PROTO_ID);
         this->proto_h = NULL;
         this->proto_st.clear();
         this->proto_list = std::make_shared<ProtoList>();
@@ -199,7 +199,7 @@ bool CConfigProtocols::init(const std::string config_file_path) {
         // build protocol-struct.
         int proto_index = 0;
         auto proto_names = json_manager->get_array_member(CONFIG_PROTO_LIST);
-        auto objects = json_manager->get_member<json_mng::CMjson>(CONFIG_PROTO_DESP);
+        auto objects = json_manager->get_member< std::shared_ptr<json_mng::CMjson> >(CONFIG_PROTO_DESP);
         for ( auto itr = proto_names->begin(); itr != proto_names->end(); itr++, proto_index++ ) {
             std::string proto_name = (*itr)->c_str();
             LOGD("element-name=%s", proto_name.c_str());

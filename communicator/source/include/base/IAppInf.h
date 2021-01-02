@@ -25,6 +25,15 @@
 
 class ICommunicator;
 
+// // @TODO : need Constructor API for Dynamic-Auto parsed Provider.
+// std::shared_ptr<ICommunicator> create_communicator(std::string& app_id, 
+//                                                    std::string& provider_id, 
+//                                                    enum_c::ProviderType provider_type, 
+//                                                    enum_c::ProviderMode mode=enum_c::ProviderMode::E_PVDM_BOTH,
+//                                                    const char* protocol_desp_path=NULL,
+//                                                    const char* alias_desp_path=NULL);
+
+// Constructor API for Static-Defined Provider. (Only for Transaction-Communication)
 std::shared_ptr<ICommunicator> create_communicator(std::string app_id, 
                                                    std::string provider_id, 
                                                    enum_c::ProviderType provider_type, 
@@ -45,6 +54,15 @@ public:
     using ProtocolProperties = std::shared_ptr<std::map<std::string, std::string>>;
 
 public:
+    // // @TODO : need Constructor API for Dynamic-Auto parsed Provider.
+    // ICommunicator(std::string app_id, 
+    //               std::string provider_id, 
+    //               enum_c::ProviderType provider_type, 
+    //               std::shared_ptr<cf_proto::CConfigProtocols> &proto_config,
+    //               std::shared_ptr<cf_alias::CConfigAliases> &alias_config,
+    //               enum_c::ProviderMode mode=enum_c::ProviderMode::E_PVDM_BOTH);
+
+    // Constructor API for Static-Defined Provider. (Only for Transaction-Communication)
     ICommunicator(std::string app_id, 
                   std::string provider_id, 
                   enum_c::ProviderType provider_type, 
@@ -53,6 +71,8 @@ public:
                   unsigned short port=0,
                   const char* ip=NULL,
                   enum_c::ProviderMode mode=enum_c::ProviderMode::E_PVDM_BOTH);
+
+    
 
     ~ICommunicator(void);
 
@@ -148,6 +168,8 @@ public:
     //                           then Receive response/notification-message from Server.
     void register_message_handler(MessagePayloadCB_Type &&handler);      // Mandatory
 
+    // void register_message_handler(MessagePayloadCB_Type &&handler, std::string &from_alias);      // Mandatory
+
     // >> Server-side (Optional)
     //   - Precondition : Handler registered by cb_register_athentication_handler() was called. 
     //   - Practice : Try to do Hand-shaking with regard to authentication.
@@ -167,13 +189,11 @@ public:
     //   - Practice : [REQ/RESP] Send request-message to Server.
     //   - Postcondition : If Server reply with response-message,
     //                     then Handler registered by cb_register_message_handler() will be called.
-    bool send(std::string alias, std::shared_ptr<payload::CPayload>&& payload);      // Mandatory
+    bool send(std::string to_alias, std::shared_ptr<payload::CPayload>&& payload);      // Mandatory
 
-    // [REQ/RESP] Send response-message to Client.
-    bool send(std::string alias, std::shared_ptr<payload::CPayload>& payload);      // Mandatory
+    bool send(std::string to_alias, std::shared_ptr<payload::CPayload>& payload);      // Mandatory
 
-    // [REQ/RESP] Send response-message to Client.
-    bool send(std::string alias, const void* msg, size_t msg_size);                 // Mandatory
+    bool send(std::string to_alias, const void* msg, size_t msg_size);                 // Mandatory
 
     /**
      * Client-Side
@@ -199,16 +219,16 @@ public:
     //   - Precondition : Handler registered by cb_register_available_handler() was called.
     //   - Practice : [PUB/SUB] Delare Event-Accepting to Service-Provider.
     //   - Postcondition : Handler registered by cb_register_subscription_handler() will be called.
-    // void subscribe(void);   // Conditional-Mandatory
+    // void subscribe(std::string & alias);   // Conditional-Mandatory
 
     //   - Precondition : Handler registered by cb_register_available_handler() was called.
     //   - Practice : [PUB/SUB] Delare Event-Rejecting to Service-Provider.
     //   - Postcondition : Handler registered by cb_register_subscription_handler() will be called.
-    // void unsubscribe(void);  // Conditional-Mandatory
+    // void unsubscribe(std::string & alias);  // Conditional-Mandatory
 
     //   - Precondition : None
     //   - Practice : [PUB/SUB] Receiving ACK-message of Service-Provider correspond to subscribe()/unsubscribe().
-    // void cb_register_subscription_handler(void);
+    // void cb_register_subscription_handler(std::string & alias, handler);
 
     /**
      * Server-Side
@@ -216,16 +236,12 @@ public:
     //   - Precondition : Handler registered by cb_register_initialization_handler() was called.
     //   - Practice : Cloud,Server,Service start.
     //   - Postcondition : Handler registered by cb_register_available_handler() will be called.
-    // void resume(void);   // Mandatory
+    // void resume(std::string & alias);   // Mandatory
 
     //   - Precondition : Handler registered by cb_register_initialization_handler() was called.
     //   - Practice : Cloud,Server,Service temporary-stop.
     //   - Postcondition : Handler registered by cb_register_available_handler() will be called.
-    // void suspend(void);  // Mandatory
-
-    //   - Precondition : Handler registered by cb_register_available_handler() was called.
-    //   - Practice : [PUB/SUB] Send Notification-message to Subscribers.
-    // void notify(void);   // Conditional-Mandatory
+    // void suspend(std::string & alias);  // Mandatory
 
     /******************************
      * Discovery API

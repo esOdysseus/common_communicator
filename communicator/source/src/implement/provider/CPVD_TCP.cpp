@@ -79,7 +79,7 @@ static const char* exception_switch(E_ERROR err_num) {
 
 
 template <>
-CPVD_TCP<struct sockaddr_in>::CPVD_TCP(AliasType& alias_list)
+CPVD_TCP<struct sockaddr_in>::CPVD_TCP(AliasPVDsType& alias_list)
 : IPVDInf(alias_list), Cinet_uds(PF_INET, SOCK_STREAM, AF_INET) {
     try{
         _mode_ = ProviderMode::E_PVDM_NONE;
@@ -94,7 +94,7 @@ CPVD_TCP<struct sockaddr_in>::CPVD_TCP(AliasType& alias_list)
 }
 
 template <>
-CPVD_TCP<struct sockaddr_un>::CPVD_TCP(AliasType& alias_list)
+CPVD_TCP<struct sockaddr_un>::CPVD_TCP(AliasPVDsType& alias_list)
 : IPVDInf(alias_list), Cinet_uds(PF_FILE, SOCK_STREAM, AF_UNIX) {
     try{
         _mode_ = ProviderMode::E_PVDM_NONE;
@@ -300,6 +300,7 @@ int CPVD_TCP<ADDR_TYPE>::make_connection(std::string alias) {
             destaddr = (ADDR_TYPE*)mAddr.get(alias).get();
         }
         else {
+            LOGERR("unknown alias --> %s", alias.data());
             throw CException(E_ERROR::E_TCP_UNKNOWN_ALIAS);
         }
 
@@ -493,12 +494,12 @@ int CPVD_TCP<ADDR_TYPE>::enable_keepalive(int sock) {
 }
 
 template <typename ADDR_TYPE>
-void CPVD_TCP<ADDR_TYPE>::update_alias_mapper(AliasType& alias_list, 
+void CPVD_TCP<ADDR_TYPE>::update_alias_mapper(AliasPVDsType& alias_list, 
                                      std::string &res_alias_name) {
     LOGD("Called.");
     bool is_new = false;
     uint16_t port_num = 0;
-    AliasType::iterator itor;
+    AliasPVDsType::iterator itor;
     std::string alias_name;
     std::shared_ptr<cf_alias::CAliasTrans> alias;
     std::shared_ptr<ADDR_TYPE> destaddr;
@@ -514,14 +515,14 @@ void CPVD_TCP<ADDR_TYPE>::update_alias_mapper(AliasType& alias_list,
             alias = std::static_pointer_cast<cf_alias::CAliasTrans>(*itor);
             assert(alias.get() != NULL);
             destaddr = std::make_shared<ADDR_TYPE>();
-            assert( alias->pvd_type == get_provider_type());
+            assert( alias->type() == get_provider_type());
 
             // make sockaddr_in variables.
-            port_num = alias->port_num;
-            set_ip_port(*destaddr.get(), alias->ip.c_str(), port_num, ProviderMode::E_PVDM_SERVER);
+            port_num = alias->get_port();
+            set_ip_port(*destaddr.get(), alias->get_ip().c_str(), port_num, ProviderMode::E_PVDM_SERVER);
 
             // append pair(alias & address) to mapper.
-            mAddr.insert(alias->alias, destaddr, alias->pvd_type, is_new);
+            mAddr.insert(alias->name(), destaddr, alias->type(), is_new);
             res_alias_name = mAddr.get( std::forward<const ADDR_TYPE>(*destaddr.get()) );
         }
     }
@@ -532,12 +533,12 @@ void CPVD_TCP<ADDR_TYPE>::update_alias_mapper(AliasType& alias_list,
 }
 
 template <typename ADDR_TYPE>
-bool CPVD_TCP<ADDR_TYPE>::update_alias_mapper(AliasType& alias_list) {
+bool CPVD_TCP<ADDR_TYPE>::update_alias_mapper(AliasPVDsType& alias_list) {
     LOGD("Called.");
     bool res = true;
     bool is_new = false;
     uint16_t port_num = 0;
-    AliasType::iterator itor;
+    AliasPVDsType::iterator itor;
     std::string alias_name;
     std::shared_ptr<cf_alias::CAliasTrans> alias;
     std::shared_ptr<ADDR_TYPE> destaddr;
@@ -552,14 +553,14 @@ bool CPVD_TCP<ADDR_TYPE>::update_alias_mapper(AliasType& alias_list) {
             alias = std::static_pointer_cast<cf_alias::CAliasTrans>(*itor);
             assert(alias.get() != NULL);
             destaddr = std::make_shared<ADDR_TYPE>();
-            assert( alias->pvd_type == get_provider_type());
+            assert( alias->type() == get_provider_type());
 
             // make sockaddr_in variables.
-            port_num = alias->port_num;
-            set_ip_port(*destaddr.get(), alias->ip.c_str(), port_num, ProviderMode::E_PVDM_SERVER);
+            port_num = alias->get_port();
+            set_ip_port(*destaddr.get(), alias->get_ip().c_str(), port_num, ProviderMode::E_PVDM_SERVER);
 
             // append pair(alias & address) to mapper.
-            mAddr.insert(alias->alias, destaddr, alias->pvd_type, is_new);
+            mAddr.insert(alias->name(), destaddr, alias->type(), is_new);
         }
     }
     catch(const std::exception &e) {

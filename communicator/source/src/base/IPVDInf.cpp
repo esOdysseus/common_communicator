@@ -68,7 +68,7 @@ void IPVDInf::CLooper::force_join(void) {
  * Definition for Member-Function of IPVDInf Class.
  */
 
-IPVDInf::IPVDInf(AliasType& alias_list) {
+IPVDInf::IPVDInf(AliasPVDsType& alias_list) {
     try {
         LOGD("Called.");
         id = "";
@@ -87,9 +87,9 @@ IPVDInf::~IPVDInf(void) {
 
 bool IPVDInf::register_new_alias(const char* peer_ip, uint16_t peer_port, 
                                     std::string &wanted_name) {
-    using AliasType = cf_alias::CAliasTrans;
+    using PvdType = cf_alias::CAliasTrans;
     std::string str_pvd_type;
-    std::list<std::shared_ptr<cf_alias::IAlias>> alias_list;
+    AliasPVDsType alias_list;
     assert(peer_ip != NULL);
     assert(peer_port > 0);
     assert(wanted_name.empty() == false);
@@ -102,12 +102,12 @@ bool IPVDInf::register_new_alias(const char* peer_ip, uint16_t peer_port,
             throw std::domain_error("IP/Port is only allowed within TCP/UDP/UDS.");
         }
 
-        // convert String-type ip/port to Abstracted IAlias-type.
-        str_pvd_type = AliasType::get_pvd_type(get_provider_type());
-        auto alias = std::make_shared<AliasType>(wanted_name.c_str(), str_pvd_type.c_str());
-        alias->ip = peer_ip;
-        alias->port_num = peer_port;
-        alias->mask = 24;
+        // convert String-type ip/port to Abstracted IAliasPVD-type.
+        str_pvd_type = PvdType::get_pvd_type(get_provider_type());
+        auto alias = std::make_shared<PvdType>(wanted_name.c_str(), str_pvd_type.c_str());
+        alias->set_ip( peer_ip );
+        alias->set_port( peer_port );
+        alias->set_mask( 24 );
         alias_list.push_back(alias);
 
         // append new alias to internal data-structure of Provider.

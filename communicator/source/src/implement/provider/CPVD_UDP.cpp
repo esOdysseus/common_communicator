@@ -46,7 +46,7 @@ template class CPVD_UDP<struct sockaddr_un>;
  * Definition of Public Function.
  */ 
 template <>
-CPVD_UDP<struct sockaddr_in>::CPVD_UDP(AliasType& alias_list)
+CPVD_UDP<struct sockaddr_in>::CPVD_UDP(AliasPVDsType& alias_list)
 : IPVDInf(alias_list), Cinet_uds(PF_INET, SOCK_DGRAM, AF_INET) {
     try{
         LOGD("Called.");
@@ -61,7 +61,7 @@ CPVD_UDP<struct sockaddr_in>::CPVD_UDP(AliasType& alias_list)
 }
 
 template <>
-CPVD_UDP<struct sockaddr_un>::CPVD_UDP(AliasType& alias_list)
+CPVD_UDP<struct sockaddr_un>::CPVD_UDP(AliasPVDsType& alias_list)
 : IPVDInf(alias_list), Cinet_uds(PF_FILE, SOCK_DGRAM, AF_UNIX) {
     try{
         LOGD("Called.");
@@ -332,12 +332,12 @@ int CPVD_UDP<ADDR_TYPE>::enable_keepalive(int sock) {
 }
 
 template <typename ADDR_TYPE>
-void CPVD_UDP<ADDR_TYPE>::update_alias_mapper(AliasType& alias_list, 
+void CPVD_UDP<ADDR_TYPE>::update_alias_mapper(AliasPVDsType& alias_list, 
                                      std::string &res_alias_name) {
     LOGD("Called.");
     bool is_new = false;
     uint16_t port_num = 0;
-    AliasType::iterator itor;
+    AliasPVDsType::iterator itor;
     std::string alias_name;
     std::shared_ptr<cf_alias::CAliasTrans> alias;
     std::shared_ptr<ADDR_TYPE> destaddr;
@@ -352,14 +352,14 @@ void CPVD_UDP<ADDR_TYPE>::update_alias_mapper(AliasType& alias_list,
             alias = std::static_pointer_cast<cf_alias::CAliasTrans>(*itor);
             assert(alias.get() != NULL);
             destaddr = std::make_shared<ADDR_TYPE>();
-            assert( alias->pvd_type == get_provider_type());
+            assert( alias->type() == get_provider_type());
 
             // make ADDR_TYPE variables.
-            port_num = alias->port_num;
-            set_ip_port(*destaddr.get(), alias->ip.c_str(), port_num, ProviderMode::E_PVDM_SERVER);
+            port_num = alias->get_port();
+            set_ip_port(*destaddr.get(), alias->get_ip().c_str(), port_num, ProviderMode::E_PVDM_SERVER);
 
             // append pair(alias & address) to mapper.
-            mAddr.insert(alias->alias, destaddr, alias->pvd_type, is_new);
+            mAddr.insert(alias->name(), destaddr, alias->type(), is_new);
             res_alias_name = mAddr.get( std::forward<const ADDR_TYPE>(*destaddr.get()) );
         }
     }
@@ -370,12 +370,12 @@ void CPVD_UDP<ADDR_TYPE>::update_alias_mapper(AliasType& alias_list,
 }
 
 template <typename ADDR_TYPE>
-bool CPVD_UDP<ADDR_TYPE>::update_alias_mapper(AliasType& alias_list) {
+bool CPVD_UDP<ADDR_TYPE>::update_alias_mapper(AliasPVDsType& alias_list) {
     LOGD("Called.");
     bool res = true;
     bool is_new = false;
     uint16_t port_num = 0;
-    AliasType::iterator itor;
+    AliasPVDsType::iterator itor;
     std::string alias_name;
     std::shared_ptr<cf_alias::CAliasTrans> alias;
     std::shared_ptr<ADDR_TYPE> destaddr;
@@ -389,14 +389,14 @@ bool CPVD_UDP<ADDR_TYPE>::update_alias_mapper(AliasType& alias_list) {
             alias = std::static_pointer_cast<cf_alias::CAliasTrans>(*itor);
             assert(alias.get() != NULL);
             destaddr = std::make_shared<ADDR_TYPE>();
-            assert( alias->pvd_type == get_provider_type());
+            assert( alias->type() == get_provider_type());
 
             // make ADDR_TYPE variables.
-            port_num = alias->port_num;
-            set_ip_port(*destaddr.get(), alias->ip.c_str(), port_num, ProviderMode::E_PVDM_SERVER);
+            port_num = alias->get_port();
+            set_ip_port(*destaddr.get(), alias->get_ip().c_str(), port_num, ProviderMode::E_PVDM_SERVER);
 
             // append pair(alias & address) to mapper.
-            mAddr.insert(alias->alias, destaddr, alias->pvd_type, is_new);
+            mAddr.insert(alias->name(), destaddr, alias->type(), is_new);
         }
     }
     catch(const std::exception &e) {

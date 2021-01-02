@@ -33,7 +33,7 @@ public:
     using SharedThisType = std::enable_shared_from_this<IPVDInf>;
     using ThreadType = std::shared_ptr<std::thread>;
     using MessageType = dtype_b::MsgType;
-    using AliasType = std::list<std::shared_ptr<cf_alias::IAlias>>;
+    using AliasPVDsType = cf_alias::CConfigAliases::PVDListType;
     using FPreceiverType = std::function<void(std::string alias, bool *is_continue)>;
 
 protected:
@@ -45,7 +45,7 @@ private:
     using LoopPoolType = std::unordered_map<std::string /* alias */, std::shared_ptr<CLooper> >;
 
 public:
-    IPVDInf(AliasType& alias_list);
+    IPVDInf(AliasPVDsType& alias_list);
 
     ~IPVDInf(void);
 
@@ -77,9 +77,9 @@ protected:
     virtual int enable_keepalive(int sock) = 0;
 
     // Temporary Function : alias 전달후 issue 발생으로 임시적으로 기능 구현을 위해 존재함.
-    virtual void update_alias_mapper(AliasType& alias_list, std::string &res_alias_name) = 0;
+    virtual void update_alias_mapper(AliasPVDsType& alias_list, std::string &res_alias_name) = 0;
 
-    virtual bool update_alias_mapper(AliasType& alias_list) = 0;
+    virtual bool update_alias_mapper(AliasPVDsType& alias_list) = 0;
 
     virtual void run_receiver(std::string alias, bool *is_continue) = 0;
 

@@ -20,22 +20,37 @@ namespace json_mng
 template std::shared_ptr<std::list<std::shared_ptr<std::string>>> CMjson::get_array<std::string>(std::string &key);
 template std::shared_ptr<std::list<std::shared_ptr<CMjson>>> CMjson::get_array<CMjson>(std::string &key);
 
-template std::shared_ptr<std::string> CMjson::get_second<std::string>(MemberIterator itor);
-template std::shared_ptr<int> CMjson::get_second<int>(MemberIterator itor);
-template std::shared_ptr<long> CMjson::get_second<long>(MemberIterator itor);
-template std::shared_ptr<bool> CMjson::get_second<bool>(MemberIterator itor);
-template std::shared_ptr<double> CMjson::get_second<double>(MemberIterator itor);
-template std::shared_ptr<float> CMjson::get_second<float>(MemberIterator itor);
+template std::string CMjson::get_second<std::string>(MemberIterator itor);
+template int CMjson::get_second<int>(MemberIterator itor);
+template short CMjson::get_second<short>(MemberIterator itor);
+template int8_t CMjson::get_second<int8_t>(MemberIterator itor);
+template uint32_t CMjson::get_second<uint32_t>(MemberIterator itor);
+template uint16_t CMjson::get_second<uint16_t>(MemberIterator itor);
+template uint8_t CMjson::get_second<uint8_t>(MemberIterator itor);
+template long CMjson::get_second<long>(MemberIterator itor);
+template bool CMjson::get_second<bool>(MemberIterator itor);
+template double CMjson::get_second<double>(MemberIterator itor);
+template float CMjson::get_second<float>(MemberIterator itor);
 
-template std::shared_ptr<std::string> CMjson::get<std::string>(std::string &key);
-template std::shared_ptr<int> CMjson::get<int>(std::string &key);
-template std::shared_ptr<long> CMjson::get<long>(std::string &key);
-template std::shared_ptr<bool> CMjson::get<bool>(std::string &key);
-template std::shared_ptr<double> CMjson::get<double>(std::string &key);
-template std::shared_ptr<float> CMjson::get<float>(std::string &key);
-template std::shared_ptr<CMjson> CMjson::get<CMjson>(std::string &key);
+template std::string CMjson::get<std::string>(std::string &key);
+template int CMjson::get<int>(std::string &key);
+template short CMjson::get<short>(std::string &key);
+template int8_t CMjson::get<int8_t>(std::string &key);
+template uint32_t CMjson::get<uint32_t>(std::string &key);
+template uint16_t CMjson::get<uint16_t>(std::string &key);
+template uint8_t CMjson::get<uint8_t>(std::string &key);
+template long CMjson::get<long>(std::string &key);
+template bool CMjson::get<bool>(std::string &key);
+template double CMjson::get<double>(std::string &key);
+template float CMjson::get<float>(std::string &key);
+template std::shared_ptr<CMjson> CMjson::get< std::shared_ptr<CMjson> >(std::string &key);
 
 template bool CMjson::update<int>(std::string &key, int value);
+template bool CMjson::update<short>(std::string &key, short value);
+template bool CMjson::update<int8_t>(std::string &key, int8_t value);
+template bool CMjson::update<uint32_t>(std::string &key, uint32_t value);
+template bool CMjson::update<uint16_t>(std::string &key, uint16_t value);
+template bool CMjson::update<uint8_t>(std::string &key, uint8_t value);
 template bool CMjson::update<long>(std::string &key, long value);
 template bool CMjson::update<bool>(std::string &key, bool value);
 template bool CMjson::update<double>(std::string &key, double value);
@@ -202,18 +217,45 @@ inline int CMjson::get_data<int>(const char* data) {
 }
 
 template<>
+inline short CMjson::get_data<short>(const char* data) {
+    return (short)(atoi(data));
+}
+
+template<>
+inline int8_t CMjson::get_data<int8_t>(const char* data) {
+    return (int8_t)(atoi(data));
+}
+
+template<>
+inline uint32_t CMjson::get_data<uint32_t>(const char* data) {
+    return (uint32_t)(atoi(data));
+}
+
+template<>
+inline uint16_t CMjson::get_data<uint16_t>(const char* data) {
+    return (uint16_t)(atoi(data));
+}
+
+template<>
+inline uint8_t CMjson::get_data<uint8_t>(const char* data) {
+    return (uint8_t)(atoi(data));
+}
+
+template<>
 inline long CMjson::get_data<long>(const char* data) {
     return atol(data);
 }
 
 template<>
 inline bool CMjson::get_data<bool>(const char* data) {
-    return atoi(data);
+    return (bool)(atoi(data));
 }
 
 template<>
 inline double CMjson::get_data<double>(const char* data) {
-    return atof(data);
+    char* end;
+    // return atof(data);
+    return strtod(data, &end);
 }
 
 template<>
@@ -314,14 +356,14 @@ std::shared_ptr<CMjson> CMjson::get<CMjson>(ValueIterator itr) {
 }
 
 template <typename T>
-std::shared_ptr<T> CMjson::get_second(MemberIterator itor) {
+T CMjson::get_second(MemberIterator itor) {
     const char* value = NULL;
-    std::shared_ptr<T> ret = std::make_shared<T>();
+    T ret;
 
     if ( itor->value.IsString() == true ) {
         value = itor->value.GetString();
         assert(value != NULL);
-        *(ret.get()) = get_data<T>(value);
+        ret = get_data<T>(value);
     }
     else {
         throw CException(E_ERROR::E_ITS_NOT_SUPPORTED_TYPE);
@@ -330,12 +372,12 @@ std::shared_ptr<T> CMjson::get_second(MemberIterator itor) {
 }
 
 template <>
-std::shared_ptr<CMjson> CMjson::get_second<CMjson>(MemberIterator itor) {
+std::shared_ptr<CMjson> CMjson::get_second< std::shared_ptr<CMjson> >(MemberIterator itor) {
     return std::make_shared<CMjson>(itor->value.GetObject());
 }
 
 template <typename T>
-std::shared_ptr<T> CMjson::get(std::string &key) {
+T CMjson::get(std::string &key) {
     assert(is_there() == true);
     rapidjson::Value::MemberIterator target = object->FindMember(key.c_str());
 

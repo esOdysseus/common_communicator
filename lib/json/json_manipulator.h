@@ -12,6 +12,7 @@
 #include <cassert>
 #include <memory>
 #include <string>
+#include <sstream>
 
 #include <CRawMessage.h>
 #include <json_headers.h>
@@ -55,12 +56,39 @@ namespace json_mng
         static std::string get_first(MemberIterator itor);
 
         template <typename T=std::string>
-        static std::shared_ptr<T> get_second(MemberIterator itor);
+        static T get_second(MemberIterator itor);
+
+        template <typename T=uint32_t>
+        static T get_second_hex(MemberIterator itor) {
+            std::string text;
+            T result;
+            // get data as string.
+            text = get_second<std::string>(itor);
+            assert( text.empty() != true );
+            // convert to T-type.
+            std::stringstream convert(text);
+            convert >> std::hex >> result;
+            return result;
+        }
 
         template <typename T=std::string>
-        std::shared_ptr<T> get_member(std::string key) {
+        T get_member(std::string key) {
             validation_check(key);
             return get<T>(key);
+        }
+
+        template <typename T=uint32_t>
+        T get_hex_member(std::string key) {
+            std::string text;
+            T result;
+            // get data as string.
+            validation_check(key);
+            text = get<std::string>(key);
+            assert( text.empty() != true );
+            // convert to T-type.
+            std::stringstream convert(text);
+            convert >> std::hex >> result;
+            return result;
         }
 
         template <typename T=std::string>
@@ -103,7 +131,7 @@ namespace json_mng
         std::shared_ptr<T> get(ValueIterator itr);
 
         template <typename T>
-        std::shared_ptr<T> get(std::string &key);
+        T get(std::string &key);
 
         template <typename T>
         static T get_data(const char* data);
