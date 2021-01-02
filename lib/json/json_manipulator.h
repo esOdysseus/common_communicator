@@ -78,7 +78,7 @@ namespace json_mng
         }
 
         template <typename T=uint32_t>
-        T get_hex_member(std::string key) {
+        T get_member_hex(std::string key) {
             std::string text;
             T result;
             // get data as string.

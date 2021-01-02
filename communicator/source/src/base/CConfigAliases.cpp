@@ -431,12 +431,10 @@ std::shared_ptr<CAliasService> CConfigAliases::make_pvd_service(std::string alia
             LOGD("= Key=%s", key.c_str());
 
             if ( key == CONFIG_ALIAS_SVC_ID ) {
-                // res->set_svc_id( *(json_mng::CMjson::get_second<uint32_t>(itr).get()) );
                 res->set_svc_id( json_mng::CMjson::get_second_hex<uint32_t>(itr) );
                 LOGD("= Value=%u", res->get_svc_id());
             }
             else if ( key == CONFIG_ALIAS_INST_ID ) {
-                // res->set_inst_id( *(json_mng::CMjson::get_second<uint32_t>(itr).get()) );
                 res->set_inst_id( json_mng::CMjson::get_second_hex<uint32_t>(itr) );
                 LOGD("= Value=%u", res->get_inst_id());
             }
@@ -491,18 +489,18 @@ void CConfigAliases::set_pvd_service_with_function( std::shared_ptr<CAliasServic
 
         // run parsing routine.
         lamda_parsing_functions( CONFIG_ALIAS_REQ_RESP, [&](std::string& name_, std::shared_ptr<json_mng::CMjson>& sub_obj_)->void {
-            uint32_t id = sub_obj_->get_hex_member<uint32_t>(CONFIG_ALIAS_FUNC_ID);
+            uint32_t id = sub_obj_->get_member_hex<uint32_t>(CONFIG_ALIAS_FUNC_ID);
             pvd_->push_reqresp_id( name_, id );
         });
 
         lamda_parsing_functions( CONFIG_ALIAS_REQ_NO_RESP, [&](std::string& name_, std::shared_ptr<json_mng::CMjson>& sub_obj_)->void {
-            uint32_t id = sub_obj_->get_hex_member<uint32_t>(CONFIG_ALIAS_FUNC_ID);
+            uint32_t id = sub_obj_->get_member_hex<uint32_t>(CONFIG_ALIAS_FUNC_ID);
             pvd_->push_reqNOresp_id( name_, id );
         });
 
         lamda_parsing_functions( CONFIG_ALIAS_PUB_SUB, [&](std::string& name_, std::shared_ptr<json_mng::CMjson>& sub_obj_)->void {
-            uint32_t id = sub_obj_->get_hex_member<uint32_t>(CONFIG_ALIAS_FUNC_ID);
-            uint32_t grp_id = sub_obj_->get_hex_member<uint32_t>(CONFIG_ALIAS_FUNC_GID);
+            uint32_t id = sub_obj_->get_member_hex<uint32_t>(CONFIG_ALIAS_FUNC_ID);
+            uint32_t grp_id = sub_obj_->get_member_hex<uint32_t>(CONFIG_ALIAS_FUNC_GID);
             pvd_->push_pubsub_id( name_, id, grp_id );
         });
     }
