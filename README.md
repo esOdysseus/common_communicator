@@ -41,7 +41,7 @@ limitations under the License.
 - esOdysseus (email: es.odysseus@gmail.com)
 
 ### Latest Release
-- version 0.2.0 (Date: 2020-06-01)
+- version 0.2.1 (Date: 2021-01-02)
 ---
 ## Installation
 > Please refer following commands.
@@ -136,6 +136,7 @@ Date | Commit-ID | Version | Description
 `2020-05-30` | `8988dddf8927b48923a1a257130cf681ee66947b` | Ver 0.1.9 | Apply Cinet_uds class to TCP/UDP provider class.
 `2020-05-31` | `a4d06f4a21eadf17f6d50f5fd14e45f12d4f363d` | Ver 0.1.9 | Implement UDS TCP/UDP provider frame, but not yet test it.
 `2020-06-01` | `4bf77dce9eb79a1c125be14bc32d48bd79c8960d` | Ver 0.2.0 | Add Feature UDS TCP/UDP communication. & sample program to test UDS.
+`2021-01-02` | `0e89fd1d739a6982f6ec8b29500a3328fa0098fc` | Ver 0.2.1 | Definition of Resource-Concept.
 
 
 ### TBD-list
