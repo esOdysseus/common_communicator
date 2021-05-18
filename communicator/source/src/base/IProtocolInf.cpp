@@ -27,16 +27,16 @@ template bool IProtocolInf::set_property<uint64_t>(const std::string key, uint64
  * Public Function Definition
  */ 
 IProtocolInf::IProtocolInf(void): payload::CPayload() {
-    segments.clear();
+    _m_segments_.clear();
 }
 
 IProtocolInf::IProtocolInf(std::string name): payload::CPayload(name) {
-    segments.clear();
+    _m_segments_.clear();
 }
 
 IProtocolInf::~IProtocolInf(void) {
     LOGD("Called.");
-    segments.clear();
+    _m_segments_.clear();
 }
 
 std::shared_ptr<std::list<std::string>> IProtocolInf::get_keys(void) {
@@ -97,7 +97,8 @@ void IProtocolInf::clean_data(bool tx_data, bool rx_data) {
  * Protected Function Definition
  */
 IProtocolInf::SegmentsType& IProtocolInf::pack_recursive(const void* msg, size_t msg_size, 
-                                                         enum_c::ProviderType provider_type) {
+                                                         enum_c::ProviderType provider_type,
+                                                         std::string &&from_app, std::string &&to_app) {
     LOGD("Called");
     auto proto_chain = get_proto_chain();
     assert(proto_chain->end() != proto_chain->begin());
@@ -106,7 +107,9 @@ IProtocolInf::SegmentsType& IProtocolInf::pack_recursive(const void* msg, size_t
     try {
         auto itr = proto_chain->begin();
         auto pre_protocol = GET_PROTOCOL(itr);
-        assert( (res = pre_protocol->pack(msg, msg_size, provider_type)) == true );
+        assert( (res = pre_protocol->pack(msg, msg_size, provider_type, 
+                                          std::forward<std::string>(from_app), 
+                                          std::forward<std::string>(to_app))) == true );
 
         if ( (*itr)->get_name() !=  payload::CPayload::Default_Name ) {
             for (itr++; itr != proto_chain->end(); itr++) {
@@ -116,7 +119,8 @@ IProtocolInf::SegmentsType& IProtocolInf::pack_recursive(const void* msg, size_t
 
                 for( itor=u_segments.begin(); itor != u_segments.end(); itor++ ) {
                     RawMsgType& segment = *itor;
-                    res = GET_PROTOCOL(itr)->pack(segment->get_msg_read_only(), segment->get_msg_size(), provider_type);
+                    res = GET_PROTOCOL(itr)->pack(segment->get_msg_read_only(), segment->get_msg_size(), provider_type,
+                                                  std::forward<std::string>(from_app), std::forward<std::string>(to_app));
                     assert(res == true);
                 }
                 pre_protocol.reset();
@@ -187,7 +191,8 @@ bool IProtocolInf::unpack_recurcive(const void* msg_raw, size_t msg_size) {
 }
 
 // fragment message. & make some segments.
-bool IProtocolInf::pack(const void* msg_raw, size_t msg_size, enum_c::ProviderType provider_type) {
+bool IProtocolInf::pack(const void* msg_raw, size_t msg_size, enum_c::ProviderType provider_type,
+                        std::string &&from_app, std::string &&to_app) {
     LOGD("Dumy protocol for Empty or NULL desp_protocol.json file.");
     assert(msg_raw != NULL);
     assert(msg_size > 0);
@@ -243,6 +248,6 @@ size_t IProtocolInf::get_msg_size(const void* data, size_t data_size) {
 }
 
 IProtocolInf::SegmentsType& IProtocolInf::get_segments(void) { 
-    return segments; 
+    return _m_segments_; 
 }
 

@@ -47,12 +47,14 @@ public:
     void clean_data(bool tx_data=true, bool rx_data=true);
 
 protected:
-    SegmentsType& pack_recursive(const void* msg, size_t msg_size, enum_c::ProviderType provider_type);
+    SegmentsType& pack_recursive(const void* msg, size_t msg_size, enum_c::ProviderType provider_type,
+                                 std::string &&from_app, std::string &&to_app);
 
     bool unpack_recurcive(const void* msg_raw, size_t msg_size);
 
     // fragment message. & make some segments.
-    virtual bool pack(const void* msg_raw, size_t msg_size, enum_c::ProviderType provider_type);
+    virtual bool pack(const void* msg_raw, size_t msg_size, enum_c::ProviderType provider_type,
+                      std::string &&from_app, std::string &&to_app);
 
     // classify segment. & extract payloads. & combine payloads. => make One-payload.
     virtual bool unpack(const void* msg_raw, size_t msg_size);
@@ -70,7 +72,7 @@ protected:
     friend class IHProtocolInf;
 
 private:
-    SegmentsType segments;   // packed messages.
+    SegmentsType _m_segments_;   // packed messages.
 
 };
 

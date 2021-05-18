@@ -30,7 +30,7 @@ std::shared_ptr<ICommunicator> create_communicator(std::string app_id,
     try {
             std::shared_ptr<cf_proto::CConfigProtocols> proto_config = std::make_shared<cf_proto::CConfigProtocols>(protocol_desp_path);
             std::shared_ptr<cf_alias::CConfigAliases> alias_config = std::make_shared<cf_alias::CConfigAliases>(alias_desp_path);
-            return std::make_shared<ICommunicator>(app_id, provider_id, provider_type, proto_config, alias_config, port, ip, mode);
+            return std::make_shared<ICommunicator>(std::move(app_id), std::move(provider_id), provider_type, proto_config, alias_config, port, ip, mode);
     }
     catch (const std::exception &e) {
         LOGERR("%s", e.what());
@@ -52,8 +52,8 @@ ICommunicator::ICommunicator(std::string app_id,
     clear();
 
     try {
-        this->app_id = app_id;
-        this->provider_id = provider_id;
+        this->app_id = std::move(app_id);
+        this->provider_id = std::move(provider_id);
         this->provider_type = provider_type;
         this->port = port;
         if ( ip != NULL ) {
@@ -127,7 +127,7 @@ bool ICommunicator::send(std::string alias, std::shared_ptr<payload::CPayload>&&
         return false;
     }
 
-    m_send_payload(alias, std::forward<std::shared_ptr<payload::CPayload>>(payload));
+    m_send_payload(std::move(alias), std::forward<std::shared_ptr<payload::CPayload>>(payload));
     return true;
 }
 
@@ -136,7 +136,7 @@ bool ICommunicator::send(std::string alias, std::shared_ptr<payload::CPayload>& 
         return false;
     }
 
-    m_send_payload(alias, std::move(payload));
+    m_send_payload(std::move(alias), std::move(payload));
     return true;
 }
 
@@ -144,7 +144,7 @@ bool ICommunicator::send(std::string alias, const void* msg, size_t msg_size) {
     try {
         auto payload = create_payload();
         assert( payload->set_payload(msg, msg_size) == true );
-        return send(alias, payload);
+        return send( std::move(alias), payload );
     }
     catch( const std::exception &e ) {
         LOGERR("%s", e.what());

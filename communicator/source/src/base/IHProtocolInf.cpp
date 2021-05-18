@@ -32,7 +32,8 @@ IHProtocolInf::~IHProtocolInf(void) {
  * Protected Function definition.
  */ 
 IHProtocolInf::SegmentsType IHProtocolInf::encapsulation(IHProtocolInf::ProtocolType& protocol, 
-                                                         enum_c::ProviderType provider_type) {
+                                                         enum_c::ProviderType provider_type,
+                                                         std::string &&from_app, std::string &&to_app) {
     /****
      * According to ServerType, fragment the message. & make segment-List.
      *                        - segment-list will be RawMsgType-List.
@@ -43,7 +44,8 @@ IHProtocolInf::SegmentsType IHProtocolInf::encapsulation(IHProtocolInf::Protocol
     const void* msg_raw = protocol->get_payload()->get_msg_read_only(&msg_size);
 
     try{
-        return protocol->pack_recursive(msg_raw, msg_size, provider_type);
+        return protocol->pack_recursive(msg_raw, msg_size, provider_type, 
+                                        std::forward<std::string>(from_app), std::forward<std::string>(to_app));
     }catch(const std::exception &e) {
         LOGERR("%s", e.what());
         throw ;

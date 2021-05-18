@@ -37,8 +37,8 @@ bool CRawMessage::init(size_t capacity) {
         }
         this->capacity = capacity; 
         this->msg_size = 0;
-        this->msg = new MsgDataType[capacity];
-        assert( this->msg != NULL );
+        this->_m_msg_ = new MsgDataType[capacity];
+        assert( this->_m_msg_ != NULL );
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
@@ -48,15 +48,15 @@ bool CRawMessage::init(size_t capacity) {
 }
 
 void CRawMessage::clear(void) {
-    msg = NULL;
+    _m_msg_ = NULL;
     msg_size = 0;
     capacity = 0;
 }
 
 void CRawMessage::destroy(void) {
-    if (msg != NULL) {
-        delete [] msg;
-        msg = NULL;
+    if (_m_msg_ != NULL) {
+        delete [] _m_msg_;
+        _m_msg_ = NULL;
     }
     msg_size = 0;
     capacity = 0;
@@ -74,7 +74,7 @@ size_t CRawMessage::get_msg(void* buffer, size_t cap) {
         }
 
         std::shared_lock<std::shared_mutex> guard(mtx_sync);
-        std::copy(msg, msg+msg_size, (MsgDataType*)buffer);
+        std::copy(_m_msg_, _m_msg_+msg_size, (MsgDataType*)buffer);
         return msg_size;
     }
     catch( const std::exception &e ) {
@@ -84,12 +84,12 @@ size_t CRawMessage::get_msg(void* buffer, size_t cap) {
 }
 
 const void* CRawMessage::get_msg_read_only(size_t* msg_size) {
-    assert(msg != NULL);
+    assert(_m_msg_ != NULL);
     
     if (msg_size != NULL) {
         *msg_size = get_msg_size();
     }
-    return (const void*)msg;
+    return (const void*)_m_msg_;
 }
 
 bool CRawMessage::set_new_msg(const void* buf, size_t msize) {
@@ -100,7 +100,7 @@ bool CRawMessage::set_new_msg(const void* buf, size_t msize) {
         {   // clean msg-memory.
             std::lock_guard<std::shared_mutex> guard(mtx_sync);
             if(msg_size > 0) {
-                assert( msg != NULL );
+                assert( _m_msg_ != NULL );
                 msg_size = 0;
             }
         }
@@ -112,15 +112,35 @@ bool CRawMessage::set_new_msg(const void* buf, size_t msize) {
 
         // copy message-data to msg-buf.
         std::lock_guard<std::shared_mutex> guard(mtx_sync);
-        std::copy(buffer, buffer+msize, msg+msg_size);
+        std::copy(buffer, buffer+msize, _m_msg_+msg_size);
         msg_size += msize;
-        *(msg+msg_size) = '\0';     // append NULL for string.
+        *(_m_msg_+msg_size) = '\0';     // append NULL for string.
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
         return false;
     }
     return true;
+}
+
+bool CRawMessage::set_msg_hook( TfuncType func, size_t msize ) {
+    assert( func != NULL );
+    assert( msize > 0 );
+    bool res = false;
+
+    try {
+        std::lock_guard<std::shared_mutex> guard(mtx_sync);
+        res = func(_m_msg_);
+        if( res == true ) {
+            msg_size = msize;
+            *(_m_msg_ + msg_size) = '\0';     // append NULL for string.
+        }
+    }
+    catch( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        return false;
+    }
+    return res;
 }
 
 bool CRawMessage::append_msg(void* buf, size_t msize) {
@@ -134,9 +154,9 @@ bool CRawMessage::append_msg(void* buf, size_t msize) {
 
         // copy message-data to msg-buf.
         std::lock_guard<std::shared_mutex> guard(mtx_sync);
-        std::copy(buffer, buffer+msize, msg+msg_size);
+        std::copy(buffer, buffer+msize, _m_msg_+msg_size);
         msg_size += msize;
-        *(msg+msg_size) = '\0';     // append NULL for string.
+        *(_m_msg_+msg_size) = '\0';     // append NULL for string.
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
@@ -234,9 +254,9 @@ bool CRawMessage::extend_capacity(size_t append_capacity) {
         assert( new_msg != NULL );
 
         std::lock_guard<std::shared_mutex> guard(mtx_sync);
-        std::copy(msg, msg+msg_size, new_msg);
-        delete msg;
-        msg = new_msg;
+        std::copy(_m_msg_, _m_msg_+msg_size, new_msg);
+        delete _m_msg_;
+        _m_msg_ = new_msg;
         capacity += append_capacity;
     }
     catch(const std::exception &e) {

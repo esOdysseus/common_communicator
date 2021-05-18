@@ -3,8 +3,8 @@ TEMPLATE = lib
 QT -= gui core
 
 VER_MAJ = 0
-VER_MIN = 1
-VER_PAT = 1
+VER_MIN = 2
+VER_PAT = 0
 VERSION = $$VER_MAJ"."$$VER_MIN"."$$VER_PAT
 
 # for pre-process, if exist.
@@ -34,12 +34,14 @@ INCLUDEPATH += \
     $$ROOT_PATH/lib/logger  \
     $$ROOT_PATH/lib/exception   \
     $$ROOT_PATH/lib/lock   \
+    $$ROOT_PATH/lib/time   \
     $$ROOT_PATH/lib
 
 SOURCES += \
     $$files($$_PRO_FILE_PWD_/src/*.cpp)  \
     $$files($$_PRO_FILE_PWD_/src/base/*.cpp)  \
-    $$files($$_PRO_FILE_PWD_/src/protocol/*.cpp)
+    $$files($$_PRO_FILE_PWD_/src/protocol/*.cpp)    \
+    $$files($$ROOT_PATH/lib/time/*.cpp)
 
 # for installation.
 EXTRA_BINFILES = \

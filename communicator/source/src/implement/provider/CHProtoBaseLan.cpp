@@ -33,12 +33,19 @@ bool CHProtoBaseLan::set_app_call_back(void) {
 /************************
  * This API support that setting Specific-property of 3th-party Protocol.
  */ 
+
+/***
+ * parameter alias [in] receiver-alias to receive the message.
+ * parameter payload [in] payload to send.
+ */
 bool CHProtoBaseLan::write_payload(std::string alias, std::shared_ptr<payload::CPayload>&& payload) {
     LOGD("It's called.");
 
     try {
+        AppCallerType& app = get_app_instance();
         ProtocolType pro_payload = std::dynamic_pointer_cast<IProtocolInf>(payload);
-        SegmentsType segments = encapsulation(pro_payload, s_server->get_provider_type());
+        SegmentsType segments = encapsulation(pro_payload, s_server->get_provider_type(), 
+                                              app->get_app_id(), std::forward<std::string>(alias));
 
         // message write.
         for(SegmentsType::iterator itor = segments.begin(); itor != segments.end(); itor++) {

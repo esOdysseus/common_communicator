@@ -2,7 +2,7 @@
  * Protocol Description
  */
 {
-    "protocol-libpath": "/home/eunseok/project/project_2020/workspace/vscode/common_communicator/debug/lib/libproto.so",         // absolute-full-path
+    "protocol-libpath": "/home/eunseok/project/project/workspace/vscode/common_communicator/release/lib/libproto.so",         // absolute-full-path
     "protocol-id": "SAMPLE_PROTOCOLS",
     "protocol-list": [
         "CPBigEndian"

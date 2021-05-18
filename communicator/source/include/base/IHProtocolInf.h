@@ -49,7 +49,8 @@ protected:
 
     virtual bool write_payload(std::string alias, std::shared_ptr<payload::CPayload>&& payload) = 0;
 
-    SegmentsType encapsulation(ProtocolType& protocol, enum_c::ProviderType provider_type);
+    SegmentsType encapsulation(ProtocolType& protocol, enum_c::ProviderType provider_type,
+                               std::string &&from_app, std::string &&to_app);
 
     ProtocolType decapsulation(RawMsgType msg_raw);
 

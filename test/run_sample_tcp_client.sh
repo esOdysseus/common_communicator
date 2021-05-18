@@ -3,9 +3,9 @@ CUR_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 ROOT_PATH=${CUR_DIR}/..
 
 # set custom variables
-BUILD_MODE=debug
+BUILD_MODE=release
 TARGET=sample_tcp_client
-DESP_PROTOCOL=${ROOT_PATH}/${BUILD_MODE}/config/desp_protocol.json
+DESP_PROTOCOL=${ROOT_PATH}/${BUILD_MODE}/config/desp_UniversalCMD_protocol.json
 DESP_ALIAS=${ROOT_PATH}/${BUILD_MODE}/config/desp_alias.json
 
 # set environment

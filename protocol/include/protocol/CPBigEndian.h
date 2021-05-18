@@ -49,7 +49,8 @@ public:
     std::string get_property(const std::string key) override;
 
 protected:
-    bool pack(const void* msg_raw, size_t msg_size, enum_c::ProviderType provider_type) override;
+    bool pack(const void* msg_raw, size_t msg_size, enum_c::ProviderType provider_type,
+              std::string &&from_app, std::string &&to_app) override;
 
     bool unpack(const void* msg_raw, size_t msg_size) override;
 

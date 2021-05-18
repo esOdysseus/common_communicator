@@ -58,15 +58,20 @@ void CAppTest::cb_receive_msg_handle(std::string client_id, std::shared_ptr<payl
 
     size_t data_size = 0;
     const void* data = payload->get_payload(data_size);
-    std::shared_ptr<IProtocolInf> protocol = payload->get(PBigEdian);
+    std::shared_ptr<IProtocolInf> protocol = payload->get(PROTOCOL_NAME);
     cout << "************************************" << endl;
     cout << "* 0. Receive-CNT : " << rcv_count << endl;
-    cout << "* 1. Server-ID : " << client_id << endl;
+    cout << "* 1. Client-ID : " << client_id << endl;
     cout << "* 2. CPayload-Name : " << payload->get_name() << endl;
     cout << "* 3. payload-size : " << data_size << endl;
     cout << "* 4. payload : " << (const char*)data << endl;
-    cout << "* 5. message-ID : " << protocol->get_property("msg_id") << endl;
-    cout << "* 6. payload-length : " << protocol->get_property("length") << endl;
+    cout << "* 5. flag : " << protocol->get_property("flag") << endl;
+    cout << "* 6. state : " << protocol->get_property("state") << endl;
+    cout << "* 7. msg-ID : " << protocol->get_property("msg_id") << endl;
+    cout << "* 8. from-APP : " << protocol->get_property("from") << endl;
+    cout << "* 9. to-APP : " << protocol->get_property("who") << endl;
+    cout << "* 10. when : " << protocol->get_property("when") << endl;
+    cout << "* 11. payload-length : " << protocol->get_property("length") << endl;
     cout << "************************************" << endl;
 }
 
@@ -83,9 +88,11 @@ int CAppTest::run_period_send(void) {
 
         // new_payload->set_op_flag(payload::E_PAYLOAD_FLAG::E_KEEP_PAYLOAD_AFTER_TX, true);
 
-        std::shared_ptr<IProtocolInf> new_protocol = new_payload->get(PBigEdian);
-        assert( new_protocol->set_property("msg_id", 5678) == true );
-        new_protocol->set_payload(msg.c_str(), msg.length());
+        std::shared_ptr<IProtocolInf> new_protocol = new_payload->get(PROTOCOL_NAME);
+        new_protocol->set_property("flag", 1);
+        new_protocol->set_property("state", 2);
+        new_protocol->set_property("msg_id", 5678);
+        new_protocol->set_payload(msg.data(), msg.length());
         assert(h_communicator->send("tcp_01", new_payload) == true);
 
         usleep(100000);     // wait 100 ms

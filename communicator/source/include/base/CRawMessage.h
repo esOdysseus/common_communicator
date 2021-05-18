@@ -9,6 +9,7 @@
 #define C_RAW_MESSAGE_H_
 
 #include <memory>
+#include <functional>
 #if __cplusplus > 201402L
     #include <shared_mutex> // for c++17
 #else
@@ -24,6 +25,7 @@ public:
     using LanAddrType = std::shared_ptr<struct sockaddr_in>;
     using LanSockType = std::shared_ptr<int>;
     using PVDType = enum_c::ProviderType;
+    using TfuncType = std::function<bool(MsgDataType* /*data*/)>;
 
 public:
     CRawMessage(size_t capacity=0);
@@ -34,6 +36,8 @@ public:
 
     // With Regard to Message
     bool set_new_msg(const void* buf, size_t msize);
+
+    bool set_msg_hook( TfuncType func, size_t msize );
 
     bool append_msg(void* buf, size_t msize);
 
@@ -74,7 +78,7 @@ private:
 
     size_t msg_size;
 
-    MsgDataType* msg;
+    MsgDataType* _m_msg_;
 
     CSource source;
 

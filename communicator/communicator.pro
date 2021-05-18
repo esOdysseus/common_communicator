@@ -4,7 +4,7 @@ QT -= gui core
 
 VER_MAJ = 0
 VER_MIN = 2
-VER_PAT = 1
+VER_PAT = 2
 VERSION = $$VER_MAJ"."$$VER_MIN"."$$VER_PAT
 
 message( "[ Build 'communicator' " )
@@ -51,6 +51,7 @@ INCLUDEPATH += \
     $$ROOT_PATH/lib/json    \
     $$ROOT_PATH/lib/exception   \
     $$ROOT_PATH/lib/lock    \
+    $$ROOT_PATH/lib/time    \
     $$ROOT_PATH/lib/util
 
 SOURCES += \
@@ -58,6 +59,7 @@ SOURCES += \
     $$files($$_PRO_FILE_PWD_/source/src/implement/provider/*.cpp)  \
     $$files($$ROOT_PATH/lib/json/*.cpp)     \
     $$files($$ROOT_PATH/lib/pal/*.c)        \
+    $$files($$ROOT_PATH/lib/time/*.cpp)        \
     $$files($$ROOT_PATH/lib/util/*.cpp)
 
 # for installation.

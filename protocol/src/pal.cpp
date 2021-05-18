@@ -16,6 +16,7 @@
 #include <logger.h>
 #include <protocol/CPBigEndian.h>
 #include <protocol/CPLittleEndian.h>
+#include <protocol/CPUniversalCMD.h>
 
 namespace pal {
 
@@ -58,6 +59,7 @@ namespace pal {
         try{
             pt_list->push_back(CPBigEndian::Protocol_NAME);
             pt_list->push_back(CPLittleEndian::Protocol_NAME);
+            pt_list->push_back(CPUniversalCMD::Protocol_NAME);
         }
         catch (const std::exception &e) {
             LOGERR("%s", e.what());
@@ -78,6 +80,10 @@ namespace pal {
             }
             else if( protocol_name == CPLittleEndian::Protocol_NAME) {
                 std::shared_ptr<CPLittleEndian> pt_inst = std::make_shared<CPLittleEndian>();
+                return pt_inst;
+            }
+            else if( protocol_name == CPUniversalCMD::Protocol_NAME) {
+                std::shared_ptr<CPUniversalCMD> pt_inst = std::make_shared<CPUniversalCMD>();
                 return pt_inst;
             }
             else {
@@ -116,7 +122,6 @@ namespace pal {
         .open = sample_open
     };
 
-
 }   // pal
 
 
@@ -129,7 +134,7 @@ struct pt_module_t module_list[MODULE_CNT] = {
         .version_minor		= SAMPLE_PROTOCOLS_MODULE_API_VERSION_MINOR,
         .id                 = SAMPLE_PROTOCOLS_MODULE_PAL_ID,
         .name               = "Demo Sample-Protocols-Module PAL",
-        .author             = "eunseok.kim@mobis.co.kr",
+        .author             = "es.odysseus@gmail.com",
         .methods            = &pal::sample_module_methods,
     }
 };
