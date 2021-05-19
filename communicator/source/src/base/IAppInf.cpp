@@ -80,6 +80,10 @@ std::string ICommunicator::get_app_id(void) {
     return app_id; 
 }
 
+std::string ICommunicator::get_provider_id(void) { 
+    return provider_id; 
+}
+
 std::string ICommunicator::get_version(void) {
     return STRING_OF_COMMON_API_VERSION;
 }
@@ -294,6 +298,7 @@ int ICommunicator::run(void) {
     app_caller->set_send_payload_of_app = std::bind(&ICommunicator::set_send_payload_fp, this, std::placeholders::_1);
     app_caller->get_cb_handlers = std::bind(&ICommunicator::get_cb_handlers, this);
     app_caller->get_app_id = std::bind(&ICommunicator::get_app_id, this);
+    app_caller->get_provider_id = std::bind(&ICommunicator::get_provider_id, this);
     h_pvd.reset();
 
     // when receive 'cancel' signal, terminate this thread immediatly.

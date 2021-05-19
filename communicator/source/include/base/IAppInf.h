@@ -79,6 +79,8 @@ public:
     // Get Application-ID which contain this Communicator.
     std::string get_app_id(void);
 
+    std::string get_provider_id(void);
+
     // Get Version-infomation of Common-API.
     std::string get_version(void);
 

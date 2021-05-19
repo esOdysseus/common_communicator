@@ -44,6 +44,10 @@ static const char* exception_switch(E_ERROR err_num) {
         return "E_NOT_SUPPORTED_KEY in cf_alias pkg.";
     case E_ERROR::E_NOT_SUPPORTED_PVD_TYPE:
         return "E_NOT_SUPPORTED_PVD_TYPE in cf_alias pkg.";
+    case E_ERROR::E_NOT_SUPPORTED_APP_TYPE:
+        return "E_NOT_SUPPORTED_APP_TYPE in cf_alias pkg.";
+    case E_ERROR::E_NOT_SUPPORTED_APP_PATH:
+        return "E_NOT_SUPPORTED_APP_PATH in cf_alias pkg.";
     default:
         return "\'not support error_type\' in cf_alias pkg.";
     }
@@ -68,11 +72,7 @@ const char* CConfigAliases::_ma_pvd_types_[] = {
     CConfigAliases::VSOMEIP, 
     NULL
 };
-const char* CConfigAliases::_ma_rsc_types_[] = {
-    CConfigAliases::SINGLE,
-    CConfigAliases::MULTIPLE,
-    NULL
-};
+
 
 /***************************************
  * Definition of Public Function.
@@ -82,10 +82,11 @@ CConfigAliases::CConfigAliases(const char* config_path)
     try {
         _mm_pvds_.clear();
         for( int i=0; _ma_pvd_types_[i] != NULL; i++ ) {
-            LOGD("List initialize.(name=%s)", _ma_pvd_types_[i]);
+            LOGD("PVD-List initialize.(name=%s)", _ma_pvd_types_[i]);
             _mm_pvds_[_ma_pvd_types_[i]].clear();
         }
 
+        _mm_pvds_map_.clear();
         _mm_rscs_.clear();
 
         if ( config_path != NULL ) {
@@ -96,34 +97,60 @@ CConfigAliases::CConfigAliases(const char* config_path)
     }
     catch ( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 }
 
 CConfigAliases::~CConfigAliases(void) {
     _m_f_ready_ = false;
     _mm_pvds_.clear();
+    _mm_pvds_map_.clear();
     _mm_rscs_.clear();
 }
 
-CConfigAliases::PVDListType& CConfigAliases::get_providers(std::string type) {
+CConfigAliases::PVDListType& CConfigAliases::get_providers(std::string pvd_type) {
     PVDMapType::iterator itr;
     assert( _m_f_ready_ == true );
-    assert( type.empty() == false );
+    assert( pvd_type.empty() == false );
 
     try {
-        itr = _mm_pvds_.find(type);
-        if ( itr != _mm_pvds_.end() ) {
-            return itr->second;
-        }
-        else {
-            LOGW("Not supported pvd_type=%s", type.c_str());
+        itr = _mm_pvds_.find(pvd_type);
+        if ( itr == _mm_pvds_.end() ) {
+            LOGW("Not supported pvd_type=%s", pvd_type.c_str());
             throw CException(E_ERROR::E_NOT_SUPPORTED_PVD_TYPE);
         }
+
+        return itr->second;
     }
     catch ( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
+    }
+}
+
+CConfigAliases::PVDListType& CConfigAliases::get_providers(std::string app_path, std::string pvd_type) {
+    PVDMapType::iterator itr;
+    assert( _m_f_ready_ == true );
+    assert( pvd_type.empty() == false );
+
+    try {
+        auto itr_app = _mm_pvds_map_.find(app_path);
+        if( itr_app == _mm_pvds_map_.end() ) {
+            LOGW("Not exist APP-path(%s)", app_path.data());
+            throw CException(E_ERROR::E_NOT_SUPPORTED_APP_PATH);
+        }
+
+        itr = itr_app->second.find(pvd_type);
+        if( itr == itr_app->second.end() ) {
+            LOGW("Not supported pvd_type=%s", pvd_type.data());
+            throw CException(E_ERROR::E_NOT_SUPPORTED_PVD_TYPE);
+        }
+
+        return itr->second;
+    }
+    catch ( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        throw e;
     }
 }
 
@@ -150,7 +177,7 @@ bool CConfigAliases::init(const std::string config_path) {
     }
     catch( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 
     return false;
@@ -181,7 +208,7 @@ bool CConfigAliases::append_rsc_alias( std::string& rsc_name, std::shared_ptr<js
     }
     catch( const std::exception& e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 
     return false;
@@ -265,7 +292,7 @@ std::shared_ptr<CAliasAPP> CConfigAliases::make_app_alias( std::string& name_,
     catch( const std::exception& e ) {
         LOGERR("%s", e.what());
         app.reset();
-        throw ;
+        throw e;
     }
 
     return app;
@@ -297,7 +324,7 @@ std::shared_ptr<Sproperties> CConfigAliases::get_property( std::shared_ptr<json_
     }
     catch( const std::exception& e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 
     return property;
@@ -320,15 +347,36 @@ bool CConfigAliases::append_pvd_alias( json_mng::MemberIterator& itr_, std::shar
         
         // register provider to list.
         app_->set( pvd_alias, context );
-        _mm_pvds_[pvd_type].push_back(context);
+        append_pvd_context( app_->path(), pvd_type, context );
         return true;
     }
     catch( const std::exception& e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 
     return false;
+}
+
+void CConfigAliases::append_pvd_context( std::string&& app_path, std::string& pvd_type, std::shared_ptr<IAliasPVD>& context ) {
+    try {
+        auto itr = _mm_pvds_map_.find( app_path );
+        if( itr == _mm_pvds_map_.end() ) {
+            _mm_pvds_map_[ app_path ].clear();
+
+            for( int i=0; _ma_pvd_types_[i] != NULL; i++ ) {
+                LOGD("PVD-List initialize.(name=%s)", _ma_pvd_types_[i]);
+                _mm_pvds_map_[ app_path ][_ma_pvd_types_[i]].clear();
+            }
+        }
+
+        _mm_pvds_map_[ app_path ][pvd_type].push_back(context);
+        _mm_pvds_[pvd_type].push_back(context);
+    }
+    catch( const std::exception& e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
 }
 
 std::shared_ptr<IAliasPVD> CConfigAliases::make_pvd_alias(std::string alias, 
@@ -367,7 +415,7 @@ std::shared_ptr<IAliasPVD> CConfigAliases::make_pvd_alias(std::string alias,
     }
     catch( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 
     return pvd;
@@ -408,7 +456,7 @@ std::shared_ptr<CAliasTrans> CConfigAliases::make_pvd_trans(std::string alias,
     }
     catch ( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 
     return res;
@@ -445,7 +493,7 @@ std::shared_ptr<CAliasService> CConfigAliases::make_pvd_service(std::string alia
     }
     catch ( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 
     return res;
@@ -506,7 +554,7 @@ void CConfigAliases::set_pvd_service_with_function( std::shared_ptr<CAliasServic
     }
     catch( const std::exception& e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 }
 
@@ -523,7 +571,7 @@ IAliasPVD::IAliasPVD(const char* alias_, const char* pvd_type_, std::shared_ptr<
     }
     catch( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 }
 
@@ -599,7 +647,7 @@ CAliasAPP::CAliasAPP(const char* alias_, const char* type_, std::shared_ptr<IAli
     }
     catch( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 }
 
@@ -633,7 +681,7 @@ std::shared_ptr<IAlias> CAliasAPP::get( std::string& alias_ ) {
     }
     catch( const std::exception& e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 
     return res;
@@ -650,7 +698,7 @@ void CAliasAPP::set( std::string& alias_, std::shared_ptr<IAlias> context_ ) {
     }
     catch( const std::exception& e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 }
 
@@ -761,7 +809,7 @@ void CAliasService::push_reqresp_id( std::string& name_, uint32_t id_ ) {
     }
     catch( const std::exception& e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 }
 
@@ -782,7 +830,7 @@ void CAliasService::push_reqNOresp_id( std::string& name_, uint32_t id_ ) {
     }
     catch( const std::exception& e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 }
 
@@ -803,7 +851,7 @@ void CAliasService::push_pubsub_id( std::string& name_, uint32_t id_, uint32_t g
     }
     catch( const std::exception& e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 }
 
@@ -826,7 +874,7 @@ IAlias::IAlias(const char* alias_, enum_c::AliasType type_, std::shared_ptr<IAli
     _m_type_ = type_;
     _m_path_.clear();
     if( parent_.get() != NULL ) {
-        set_path( *parent_.get() );
+        set_path_parent( *parent_.get() );
     }
 }
 
@@ -837,11 +885,19 @@ IAlias::~IAlias(void) {
 }
 
 // getter
-std::string& IAlias::name( void ) {
+std::string IAlias::name( void ) {
     return _m_name_;
 }
 
-std::string& IAlias::path( void ) {
+std::string IAlias::path( void ) {
+    if( _m_path_.empty() != true ) {
+        return _m_path_ + '/' + _m_name_;
+    }
+
+    return _m_name_;
+}
+
+std::string IAlias::path_parent( void ) {
     return _m_path_;
 }
 
@@ -850,12 +906,8 @@ enum_c::AliasType IAlias::alias_type( void ) {
 }
 
 // setter
-void IAlias::set_path( IAlias& parent_ ) {
+void IAlias::set_path_parent( IAlias& parent_ ) {
     _m_path_ = parent_.path();
-    if( _m_path_.empty() != true ) {
-        _m_path_ += '/';
-    }
-    _m_path_ += parent_.name();
 }
 
 

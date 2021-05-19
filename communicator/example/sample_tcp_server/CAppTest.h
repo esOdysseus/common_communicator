@@ -23,9 +23,9 @@ public:
 
     void cb_initialization(enum_c::ProviderType provider_type, bool flag_init);
 
-    void cb_connected(std::string client_id, bool flag_connect);
+    void cb_connected(std::string peer_id, bool flag_connect);
 
-    void cb_receive_msg_handle(std::string client_id, std::shared_ptr<payload::CPayload> payload);
+    void cb_receive_msg_handle(std::string peer_id, std::shared_ptr<payload::CPayload> payload);
 
     void cb_abnormally_quit(const std::exception &e);
 

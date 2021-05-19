@@ -45,7 +45,7 @@ bool CHProtoBaseLan::write_payload(std::string alias, std::shared_ptr<payload::C
         AppCallerType& app = get_app_instance();
         ProtocolType pro_payload = std::dynamic_pointer_cast<IProtocolInf>(payload);
         SegmentsType segments = encapsulation(pro_payload, s_server->get_provider_type(), 
-                                              app->get_app_id(), std::forward<std::string>(alias));
+                                              app->get_provider_id(), std::forward<std::string>(alias));
 
         // message write.
         for(SegmentsType::iterator itor = segments.begin(); itor != segments.end(); itor++) {

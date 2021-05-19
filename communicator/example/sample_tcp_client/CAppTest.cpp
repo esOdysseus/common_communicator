@@ -47,12 +47,12 @@ void CAppTest::cb_abnormally_quit(const std::exception &e) {
 }
 
 // Client was connected.
-void CAppTest::cb_connected(std::string client_id, bool flag_connect) {
+void CAppTest::cb_connected(std::string peer_id, bool flag_connect) {
     cout << "[Debug] CAppTest::cb_connected() is called.(" << flag_connect << ")" << endl;
 }
 
-// We receved a message from client_id.
-void CAppTest::cb_receive_msg_handle(std::string client_id, std::shared_ptr<payload::CPayload> payload) {
+// We receved a message from peer_id.
+void CAppTest::cb_receive_msg_handle(std::string peer_id, std::shared_ptr<payload::CPayload> payload) {
     cout << "[Debug] CAppTest::cb_receive_msg_handle() is called." << endl;
     rcv_count++;
 
@@ -61,7 +61,7 @@ void CAppTest::cb_receive_msg_handle(std::string client_id, std::shared_ptr<payl
     std::shared_ptr<IProtocolInf> protocol = payload->get(PROTOCOL_NAME);
     cout << "************************************" << endl;
     cout << "* 0. Receive-CNT : " << rcv_count << endl;
-    cout << "* 1. Client-ID : " << client_id << endl;
+    cout << "* 1. Peer-ID : " << peer_id << endl;
     cout << "* 2. CPayload-Name : " << payload->get_name() << endl;
     cout << "* 3. payload-size : " << data_size << endl;
     cout << "* 4. payload : " << (const char*)data << endl;

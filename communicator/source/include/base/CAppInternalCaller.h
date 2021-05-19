@@ -25,6 +25,7 @@ public:
     AppSendPayload_SetterType   set_send_payload_of_app;
     AppCBhandler_GetterType     get_cb_handlers;
     AppID_GetterType            get_app_id;
+    AppID_GetterType            get_provider_id;
 
 public:
     CAppInternalCaller(void) { clear(); }
@@ -36,6 +37,7 @@ private:
         set_send_payload_of_app = NULL;
         get_cb_handlers = NULL;
         get_app_id = NULL;
+        get_provider_id = NULL;
     }
 
 };

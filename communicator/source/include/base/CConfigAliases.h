@@ -25,7 +25,8 @@ namespace cf_alias {
         E_NO_ERROR = 0,
         E_NOT_SUPPORTED_KEY = 1,
         E_NOT_SUPPORTED_PVD_TYPE = 2,
-        E_NOT_SUPPORTED_APP_TYPE = 3
+        E_NOT_SUPPORTED_APP_TYPE = 3,
+        E_NOT_SUPPORTED_APP_PATH = 4
     }E_ERROR;
 
     typedef struct Sproperties {
@@ -44,15 +45,17 @@ namespace cf_alias {
         ~IAlias(void);
 
         // getter
-        std::string& name( void );
+        std::string name( void );
 
-        std::string& path( void );
+        std::string path( void );
+
+        std::string path_parent( void );
 
         enum_c::AliasType alias_type( void );
 
     private:
         // setter
-        void set_path( IAlias& parent_ );
+        void set_path_parent( IAlias& parent_ );
 
     private:
         std::string _m_name_;       // Current name.
@@ -110,6 +113,9 @@ namespace cf_alias {
     private:
         enum_c::AppType _m_type_;
         std::string _m_where_;
+
+        // string : app-name or provider-name
+        // IAlias : app-instance or provider-instance
         std::map<std::string, std::shared_ptr<IAlias>> _mm_alias_;
 
     };
@@ -243,8 +249,11 @@ namespace cf_alias {
         using PVDListType = std::list<std::shared_ptr<IAliasPVD>>;
 
     private:
+        // provider_type : 'udp' , 'tcp' , 'vsomeip' , 'udp_uds' , 'tcp_uds'
         using PVDMapType = std::map< std::string /* provider_type */, PVDListType >;
-        using RSCMapType = std::map< std::string /* app_type */, std::shared_ptr<CAliasRSC> >;
+
+        using RSCMapType = std::map< std::string /* rsc_name */, std::shared_ptr<CAliasRSC> >;
+        using APPMapType = std::map< std::string /* app_path */, PVDMapType >;
 
     public:
         CConfigAliases(const char* config_path);
@@ -252,6 +261,8 @@ namespace cf_alias {
         ~CConfigAliases(void);
 
         PVDListType& get_providers(std::string type);
+
+        PVDListType& get_providers(std::string app_path, std::string type);
 
     private:
         CConfigAliases(void) = delete;
@@ -271,6 +282,8 @@ namespace cf_alias {
 
         // provider builder 
         bool append_pvd_alias( json_mng::MemberIterator& itr, std::shared_ptr<CAliasAPP>& app_ );
+
+        void append_pvd_context( std::string&& app_path, std::string& pvd_type, std::shared_ptr<IAliasPVD>& context );
 
         std::shared_ptr<IAliasPVD> make_pvd_alias(std::string alias, 
                                                   std::shared_ptr<json_mng::CMjson> obj_value, 
@@ -292,13 +305,15 @@ namespace cf_alias {
         // // valid 'value' assignment of configuration.
         static const char* _ma_pvd_types_[];
 
-        static const char* _ma_rsc_types_[];
-
-        // resource_type : 'udp' , 'tcp' , 'vsomeip' , 'udp_uds' , 'tcp_uds'
+        // provider_type : 'udp' , 'tcp' , 'vsomeip' , 'udp_uds' , 'tcp_uds'
         PVDMapType _mm_pvds_;
 
-        // app_type : 'single' , 'multi'
+        // store resource-instance per resource-name
         RSCMapType _mm_rscs_;
+
+        // store mapper for provider-instances per app-path
+        // app-path : 'APP-01/sub01/sub-app'
+        APPMapType _mm_pvds_map_;
 
         bool _m_f_ready_;
 
