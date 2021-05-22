@@ -114,8 +114,8 @@ $ bash ./build.sh -m release -t example -arch x86
 
 ---
 ## History
-Date | Commit-ID | Version | Description
-:----|:----:|:----:|:----
+Date | Version | Description
+:----|:----:|:----
 `2019-12-4` | Ver 0.1.0 | First commit for Common-Communicator.
 `2019-12-5` | Ver 0.1.1 | Change folder-tree and API-design change.
 `2019-12-7` | Ver 0.1.1 | 1. Add Logger.<br> 2. UDP connected-call-back op enable.<br> 3. Remove 'using namespace std'.
