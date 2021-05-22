@@ -33,7 +33,7 @@ IHProtocolInf::~IHProtocolInf(void) {
  */ 
 IHProtocolInf::SegmentsType IHProtocolInf::encapsulation(IHProtocolInf::ProtocolType& protocol, 
                                                          enum_c::ProviderType provider_type,
-                                                         std::string &&from_app, std::string &&to_app) {
+                                                         std::string &&from_app) {
     /****
      * According to ServerType, fragment the message. & make segment-List.
      *                        - segment-list will be RawMsgType-List.
@@ -45,7 +45,7 @@ IHProtocolInf::SegmentsType IHProtocolInf::encapsulation(IHProtocolInf::Protocol
 
     try{
         return protocol->pack_recursive(msg_raw, msg_size, provider_type, 
-                                        std::forward<std::string>(from_app), std::forward<std::string>(to_app));
+                                        std::forward<std::string>(from_app));
     }catch(const std::exception &e) {
         LOGERR("%s", e.what());
         throw ;

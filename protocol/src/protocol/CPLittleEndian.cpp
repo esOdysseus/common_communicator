@@ -60,7 +60,7 @@ std::string CPLittleEndian::get_property(const std::string key) {
  * Protected Function Definition
  */
 bool CPLittleEndian::pack(const void* msg_raw, size_t msg_size, enum_c::ProviderType provider_type,
-                          std::string &&from_app, std::string &&to_app) {
+                          std::string &&from_app) {
     LOGD("It's called.");
 
     size_t msg_length = 0;

@@ -41,7 +41,7 @@ limitations under the License.
 - esOdysseus (email: es.odysseus@gmail.com)
 
 ### Latest Release
-- version 0.2.3 (Date: 2021-05-20)
+- version 0.2.4 (Date: 2021-05-22)
 ---
 ## Installation
 > Please refer following commands.
@@ -116,29 +116,30 @@ $ bash ./build.sh -m release -t example -arch x86
 ## History
 Date | Commit-ID | Version | Description
 :----|:----:|:----:|:----
-`2019-12-4` | `e5d31e09073be75c884eca4bd207b6e2c2be6895` | Ver 0.1.0 | First commit for Common-Communicator.
-`2019-12-5` | `d37fd441949617a92e0fd583a703f56db21cfacf` | Ver 0.1.1 | Change folder-tree and API-design change.
-`2019-12-7` | `ad863961333ca7c4e7bca054b04f39dfefa7fdb7` | Ver 0.1.1 | 1. Add Logger.<br> 2. UDP connected-call-back op enable.<br> 3. Remove 'using namespace std'.
-`2020-01-5` | `63c626078a5a3631e467c5dfeef98ec90a13d426` | Ver 0.1.1 | 1. Decomposition of Protocol-library.<br> 2. Decomposition common-library.<br> 3. Create CConfigProtocol.
-`2020-01-11` | `0ea787e9f1be03c0073dec341d131ef4c1d9c373` | Ver 0.1.2 | 1. Protocol-Chain Impled. <br> 2. Isolate Protocol-Lib & Communicator Lib. <br> 3. Apply PAL-concept for Dynamic-load Protocol-Library.
-`2020-01-14` | `1ed4cff327dfd6b3b543ae1f65acaafc4596e1e6` | Ver 0.1.2 | Support ARMv7 Build.
-`2020-02-01` | `1615a31aa20f49d56ab6dfb0df07fb08ef7dcbe3` | Ver 0.1.3 | 1. Support ARMv7 & Aarch64 Build.<br> 2. Done processing of default-argument.
-`2020-02-02` | `7d763ab057b0532388a787f7ffd5edd8c9995cb9` | Ver 0.1.3 | Add Converter that convert alias-name to essential-address.
-`2020-02-03` | `be28532ec0b07dfc337f0b9785216d22db5c6552` | Ver 0.1.3 | Add CConfigAliases class that load desp-alias.json file.
-`2020-02-04` | `c9893217d54b6be28ec6f2f029bacf1c9e6464a9` | Ver 0.1.3 | 1. Support Client of UDP.<br> 2. Fix bug of _flag_op_ in CPayload class.
-`2020-02-07` | `0cc7bf9e6d5427d2d5d5add075d90cfea644ab62` | Ver 0.1.4 | 1. Support Client of TCP.<br> 2. Support Server of TCP.<br> 3. Support Server of UDP.
-`2020-02-12` | `30f2973d546a1620c2b49488e3fbecb316d827ba` | Ver 0.1.5 | 1. Add shared_mutex library for c++11.<br> 2. Add Address to Alias mapper.
-`2020-04-03` | `0fdbdd8b2e4457fbe0440071002537b57b4b04bc` | Ver 0.1.6 | Add quit API.
-`2020-04-18` | `bec7426aa13923a9017a7389399060f0c9318031` | Ver 0.1.7 | 1. Add connect, disconnect API.<br> 2. Allow additional new-alias in runtime.
-`2020-05-01` | `0af060ee849e937e9392308efcac3780e498d47f` | Ver 0.1.8 | 1. Bug-Fix: TCP disconn & re-connect bug.<br> 2. Bug-Fix: Protocol-Chain buf.<br> 3. Bug-Fix: Random-Device bug.<br> 4. API-chang: connect --> connect_try.
-`2020-05-13` | `fc851b1a0e776749c6ac4e79b3e67df42c6883bc` | Ver 0.1.9 | 1. Buf-Fix: Unintended multiple sending by E_KEEP_PAYLOAD_AFTER_TX option.<br> 2. Apply ThreadPool & queue for Rx.<br> 3. Upgrade Protocol API for receiving of multiple message.
-`2020-05-29` | `0de9a9ff379ae6606f6faf1073971ad934de9863` | Ver 0.1.9 | 1. Add Cinet_uds class.<br> 2. Clean warning message.
-`2020-05-30` | `8988dddf8927b48923a1a257130cf681ee66947b` | Ver 0.1.9 | Apply Cinet_uds class to TCP/UDP provider class.
-`2020-05-31` | `a4d06f4a21eadf17f6d50f5fd14e45f12d4f363d` | Ver 0.1.9 | Implement UDS TCP/UDP provider frame, but not yet test it.
-`2020-06-01` | `4bf77dce9eb79a1c125be14bc32d48bd79c8960d` | Ver 0.2.0 | Add Feature UDS TCP/UDP communication. & sample program to test UDS.
-`2021-01-02` | `0e89fd1d739a6982f6ec8b29500a3328fa0098fc` | Ver 0.2.1 | Definition of Resource-Concept.
-`2021-05-18` | `9e732b6f133a80b2f7161ffbcbb78b7934136c55` | Ver 0.2.2 | [Protocol] Add UniversalCMD & improve structure of Protocol-Handling.
-`2021-05-20` | `` | Ver 0.2.3 | Improve ConfigAlias.
+`2019-12-4` | Ver 0.1.0 | First commit for Common-Communicator.
+`2019-12-5` | Ver 0.1.1 | Change folder-tree and API-design change.
+`2019-12-7` | Ver 0.1.1 | 1. Add Logger.<br> 2. UDP connected-call-back op enable.<br> 3. Remove 'using namespace std'.
+`2020-01-5` | Ver 0.1.1 | 1. Decomposition of Protocol-library.<br> 2. Decomposition common-library.<br> 3. Create CConfigProtocol.
+`2020-01-11` | Ver 0.1.2 | 1. Protocol-Chain Impled. <br> 2. Isolate Protocol-Lib & Communicator Lib. <br> 3. Apply PAL-concept for Dynamic-load Protocol-Library.
+`2020-01-14` | Ver 0.1.2 | Support ARMv7 Build.
+`2020-02-01` | Ver 0.1.3 | 1. Support ARMv7 & Aarch64 Build.<br> 2. Done processing of default-argument.
+`2020-02-02` | Ver 0.1.3 | Add Converter that convert alias-name to essential-address.
+`2020-02-03` | Ver 0.1.3 | Add CConfigAliases class that load desp-alias.json file.
+`2020-02-04` | Ver 0.1.3 | 1. Support Client of UDP.<br> 2. Fix bug of _flag_op_ in CPayload class.
+`2020-02-07` | Ver 0.1.4 | 1. Support Client of TCP.<br> 2. Support Server of TCP.<br> 3. Support Server of UDP.
+`2020-02-12` | Ver 0.1.5 | 1. Add shared_mutex library for c++11.<br> 2. Add Address to Alias mapper.
+`2020-04-03` | Ver 0.1.6 | Add quit API.
+`2020-04-18` | Ver 0.1.7 | 1. Add connect, disconnect API.<br> 2. Allow additional new-alias in runtime.
+`2020-05-01` | Ver 0.1.8 | 1. Bug-Fix: TCP disconn & re-connect bug.<br> 2. Bug-Fix: Protocol-Chain buf.<br> 3. Bug-Fix: Random-Device bug.<br> 4. API-chang: connect --> connect_try.
+`2020-05-13` | Ver 0.1.9 | 1. Buf-Fix: Unintended multiple sending by E_KEEP_PAYLOAD_AFTER_TX option.<br> 2. Apply ThreadPool & queue for Rx.<br> 3. Upgrade Protocol API for receiving of multiple message.
+`2020-05-29` | Ver 0.1.9 | 1. Add Cinet_uds class.<br> 2. Clean warning message.
+`2020-05-30` | Ver 0.1.9 | Apply Cinet_uds class to TCP/UDP provider class.
+`2020-05-31` | Ver 0.1.9 | Implement UDS TCP/UDP provider frame, but not yet test it.
+`2020-06-01` | Ver 0.2.0 | Add Feature UDS TCP/UDP communication. & sample program to test UDS.
+`2021-01-02` | Ver 0.2.1 | Definition of Resource-Concept.
+`2021-05-18` | Ver 0.2.2 | [Protocol] Add UniversalCMD & improve structure of Protocol-Handling.
+`2021-05-20` | Ver 0.2.3 | Improve ConfigAlias class.
+`2021-05-22` | Ver 0.2.4 | [Bug-Fix] Fix memory-corruption of CRawMessage Class.<br> [Protocol] Change structure of protocol-header in UniversalCMD protocol.
 
 
 ### TBD-list

@@ -17,8 +17,8 @@ int main(int argc, char *argv[])
     std::cout << "Sample-Server for check operating of TCP provider." << std::endl;
 
     // Create Communicator instance.
-    auto handler = create_communicator("TestApp03", 
-                                       "TCP_provider", 
+    auto handler = create_communicator("APP-01_X", 
+                                       "tcp_01_X", 
                                        enum_c::ProviderType::E_PVDT_TRANS_TCP,
                                        atoi(argv[2]), 
                                        argv[1],

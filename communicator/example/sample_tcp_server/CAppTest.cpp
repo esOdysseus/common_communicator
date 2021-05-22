@@ -60,9 +60,8 @@ void CAppTest::cb_receive_msg_handle(std::string peer_id, std::shared_ptr<payloa
     cout << "* 6. state : " << protocol->get_property("state") << endl;
     cout << "* 7. msg-ID : " << protocol->get_property("msg_id") << endl;
     cout << "* 8. from-APP : " << protocol->get_property("from") << endl;
-    cout << "* 9. to-APP : " << protocol->get_property("who") << endl;
-    cout << "* 10. when : " << protocol->get_property("when") << endl;
-    cout << "* 11. payload-length : " << protocol->get_property("length") << endl;
+    cout << "* 9. when : " << protocol->get_property("when") << endl;
+    cout << "* 10. payload-length : " << protocol->get_property("length") << endl;
     cout << "************************************" << endl;
 
     // Send Message

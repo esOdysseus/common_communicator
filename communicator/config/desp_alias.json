@@ -68,6 +68,48 @@
                             }
                         }
                     }   // functions
+                }
+            }   // svc-pvd
+            
+        },   // APP-01
+        "APP-02": {              // name of resource/app
+            "properties": {
+                "type": "single",      // valid-value : single , multi
+                "name": "self",        // default-value
+                "where": "local-pos"   // single일때 만 유효하다. [Mandatory]
+            },
+            "svc-pvd": {
+                "udp_01": {               // name of provider.
+                    "provider-type": "udp",     // available-type : udp, tcp, udp_uds, tcp_uds, vsomeip, iotivity
+                    "address": {                // describe address of alias.
+                        "ip": "192.168.1.3", // ip of alias that is destination.
+                        "mask": "24",           // Network mask.
+                        "port": "12346"         // port of alias.
+                    }
+                },
+                "tcp_01": {               // name of provider.
+                    "provider-type": "tcp",     // available-type : udp, tcp, udp_uds, tcp_uds, vsomeip, iotivity
+                    "address": {                // describe address of alias.
+                        "ip": "192.168.1.3", // ip of alias that is destination.
+                        "mask": "24",           // Network mask.
+                        "port": "12346"         // port of alias.
+                    }
+                },
+                "uds_udp_01": {               // name of provider.
+                    "provider-type": "udp_uds",     // available-type : udp, tcp, udp_uds, tcp_uds, vsomeip, iotivity
+                    "address": {                // describe address of alias.
+                        "ip": "192.168.1.3", // ip of alias that is destination.
+                        "mask": "24",           // Network mask.
+                        "port": "12346"         // port of alias.
+                    }
+                },
+                "uds_tcp_01": {               // name of provider.
+                    "provider-type": "tcp_uds",     // available-type : udp, tcp, udp_uds, tcp_uds, vsomeip, iotivity
+                    "address": {                // describe address of alias.
+                        "ip": "192.168.1.3", // ip of alias that is destination.
+                        "mask": "24",           // Network mask.
+                        "port": "12346"         // port of alias.
+                    }
                 },
                 "svc-02": {                  // name of service.
                     "provider-type": "vsomeip", // available-type : udp, tcp, udp_uds, tcp_uds, vsomeip, iotivity
@@ -98,103 +140,6 @@
                 }
             }   // svc-pvd
             
-        }
-        // },   // APP-01
-        // "APP-02": {              // name of resource/app
-        //     "properties": {
-        //         "type": "single",      // valid-value : single , multi
-        //         "name": "self",        // default-value
-        //         "where": "local-pos"   // single일때 만 유효하다. [Mandatory]
-        //     },
-        //     "svc-pvd": {
-        //         "udp_01": {               // name of provider.
-        //             "provider-type": "udp",     // available-type : udp, tcp, udp_uds, tcp_uds, vsomeip, iotivity
-        //             "address": {                // describe address of alias.
-        //                 "ip": "192.168.1.2", // ip of alias that is destination.
-        //                 "mask": "24",           // Network mask.
-        //                 "port": "12346"         // port of alias.
-        //             }
-        //         },
-        //         "tcp_01": {               // name of provider.
-        //             "provider-type": "tcp",     // available-type : udp, tcp, udp_uds, tcp_uds, vsomeip, iotivity
-        //             "address": {                // describe address of alias.
-        //                 "ip": "192.168.1.2", // ip of alias that is destination.
-        //                 "mask": "24",           // Network mask.
-        //                 "port": "12346"         // port of alias.
-        //             }
-        //         },
-        //         "uds_udp_01": {               // name of provider.
-        //             "provider-type": "udp_uds",     // available-type : udp, tcp, udp_uds, tcp_uds, vsomeip, iotivity
-        //             "address": {                // describe address of alias.
-        //                 "ip": "192.168.1.2", // ip of alias that is destination.
-        //                 "mask": "24",           // Network mask.
-        //                 "port": "12346"         // port of alias.
-        //             }
-        //         },
-        //         "uds_tcp_01": {               // name of provider.
-        //             "provider-type": "tcp_uds",     // available-type : udp, tcp, udp_uds, tcp_uds, vsomeip, iotivity
-        //             "address": {                // describe address of alias.
-        //                 "ip": "192.168.1.2", // ip of alias that is destination.
-        //                 "mask": "24",           // Network mask.
-        //                 "port": "12346"         // port of alias.
-        //             }
-        //         },
-        //         "water_valve": {             // name of service.
-        //             "provider-type": "vsomeip", // available-type : udp, tcp, udp_uds, tcp_uds, vsomeip, iotivity
-        //             "address": {
-        //                 "service-id": "0x1234",
-        //                 "instance-id": "0x5678"
-        //             },   // address
-        //             "functions": {
-        //                 "reqresp": {    // Rx req-msg and Tx response-msg.
-        //                     "reservation" : {     "id": "0x1234"    },
-        //                     "get-valve" : {     "id": "0x1234"    },
-        //                     "get-system" : {     "id": "0x1234"    }
-        //                 },
-        //                 "req_noresp": { // Rx req-msg but can not Tx response-msg.
-        //                     "sync-time" : {     "id": "0x1234"    }
-        //                 },
-        //                 "pubsub": {     // Tx Publishing-message.
-        //                     "change-valve": {
-        //                         "id": "0x1234",
-        //                         "grp-id": "0x2345"
-        //                     },
-        //                     "change-system": {
-        //                         "id": "0x1234",
-        //                         "grp-id": "0x2345"
-        //                     }
-        //                 }
-        //             }   // functions
-        //         },
-        //         "svc-02": {                  // name of service.
-        //             "provider-type": "vsomeip", // available-type : udp, tcp, udp_uds, tcp_uds, vsomeip, iotivity
-        //             "address": {
-        //                 "service-id": "0x3456",
-        //                 "instance-id": "0x1234"
-        //             },   // address
-        //             "functions": {
-        //                 "reqresp": {    // Rx req-msg and Tx response-msg.
-        //                     "method-01" : {     "id": "0x1234"    },
-        //                     "method-02" : {     "id": "0x1234"    },
-        //                     "method-03" : {     "id": "0x1234"    }
-        //                 },
-        //                 "req_noresp": { // Rx req-msg but can not Tx response-msg.
-        //                     "method-04" : {     "id": "0x1234"    }
-        //                 },
-        //                 "pubsub": {     // Tx Publishing-message.
-        //                     "event-01": {
-        //                         "id": "0x1234",
-        //                         "grp-id": "0x2345"
-        //                     },
-        //                     "event-02": {
-        //                         "id": "0x1234",
-        //                         "grp-id": "0x2345"
-        //                     }
-        //                 }
-        //             }   // functions
-        //         }
-        //     }   // svc-pvd
-            
-        // }   // APP-02
+        }   // APP-02
     }
 }

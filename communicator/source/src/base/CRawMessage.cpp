@@ -21,21 +21,21 @@ template bool CRawMessage::set_source(std::shared_ptr<int> addr, const char* add
 /***********************************************************
  * Definition member-function of CRawMessage Class.
  * */
-CRawMessage::CRawMessage(size_t capacity) { 
+CRawMessage::CRawMessage(size_t capa) { 
     clear();
-    init(capacity);
+    init(capa);
 }
 
 CRawMessage::~CRawMessage(void) {
     destroy();
 }
 
-bool CRawMessage::init(size_t capacity) {
+bool CRawMessage::init(size_t capa) {
     try {
-        if (capacity == 0) {
-            capacity = 2*capacity_bin;
+        if (capa == 0) {
+            capa = 2*capacity_bin;
         }
-        this->capacity = capacity; 
+        this->capacity = capa + 1; 
         this->msg_size = 0;
         this->_m_msg_ = new MsgDataType[capacity];
         assert( this->_m_msg_ != NULL );
@@ -129,6 +129,11 @@ bool CRawMessage::set_msg_hook( TfuncType func, size_t msize ) {
     bool res = false;
 
     try {
+        if( msize > (capacity-1) ) {
+            LOGERR("msize(%u) > capacity-1(%u)", msize, capacity-1);
+            throw std::overflow_error("msize is overflowed.");
+        }
+
         std::lock_guard<std::shared_mutex> guard(mtx_sync);
         res = func(_m_msg_);
         if( res == true ) {
@@ -138,7 +143,7 @@ bool CRawMessage::set_msg_hook( TfuncType func, size_t msize ) {
     }
     catch( const std::exception &e ) {
         LOGERR("%s", e.what());
-        return false;
+        res = false;
     }
     return res;
 }

@@ -50,7 +50,7 @@ public:
 
 protected:
     bool pack(const void* msg_raw, size_t msg_size, enum_c::ProviderType provider_type,
-              std::string &&from_app, std::string &&to_app) override;
+              std::string &&from_app) override;
 
     bool unpack(const void* msg_raw, size_t msg_size) override;
 
