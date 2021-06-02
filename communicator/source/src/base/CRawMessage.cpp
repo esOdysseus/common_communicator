@@ -14,9 +14,13 @@
 #include <CRawMessage.h>
 #include <type_traits>
 
-template bool CRawMessage::set_source(std::shared_ptr<struct sockaddr_in> addr, const char* addr_str, CRawMessage::PVDType pvd_type);
-template bool CRawMessage::set_source(std::shared_ptr<struct sockaddr_un> addr, const char* addr_str, CRawMessage::PVDType pvd_type);
-template bool CRawMessage::set_source(std::shared_ptr<int> addr, const char* addr_str, CRawMessage::PVDType pvd_type);
+template bool CRawMessage::set_source(std::shared_ptr<struct sockaddr_in> addr, std::shared_ptr<cf_alias::IAliasPVD> peer_alias);
+template bool CRawMessage::set_source(std::shared_ptr<struct sockaddr_un> addr, std::shared_ptr<cf_alias::IAliasPVD> peer_alias);
+template bool CRawMessage::set_source(std::shared_ptr<int> addr, std::shared_ptr<cf_alias::IAliasPVD> peer_alias);
+
+template bool CRawMessage::set_source(std::shared_ptr<struct sockaddr_in> addr, const char* app_path, const char* pvd_path, CRawMessage::PVDType pvd_type);
+template bool CRawMessage::set_source(std::shared_ptr<struct sockaddr_un> addr, const char* app_path, const char* pvd_path, CRawMessage::PVDType pvd_type);
+template bool CRawMessage::set_source(std::shared_ptr<int> addr, const char* app_path, const char* pvd_path, CRawMessage::PVDType pvd_type);
 
 /***********************************************************
  * Definition member-function of CRawMessage Class.
@@ -171,23 +175,17 @@ bool CRawMessage::append_msg(void* buf, size_t msize) {
 }
 
 template <typename ADDR_TYPE>
-bool CRawMessage::set_source(std::shared_ptr<ADDR_TYPE> addr, const char* addr_str, PVDType pvd_type) {
-    try{
-        pvd_type = policy_addr<ADDR_TYPE>(pvd_type);
-        source.init(addr,addr_str, pvd_type);
-    }
-    catch(const std::exception &e) {
-        LOGERR("%s", e.what());
-        return false;
-    }
-    return true;
+bool CRawMessage::set_source(std::shared_ptr<ADDR_TYPE> addr, std::shared_ptr<cf_alias::IAliasPVD> peer_alias) {
+    assert(peer_alias.get() != NULL);
+    return set_source(addr, peer_alias->path_parent().data(), peer_alias->name().data(), peer_alias->type());
 }
 
-CRawMessage::LanAddrType CRawMessage::get_source_addr(std::string& alias, enum_c::ProviderType provider_type) {
+CRawMessage::LanAddrType CRawMessage::get_source_addr(std::string& app_path, std::string& pvd_path, enum_c::ProviderType provider_type) {
     try {
         assert( source.get_addr_type() == enum_c::ProviderType::E_PVDT_NOT_DEFINE || 
                 source.get_addr_type() == provider_type );
-        alias = source.get_alias();
+        app_path = source.get_app_path();
+        pvd_path = source.get_pvd_path();
         return source.get_address<struct sockaddr_in>();
     }
     catch(const std::exception &e) {
@@ -195,11 +193,12 @@ CRawMessage::LanAddrType CRawMessage::get_source_addr(std::string& alias, enum_c
     }
 }
 
-CRawMessage::LanSockType CRawMessage::get_source_sock(std::string& alias, enum_c::ProviderType provider_type) {
+CRawMessage::LanSockType CRawMessage::get_source_sock(std::string& app_path, std::string& pvd_path, enum_c::ProviderType provider_type) {
     try {
         assert( source.get_addr_type() == enum_c::ProviderType::E_PVDT_NOT_DEFINE || 
                 source.get_addr_type() == provider_type );
-        alias = source.get_alias();
+        app_path = source.get_app_path();
+        pvd_path = source.get_pvd_path();
         return source.get_address<int>();
     }
     catch(const std::exception &e) {
@@ -208,21 +207,27 @@ CRawMessage::LanSockType CRawMessage::get_source_sock(std::string& alias, enum_c
 }
 
 const struct sockaddr_in* CRawMessage::get_source_addr_read_only(enum_c::ProviderType provider_type) {
-    std::string src_name;
-    LanAddrType src = get_source_addr(src_name, provider_type);
-    LOGD("source-Name=%s", src_name.c_str());
+    std::string app_path;
+    std::string pvd_id;
+    LanAddrType src = get_source_addr(app_path, pvd_id, provider_type);
+    LOGD("alias=%s%s%s", app_path.data(), "/", pvd_id.data());
     return (const struct sockaddr_in*)src.get();
 }
 
 int CRawMessage::get_source_sock_read_only(enum_c::ProviderType provider_type) {
-    std::string src_name;
-    LanSockType src = get_source_sock(src_name, provider_type);
-    LOGD("source-Name=%s", src_name.c_str());
+    std::string app_path;
+    std::string pvd_id;
+    LanSockType src = get_source_sock(app_path, pvd_id, provider_type);
+    LOGD("alias=%s%s%s", app_path.data(), "/", pvd_id.data());
     return *(src.get());
 }
 
-std::string CRawMessage::get_source_alias(void) {
-    return source.get_alias();
+std::string CRawMessage::get_source_app(void) {
+    return source.get_app_path();
+}
+
+std::string CRawMessage::get_source_pvd(void) {
+    return source.get_pvd_path();
 }
 
 template <typename ADDR_TYPE>
@@ -271,3 +276,15 @@ bool CRawMessage::extend_capacity(size_t append_capacity) {
     return true;
 }
 
+template <typename ADDR_TYPE>
+bool CRawMessage::set_source(std::shared_ptr<ADDR_TYPE> addr, const char* app_path, const char* pvd_path, PVDType pvd_type) {
+    try{
+        pvd_type = policy_addr<ADDR_TYPE>(pvd_type);
+        source.init(addr, app_path, pvd_path, pvd_type);
+    }
+    catch(const std::exception &e) {
+        LOGERR("%s", e.what());
+        return false;
+    }
+    return true;
+}

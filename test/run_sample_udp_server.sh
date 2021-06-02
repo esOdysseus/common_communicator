@@ -22,8 +22,8 @@ touch ${VAL_FILE}
 
 cd ${ROOT_PATH}/${BUILD_MODE}/bin
 # run program.
-./${TARGET} "192.168.1.2" "12346" ${DESP_PROTOCOL} ${DESP_ALIAS}  # for simple run program
+./${TARGET} "192.168.1.2" "12347" ${DESP_PROTOCOL} ${DESP_ALIAS}  # for simple run program
 #${GDB_BIN} ./${TARGET}  ${GDB_FILE}        # for gdb debug
-#${VAL_BIN} ${VAL_OPT} ./${TARGET} "192.168.1.2" "12346" ${DESP_PROTOCOL} ${DESP_ALIAS} >& ${VAL_FILE} # for valgrind debug
+#${VAL_BIN} ${VAL_OPT} ./${TARGET} "192.168.1.2" "12347" ${DESP_PROTOCOL} ${DESP_ALIAS} >& ${VAL_FILE} # for valgrind debug
 
 

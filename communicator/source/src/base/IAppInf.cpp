@@ -34,7 +34,7 @@ std::shared_ptr<ICommunicator> create_communicator(std::string app_id,
     }
     catch (const std::exception &e) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 }
 
@@ -67,7 +67,7 @@ ICommunicator::ICommunicator(std::string app_id,
     }
     catch( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 }
 
@@ -126,85 +126,88 @@ std::shared_ptr<payload::CPayload> ICommunicator::create_payload(void) {
     return proto_config->create_protocols_chain();
 }
 
-bool ICommunicator::send(std::string alias, std::shared_ptr<payload::CPayload>&& payload) {
+bool ICommunicator::send(std::string app_path, std::string pvd_path, std::shared_ptr<payload::CPayload>&& payload) {
     if (m_send_payload == NULL) {
         return false;
     }
 
-    m_send_payload(std::move(alias), std::forward<std::shared_ptr<payload::CPayload>>(payload));
+    m_send_payload(std::move(app_path), std::move(pvd_path), std::forward<std::shared_ptr<payload::CPayload>>(payload));
     return true;
 }
 
-bool ICommunicator::send(std::string alias, std::shared_ptr<payload::CPayload>& payload) {
+bool ICommunicator::send(std::string app_path, std::string pvd_path, std::shared_ptr<payload::CPayload>& payload) {
     if (m_send_payload == NULL) {
         return false;
     }
 
-    m_send_payload(std::move(alias), std::move(payload));
+    m_send_payload(std::move(app_path), std::move(pvd_path), std::move(payload));
     return true;
 }
 
-bool ICommunicator::send(std::string alias, const void* msg, size_t msg_size) {
+bool ICommunicator::send(std::string app_path, std::string pvd_path, const void* msg, size_t msg_size) {
     try {
         auto payload = create_payload();
         assert( payload->set_payload(msg, msg_size) == true );
-        return send( std::move(alias), payload );
+        return send( std::move(app_path), std::move(pvd_path), payload );
     }
     catch( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 
     return false;
 }
 
-bool ICommunicator::connect_try(std::string &peer_ip, uint16_t peer_port, std::string &new_alias) {
+bool ICommunicator::connect_try(std::string &peer_ip, uint16_t peer_port, std::string& app_path, std::string &pvd_id) {
     bool ret = true;
+    std::string peer_full_path;
     assert( peer_ip.empty() != true );
     assert( peer_port > 0 );
-    assert( new_alias.empty() == false );
 
     try {
+        peer_full_path = cf_alias::IAlias::make_full_path(app_path, pvd_id);
         if( h_pvd.get() == NULL ) {
             throw std::runtime_error("Provider instance is NULL, Please check it.");
         }
         
-        assert( h_pvd->register_new_alias(peer_ip.c_str(), peer_port, new_alias) == true );
-        if( h_pvd->make_connection(new_alias) <= 0 ) {
+        assert( h_pvd->register_new_alias(peer_ip.c_str(), peer_port, app_path, pvd_id) == true );
+        if( h_pvd->make_connection(peer_full_path) <= 0 ) {
             ret = false;
         }
     }
     catch( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 
     return ret;
 }
 
-bool ICommunicator::connect_try(std::string && alias) {
+bool ICommunicator::connect_try(std::string && app_path, std::string && pvd_id) {
     bool ret = true;
-    assert( alias.empty() == false );
+    assert( app_path.empty() == false );
+    assert( pvd_id.empty() == false );
 
     try{
         if( h_pvd.get() == NULL ) {
             throw std::runtime_error("Provider instance is NULL, Please check it.");
         }
 
-        if( h_pvd->make_connection( alias ) <= 0 ) {
+        if( h_pvd->make_connection( cf_alias::IAlias::make_full_path(app_path, pvd_id) ) <= 0 ) {
             ret = false;
         }
     }
     catch( const std::exception &e) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 
     return ret;
 }
 
-void ICommunicator::disconnect(std::string & alias) {
-    assert( alias.empty() == false );
+void ICommunicator::disconnect(std::string & app_path, std::string & pvd_id) {
+    assert( app_path.empty() == false );
+    assert( pvd_id.empty() == false );
 
     try{
         if( h_pvd.get() == NULL ) {
@@ -212,16 +215,17 @@ void ICommunicator::disconnect(std::string & alias) {
             return ;
         }
 
-        h_pvd->disconnection(alias);
+        h_pvd->disconnection(app_path, pvd_id);
     }
     catch( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 }
 
-void ICommunicator::disconnect(std::string && alias) {
-    assert( alias.empty() == false );
+void ICommunicator::disconnect(std::string && app_path, std::string && pvd_id) {
+    assert( app_path.empty() == false );
+    assert( pvd_id.empty() == false );
 
     try{
         if( h_pvd.get() == NULL ) {
@@ -229,11 +233,11 @@ void ICommunicator::disconnect(std::string && alias) {
             return ;
         }
 
-        h_pvd->disconnection(alias);
+        h_pvd->disconnection(app_path, pvd_id);
     }
     catch( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 }
 
@@ -306,46 +310,50 @@ int ICommunicator::run(void) {
     pthread_setcanceltype( PTHREAD_CANCEL_ASYNCHRONOUS, NULL );
     pthread_cleanup_push( cb_force_exit_thread, (void*)(get_app_id().c_str()) );
 
-    switch(this->provider_type)
-    {
-    case enum_c::ProviderType::E_PVDT_TRANS_TCP:
+    try {
+        auto pvd_alias = get_provider();
+
+        switch(this->provider_type)
         {
-            h_pvd = std::make_shared<CPVD_TCP<>>( alias_config->get_providers(alias_config->TCP) );
-            const char* ip_str = ip.empty() == true ? NULL : ip.c_str();
-            h_pvd->init(provider_id, port, ip_str, mode);
-            h_pvd->start(app_caller, proto_config);
-            while(h_pvd->accept() && is_running_continue());  // Block
+        case enum_c::ProviderType::E_PVDT_TRANS_TCP:
+            {
+                h_pvd = std::make_shared<CPVD_TCP<>>( pvd_alias, alias_config->get_providers(pvd_alias->TCP) );
+                h_pvd->init(port, ip, mode);
+                h_pvd->start(app_caller, proto_config);
+                while(h_pvd->accept() && is_running_continue());  // Block
+            }
+            break;
+        case enum_c::ProviderType::E_PVDT_TRANS_UDP:
+            {
+                h_pvd = std::make_shared<CPVD_UDP<>>(pvd_alias, alias_config->get_providers(pvd_alias->UDP) );
+                h_pvd->init(port, ip, mode);
+                h_pvd->start(app_caller, proto_config);
+                while(h_pvd->accept() && is_running_continue());  // Block
+            }
+            break;
+        case enum_c::ProviderType::E_PVDT_TRANS_UDS_TCP:
+            {
+                h_pvd = std::make_shared<CPVD_TCP<struct sockaddr_un>>(pvd_alias, alias_config->get_providers(pvd_alias->TCP_UDS) );
+                h_pvd->init(port, ip, mode);
+                h_pvd->start(app_caller, proto_config);
+                while(h_pvd->accept() && is_running_continue());  // Block
+            }
+            break;
+        case enum_c::ProviderType::E_PVDT_TRANS_UDS_UDP:
+            {
+                h_pvd = std::make_shared<CPVD_UDP<struct sockaddr_un>>(pvd_alias, alias_config->get_providers(pvd_alias->UDP_UDS) );
+                h_pvd->init(port, ip, mode);
+                h_pvd->start(app_caller, proto_config);
+                while(h_pvd->accept() && is_running_continue());  // Block
+            }
+            break;
+        default:
+            break;
         }
-        break;
-    case enum_c::ProviderType::E_PVDT_TRANS_UDP:
-        {
-            h_pvd = std::make_shared<CPVD_UDP<>>( alias_config->get_providers(alias_config->UDP) );
-            const char* ip_str = ip.empty() == true ? NULL : ip.c_str();
-            h_pvd->init(provider_id, port, ip_str, mode);
-            h_pvd->start(app_caller, proto_config);
-            while(h_pvd->accept() && is_running_continue());  // Block
-        }
-        break;
-    case enum_c::ProviderType::E_PVDT_TRANS_UDS_TCP:
-        {
-            h_pvd = std::make_shared<CPVD_TCP<struct sockaddr_un>>( alias_config->get_providers(alias_config->TCP_UDS) );
-            const char* ip_str = ip.empty() == true ? NULL : ip.c_str();
-            h_pvd->init(provider_id, port, ip_str, mode);
-            h_pvd->start(app_caller, proto_config);
-            while(h_pvd->accept() && is_running_continue());  // Block
-        }
-        break;
-    case enum_c::ProviderType::E_PVDT_TRANS_UDS_UDP:
-        {
-            h_pvd = std::make_shared<CPVD_UDP<struct sockaddr_un>>( alias_config->get_providers(alias_config->UDP_UDS) );
-            const char* ip_str = ip.empty() == true ? NULL : ip.c_str();
-            h_pvd->init(provider_id, port, ip_str, mode);
-            h_pvd->start(app_caller, proto_config);
-            while(h_pvd->accept() && is_running_continue());  // Block
-        }
-        break;
-    default:
-        break;
+    }
+    catch( const std::exception& e ) {
+        LOGERR("%s", e.what());
+        throw e;
     }
 
     h_pvd.reset();
@@ -365,5 +373,57 @@ void ICommunicator::force_exit_thread(std::thread &h_thread) {
 
         // wait for calling of 'cb_force_exit_thread' function
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+}
+
+std::shared_ptr<cf_alias::IAliasPVD> ICommunicator::get_provider( void ) {
+    std::shared_ptr<cf_alias::IAliasPVD> res;
+    try {
+        res = alias_config->get_provider( app_id, provider_id, provider_type );
+        if( res.get() == NULL ) {
+            res = alias_config->create_provider( app_id, provider_id, provider_type );
+        }
+        assert( res.get() != NULL );
+
+        if( provider_type == enum_c::ProviderType::E_PVDT_TRANS_TCP || 
+            provider_type == enum_c::ProviderType::E_PVDT_TRANS_UDP ) {
+            // if type is transaction-type, then check ip/port validation.
+            // if need, then update empty ip/port variables.
+            auto pvd_trans = std::dynamic_pointer_cast<cf_alias::CAliasTrans>( res );
+            sync_trans_provider( pvd_trans );
+        }
+    }
+    catch( const std::exception& e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+
+    return res;
+}
+
+void ICommunicator::sync_trans_provider( std::shared_ptr<cf_alias::CAliasTrans>& pvd ) {
+    try {
+        std::string& pvd_ip = pvd->get_ip_ref();
+        uint32_t& pvd_port = pvd->get_port_ref();
+
+        if( pvd_ip.empty() == true && ip.empty() == false ) {
+            pvd_ip = ip;
+            pvd_port = port;
+            pvd->set_mask(24);
+        }
+        else if( pvd_ip.empty() == false && ip.empty() == true ) {
+            ip = pvd_ip;
+            port = pvd_port;
+        }
+        else if( pvd_ip.empty() == false && ip.empty() == false ) {
+            if( pvd_ip != ip || pvd_port != port ) {
+                LOGERR("IP/Port(%s/%u) is not missmatched with IP/Port(%s/%u) of Provider.", ip.data(), port, pvd_ip.data(), pvd_port);
+                throw std::invalid_argument( "IP/Port value is mismatched with IP/Port of Provider." );
+            }
+        }
+    }
+    catch( const std::exception& e ) {
+        LOGERR("%s", e.what());
+        throw e;
     }
 }

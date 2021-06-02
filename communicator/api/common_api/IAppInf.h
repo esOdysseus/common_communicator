@@ -1,3 +1,4 @@
+
 /***
  * IAppInf.h
  * Copyright [2019-] 
@@ -47,6 +48,8 @@ public:
 
     // Get Application-ID which contain this Communicator.
     std::string get_app_id(void);
+
+    std::string get_provider_id(void);
 
     // Get Version-infomation of Common-API.
     std::string get_version(void);
@@ -137,6 +140,8 @@ public:
     //                           then Receive response/notification-message from Server.
     void register_message_handler(MessagePayloadCB_Type &&handler);      // Mandatory
 
+    // void register_message_handler(MessagePayloadCB_Type &&handler, std::string &from_alias);      // Mandatory
+
     // >> Server-side (Optional)
     //   - Precondition : Handler registered by cb_register_athentication_handler() was called. 
     //   - Practice : Try to do Hand-shaking with regard to authentication.
@@ -156,13 +161,11 @@ public:
     //   - Practice : [REQ/RESP] Send request-message to Server.
     //   - Postcondition : If Server reply with response-message,
     //                     then Handler registered by cb_register_message_handler() will be called.
-    bool send(std::string alias, std::shared_ptr<payload::CPayload>&& payload);      // Mandatory
+    bool send(std::string app_path, std::string pvd_path, std::shared_ptr<payload::CPayload>&& payload);      // Mandatory
 
-    // [REQ/RESP] Send response-message to Client.
-    bool send(std::string alias, std::shared_ptr<payload::CPayload>& payload);      // Mandatory
+    bool send(std::string app_path, std::string pvd_path, std::shared_ptr<payload::CPayload>& payload);      // Mandatory
 
-    // [REQ/RESP] Send response-message to Client.
-    bool send(std::string alias, const void* msg, size_t msg_size);                 // Mandatory
+    bool send(std::string app_path, std::string pvd_path, const void* msg, size_t msg_size);                 // Mandatory
 
     /**
      * Client-Side
@@ -175,29 +178,29 @@ public:
     bool connect_try(std::string &peer_ip, uint16_t peer_port, std::string &new_alias_name);  // Mandatory
 
     // connect to peer that is pre-named as 'alias' variable.
-    bool connect_try(std::string && alias);  // Mandatory
+    bool connect_try(std::string &&app_path, std::string &&pvd_id);  // Mandatory
 
     //   - Precondition : connect() was called
     //   - Practice : disconnect from Cloud/Server/Service-Provider.
     //   - Postcondition : Handler registered by cb_register_available_handler() will be called.
     //                   : Handler registered by cb_register_connection_handler() will be called.
-    void disconnect(std::string & alias);   // Mandatory
-    
-    void disconnect(std::string && alias);   // Mandatory
+    void disconnect(std::string &app_path, std::string &pvd_id);   // Mandatory
+
+    void disconnect(std::string &&app_path, std::string &&pvd_id);   // Mandatory
 
     //   - Precondition : Handler registered by cb_register_available_handler() was called.
     //   - Practice : [PUB/SUB] Delare Event-Accepting to Service-Provider.
     //   - Postcondition : Handler registered by cb_register_subscription_handler() will be called.
-    // void subscribe(void);   // Conditional-Mandatory
+    // void subscribe(std::string & alias);   // Conditional-Mandatory
 
     //   - Precondition : Handler registered by cb_register_available_handler() was called.
     //   - Practice : [PUB/SUB] Delare Event-Rejecting to Service-Provider.
     //   - Postcondition : Handler registered by cb_register_subscription_handler() will be called.
-    // void unsubscribe(void);  // Conditional-Mandatory
+    // void unsubscribe(std::string & alias);  // Conditional-Mandatory
 
     //   - Precondition : None
     //   - Practice : [PUB/SUB] Receiving ACK-message of Service-Provider correspond to subscribe()/unsubscribe().
-    // void cb_register_subscription_handler(void);
+    // void cb_register_subscription_handler(std::string & alias, handler);
 
     /**
      * Server-Side
@@ -205,16 +208,12 @@ public:
     //   - Precondition : Handler registered by cb_register_initialization_handler() was called.
     //   - Practice : Cloud,Server,Service start.
     //   - Postcondition : Handler registered by cb_register_available_handler() will be called.
-    // void resume(void);   // Mandatory
+    // void resume(std::string & alias);   // Mandatory
 
     //   - Precondition : Handler registered by cb_register_initialization_handler() was called.
     //   - Practice : Cloud,Server,Service temporary-stop.
     //   - Postcondition : Handler registered by cb_register_available_handler() will be called.
-    // void suspend(void);  // Mandatory
-
-    //   - Precondition : Handler registered by cb_register_available_handler() was called.
-    //   - Practice : [PUB/SUB] Send Notification-message to Subscribers.
-    // void notify(void);   // Conditional-Mandatory
+    // void suspend(std::string & alias);  // Mandatory
 
     /******************************
      * Discovery API

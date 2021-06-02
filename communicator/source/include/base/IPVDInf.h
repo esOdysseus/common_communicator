@@ -23,6 +23,7 @@
 #include <CAliasAddr.h>
 #include <CAliasCompare.h>
 #include <CConfigAliases.h>
+#include <IAliasPVD.h>
 
 class IHProtocolInf;
 
@@ -34,7 +35,7 @@ public:
     using ThreadType = std::shared_ptr<std::thread>;
     using MessageType = dtype_b::MsgType;
     using AliasPVDsType = cf_alias::CConfigAliases::PVDListType;
-    using FPreceiverType = std::function<void(std::string alias, bool *is_continue)>;
+    using FPreceiverType = std::function<void(std::shared_ptr<cf_alias::IAliasPVD> pvd_alias, bool *is_continue)>;
 
 protected:
     using ProviderMode = enum_c::ProviderMode;
@@ -42,14 +43,14 @@ protected:
 private:
     class CLooper;
 
-    using LoopPoolType = std::unordered_map<std::string /* alias */, std::shared_ptr<CLooper> >;
+    using LoopPoolType = std::unordered_map<std::string /* peer_full_path */, std::shared_ptr<CLooper> >;
 
 public:
-    IPVDInf(AliasPVDsType& alias_list);
+    IPVDInf(std::shared_ptr<cf_alias::IAliasPVD>& pvd_alias);
 
     ~IPVDInf(void);
 
-    virtual bool init(std::string id, uint16_t port=0, const char* ip=NULL, ProviderMode mode=ProviderMode::E_PVDM_BOTH) = 0;
+    virtual bool init(uint16_t port=0, std::string ip=std::string(), ProviderMode mode=ProviderMode::E_PVDM_BOTH) = 0;
 
     virtual bool start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) = 0;
 
@@ -57,48 +58,46 @@ public:
 
     virtual bool accept(void) = 0;
 
-    virtual int make_connection(std::string alias) = 0;
+    virtual int make_connection(std::string peer_full_path) = 0;
 
-    virtual void disconnection(std::string alias) = 0;
+    virtual void disconnection(std::string app_path, std::string pvd_id) = 0;
 
     virtual MessageType read_msg(int u_sockfd, bool &is_new) = 0;
 
-    virtual bool write_msg(std::string alias, MessageType msg) = 0;
+    virtual bool write_msg(std::string app_path, std::string pvd_path, MessageType msg) = 0;
 
-    bool register_new_alias(const char* peer_ip, uint16_t peer_port, std::string &wanted_name);
+    bool register_new_alias(const char* peer_ip, uint16_t peer_port, std::string& app_path, std::string &pvd_id);
 
     bool quit(void);
 
-    std::string get_id(void) { return id; }
+    enum_c::ProviderType get_provider_type(void);
 
-    enum_c::ProviderType get_provider_type(void) { return provider_type; }
+    std::shared_ptr<cf_alias::IAliasPVD> get_pvd_alias( void );
 
 protected:
     virtual int enable_keepalive(int sock) = 0;
 
     // Temporary Function : alias 전달후 issue 발생으로 임시적으로 기능 구현을 위해 존재함.
-    virtual void update_alias_mapper(AliasPVDsType& alias_list, std::string &res_alias_name) = 0;
+    virtual void update_alias_mapper(std::shared_ptr<cf_alias::IAliasPVD> new_pvd) = 0;
 
     virtual bool update_alias_mapper(AliasPVDsType& alias_list) = 0;
 
-    virtual void run_receiver(std::string alias, bool *is_continue) = 0;
+    virtual void run_receiver(std::shared_ptr<cf_alias::IAliasPVD> peer_alias, bool *is_continue) = 0;
+
+    virtual void disconnection(std::shared_ptr<cf_alias::IAliasPVD> peer_alias) = 0;
 
     void clear(void);
 
     template <typename PROTOCOL_H> 
     bool create_hprotocol(AppCallerType& app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager);
 
-    bool thread_create(std::string& client_id, FPreceiverType &&func);
+    bool thread_create(std::shared_ptr<cf_alias::IAliasPVD>& peer_alias, FPreceiverType &&func);
 
-    bool thread_this_migrate(std::string& client_id, FPreceiverType &&func, bool *is_continue);
+    bool thread_this_migrate(std::shared_ptr<cf_alias::IAliasPVD>& peer_alias, FPreceiverType &&func, bool *is_continue);
 
-    bool thread_destroy(std::string client_id);
+    bool thread_destroy(std::string peer_full_path);
 
-    bool zombi_thread_migrate(std::string client_id);
-
-    void set_id(std::string& value) { id = value; }
-
-    void set_provider_type(enum_c::ProviderType type) { provider_type = type; }
+    bool zombi_thread_migrate(std::shared_ptr<cf_alias::IAliasPVD> peer_alias);
 
 protected:
     bool started;
@@ -122,13 +121,11 @@ protected:
     char read_buf[read_bufsize];
 
 private:
-    std::string id;
+    std::shared_ptr<cf_alias::IAliasPVD>  _m_pvd_alias_;
 
     LoopPoolType mLooperPool;
 
     LoopPoolType mLooperGarbage;
-
-    enum_c::ProviderType provider_type;
 
 };
 

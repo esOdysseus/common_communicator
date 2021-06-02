@@ -55,21 +55,16 @@ static const char* exception_switch(E_ERROR err_num) {
 #include <CException.h>
 
 
-constexpr const char* CConfigAliases::UDP;
-constexpr const char* CConfigAliases::UDP_UDS;
-constexpr const char* CConfigAliases::TCP;
-constexpr const char* CConfigAliases::TCP_UDS;
-constexpr const char* CConfigAliases::VSOMEIP;
 constexpr const char* CConfigAliases::SINGLE;
 constexpr const char* CConfigAliases::MULTIPLE;
 constexpr const char* CConfigAliases::SELF;
 
 const char* CConfigAliases::_ma_pvd_types_[] = { 
-    CConfigAliases::UDP, 
-    CConfigAliases::UDP_UDS, 
-    CConfigAliases::TCP, 
-    CConfigAliases::TCP_UDS, 
-    CConfigAliases::VSOMEIP, 
+    IAliasPVD::UDP, 
+    IAliasPVD::UDP_UDS, 
+    IAliasPVD::TCP, 
+    IAliasPVD::TCP_UDS, 
+    IAliasPVD::VSOMEIP, 
     NULL
 };
 
@@ -148,11 +143,69 @@ CConfigAliases::PVDListType& CConfigAliases::get_providers(std::string app_path,
 
         return itr->second;
     }
+    catch ( const CException &e ) {
+        LOGW("%s", e.what());
+        throw e;
+    }
     catch ( const std::exception &e ) {
         LOGERR("%s", e.what());
         throw e;
     }
 }
+
+CConfigAliases::PVDListType& CConfigAliases::get_providers(std::string app_path, enum_c::ProviderType pvd_type) {
+    return get_providers( app_path, IAliasPVD::convert(pvd_type) );
+}
+
+std::shared_ptr<IAliasPVD> CConfigAliases::get_provider(std::string app_path, std::string pvd_id, std::string pvd_type) {
+    std::shared_ptr<IAliasPVD> result;
+
+    try {
+        PVDListType& pvds_list = get_providers(std::move(app_path), std::move(pvd_type));
+
+        for( auto itr = pvds_list.begin(); itr != pvds_list.end(); itr++ ) {
+            if( (*itr)->name() == pvd_id ) {
+                result = *itr;
+                break;
+            }
+        }
+    }
+    catch ( const CException &e ) {
+        LOGW("%s", e.what());
+    }
+    catch( const std::exception& e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+
+    return result;
+}
+
+std::shared_ptr<IAliasPVD> CConfigAliases::get_provider(std::string app_path, std::string pvd_id, enum_c::ProviderType pvd_type) {
+    return get_provider( app_path, pvd_id, IAliasPVD::convert(pvd_type) );
+}
+
+std::shared_ptr<IAliasPVD> CConfigAliases::create_provider(std::string app_path, std::string pvd_id, enum_c::ProviderType pvd_type) {
+    try {
+        switch( pvd_type ) {
+        case enum_c::ProviderType::E_PVDT_TRANS_TCP:
+        case enum_c::ProviderType::E_PVDT_TRANS_UDP:
+        case enum_c::ProviderType::E_PVDT_TRANS_UDS_TCP:
+        case enum_c::ProviderType::E_PVDT_TRANS_UDS_UDP:
+            return std::make_shared<CAliasTrans>(app_path.data(), pvd_id.data(), IAliasPVD::convert(pvd_type).data());
+        default:
+            LOGERR("Not Supported Provider-Type.(%u)", pvd_type);
+            throw std::out_of_range("Not Supported Provider-Type.");
+        }
+    }
+    catch( const std::exception& e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+
+    return std::shared_ptr<IAliasPVD>();
+}
+
 
 /***************************************************
  * Private Function Definition.
@@ -365,13 +418,14 @@ void CConfigAliases::append_pvd_context( std::string&& app_path, std::string& pv
             _mm_pvds_map_[ app_path ].clear();
 
             for( int i=0; _ma_pvd_types_[i] != NULL; i++ ) {
-                LOGD("PVD-List initialize.(name=%s)", _ma_pvd_types_[i]);
+                LOGD("APP(%s) PVD-List initialize.(name=%s)", app_path.data(), _ma_pvd_types_[i]);
                 _mm_pvds_map_[ app_path ][_ma_pvd_types_[i]].clear();
             }
         }
 
         _mm_pvds_map_[ app_path ][pvd_type].push_back(context);
         _mm_pvds_[pvd_type].push_back(context);
+        LOGI("PVD(%s) is saved to PVD-List.", context->path().data());
     }
     catch( const std::exception& e ) {
         LOGERR("%s", e.what());
@@ -395,13 +449,13 @@ std::shared_ptr<IAliasPVD> CConfigAliases::make_pvd_alias(std::string alias,
         }
 
         LOGD("= pvd_type=%s", pvd_type.c_str());
-        if ( pvd_type == CConfigAliases::UDP || 
-             pvd_type == CConfigAliases::UDP_UDS || 
-             pvd_type == CConfigAliases::TCP ||
-             pvd_type == CConfigAliases::TCP_UDS ) {
+        if ( pvd_type == IAliasPVD::UDP || 
+             pvd_type == IAliasPVD::UDP_UDS || 
+             pvd_type == IAliasPVD::TCP ||
+             pvd_type == IAliasPVD::TCP_UDS ) {
             pvd = make_pvd_trans(alias, pvd_type, obj_value, parent_);
         }
-        else if ( pvd_type == CConfigAliases::VSOMEIP ) {
+        else if ( pvd_type == IAliasPVD::VSOMEIP ) {
             std::shared_ptr<CAliasService> svc_pvd = make_pvd_service(alias, pvd_type, obj_value, parent_);
 
             obj_value = obj_->get_member< std::shared_ptr<json_mng::CMjson> >(CONFIG_ALIAS_FUNCTION);
@@ -560,82 +614,6 @@ void CConfigAliases::set_pvd_service_with_function( std::shared_ptr<CAliasServic
 
 
 /*************************
- * IAliasPVD Class Definition
- */
-IAliasPVD::IAliasPVD(const char* alias_, const char* pvd_type_, std::shared_ptr<IAlias> parent_)
-: IAlias( alias_, enum_c::AliasType::E_ALIAST_PROVIDER, parent_ ) {
-    assert( pvd_type_ != NULL );
-    
-    try{
-        _m_type_ = convert(pvd_type_);
-    }
-    catch( const std::exception &e ) {
-        LOGERR("%s", e.what());
-        throw e;
-    }
-}
-
-IAliasPVD::~IAliasPVD(void) {
-    _m_type_ = enum_c::ProviderType::E_PVDT_NOT_DEFINE;
-}
-
-enum_c::ProviderType IAliasPVD::type( void ) {
-    return _m_type_;
-}
-
-enum_c::ProviderType IAliasPVD::convert(std::string pvd_type_str) {
-    assert(pvd_type_str.empty() == false);
-
-    if(pvd_type_str == CConfigAliases::UDP) {
-        return enum_c::ProviderType::E_PVDT_TRANS_UDP;
-    }
-    else if(pvd_type_str == CConfigAliases::UDP_UDS) {
-        return enum_c::ProviderType::E_PVDT_TRANS_UDS_UDP;
-    }
-    else if(pvd_type_str == CConfigAliases::TCP) {
-        return enum_c::ProviderType::E_PVDT_TRANS_TCP;
-    }
-    else if(pvd_type_str == CConfigAliases::TCP_UDS) {
-        return enum_c::ProviderType::E_PVDT_TRANS_UDS_TCP;
-    }
-    else if(pvd_type_str == CConfigAliases::VSOMEIP) {
-        return enum_c::ProviderType::E_PVDT_SERVICE_VSOMEIP;
-    }
-    else {
-        throw CException(E_ERROR::E_NOT_SUPPORTED_PVD_TYPE);
-    }
-}
-
-std::string IAliasPVD::get_pvd_type(enum_c::ProviderType pvd_type) {
-    std::string res;
-
-    switch( pvd_type ) {
-    case enum_c::ProviderType::E_PVDT_TRANS_UDP:
-        res = std::string(CConfigAliases::UDP);
-        break;
-    case enum_c::ProviderType::E_PVDT_TRANS_UDS_UDP:
-        res = std::string(CConfigAliases::UDP_UDS);
-        break;
-    case enum_c::ProviderType::E_PVDT_TRANS_TCP:
-        res = std::string(CConfigAliases::TCP);
-        break;
-    case enum_c::ProviderType::E_PVDT_TRANS_UDS_TCP:
-        res = std::string(CConfigAliases::TCP_UDS);
-        break;
-    case enum_c::ProviderType::E_PVDT_SERVICE_VSOMEIP:
-        res = std::string(CConfigAliases::VSOMEIP);
-        break;
-    default:
-        {
-            std::string err_str = "Not Support Provider-Type.(" + std::to_string(pvd_type) + ")";
-            throw std::out_of_range(err_str);
-        }
-    }
-
-    return res;
-}
-
-/*************************
  * CAliasAPP Class Definition
  */
 CAliasAPP::CAliasAPP(const char* alias_, const char* type_, std::shared_ptr<IAlias> parent_)
@@ -725,12 +703,17 @@ CAliasTrans::CAliasTrans(const char* alias, const char* pvd_type, std::shared_pt
     clear();
 }
 
+CAliasTrans::CAliasTrans(const char* app_path, const char* pvd_id, const char* pvd_type)
+: IAliasPVD(app_path, pvd_id, pvd_type) {
+    clear();
+}
+
 CAliasTrans::~CAliasTrans(void) {
     clear();
 }
 
 // getter
-std::string& CAliasTrans::get_ip( void ) {
+std::string CAliasTrans::get_ip( void ) {
     return _m_ip_;
 }
 
@@ -739,6 +722,14 @@ uint32_t CAliasTrans::get_mask( void ) {
 }
 
 uint32_t CAliasTrans::get_port( void ) {
+    return _m_port_num_;
+}
+
+std::string& CAliasTrans::get_ip_ref( void ) {
+    return _m_ip_;
+}
+
+uint32_t& CAliasTrans::get_port_ref( void ) {
     return _m_port_num_;
 }
 
@@ -767,6 +758,11 @@ void CAliasTrans::clear( void ) {
  */
 CAliasService::CAliasService(const char* alias, const char* pvd_type, std::shared_ptr<IAlias> parent_)
 : IAliasPVD(alias, pvd_type, parent_) {
+    clear();
+}
+
+CAliasService::CAliasService(const char* app_path, const char* pvd_id, const char* pvd_type)
+: IAliasPVD(app_path, pvd_id, pvd_type) {
     clear();
 }
 
@@ -862,52 +858,6 @@ void CAliasService::clear( void ) {
     _mm_req_resp_.clear();
     _mm_req_noresp_.clear();
     _mm_pub_sub_.clear();
-}
-
-
-/***
- * IAlias class definition.
- */
-IAlias::IAlias(const char* alias_, enum_c::AliasType type_, std::shared_ptr<IAlias> parent_) {
-    assert( alias_ != NULL );
-    _m_name_ = alias_;
-    _m_type_ = type_;
-    _m_path_.clear();
-    if( parent_.get() != NULL ) {
-        set_path_parent( *parent_.get() );
-    }
-}
-
-IAlias::~IAlias(void) {
-    _m_name_.clear();
-    _m_path_.clear();
-    _m_type_ = enum_c::AliasType::E_ALIAST_NOT_DEFINE;
-}
-
-// getter
-std::string IAlias::name( void ) {
-    return _m_name_;
-}
-
-std::string IAlias::path( void ) {
-    if( _m_path_.empty() != true ) {
-        return _m_path_ + '/' + _m_name_;
-    }
-
-    return _m_name_;
-}
-
-std::string IAlias::path_parent( void ) {
-    return _m_path_;
-}
-
-enum_c::AliasType IAlias::alias_type( void ) {
-    return _m_type_;
-}
-
-// setter
-void IAlias::set_path_parent( IAlias& parent_ ) {
-    _m_path_ = parent_.path();
 }
 
 

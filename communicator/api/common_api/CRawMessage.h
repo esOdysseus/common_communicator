@@ -40,19 +40,21 @@ public:
 
     const void* get_msg_read_only(size_t* msg_size=NULL);
 
-    // With Regard to Source. (Client Address & Alias name)
+    // With Regard to Source. (Client Address & Peer-Alias)
     template <typename ADDR_TYPE>
-    bool set_source(std::shared_ptr<ADDR_TYPE> addr, const char* alias, PVDType pvd_type);
+    bool set_source(std::shared_ptr<ADDR_TYPE> addr, std::shared_ptr<void> peer_alias);
 
-    LanAddrType get_source_addr(std::string& alias, enum_c::ProviderType provider_type);
+    LanAddrType get_source_addr(std::string& app_path, std::string& pvd_path, enum_c::ProviderType provider_type);
 
-    LanSockType get_source_sock(std::string& alias, enum_c::ProviderType provider_type);
+    LanSockType get_source_sock(std::string& app_path, std::string& pvd_path, enum_c::ProviderType provider_type);
 
     const struct sockaddr_in* get_source_addr_read_only(enum_c::ProviderType provider_type);
 
     int get_source_sock_read_only(enum_c::ProviderType provider_type);
 
-    std::string get_source_alias(void);
+    std::string get_source_app(void);
+
+    std::string get_source_pvd(void);
 
 };
 

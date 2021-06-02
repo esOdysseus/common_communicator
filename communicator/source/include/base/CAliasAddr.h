@@ -18,13 +18,14 @@
 #endif
 
 #include <CSource.h>
+#include <IAliasPVD.h>
 #include <Enum_common.h>
 
 template <typename ADDR_TYPE, typename _Compare = std::less<ADDR_TYPE>> 
 class CAliasAddr {
 private:
-    using AddressMapType = std::map<std::string /*alias*/, CSource /*essential-addr*/>;
-    using AliasMapType = std::map<ADDR_TYPE /*address*/, std::string /*alias*/, _Compare>;
+    using AddressMapType = std::map<std::string /*pvd_full_path*/, CSource /*essential-addr*/>;
+    using AliasMapType = std::map<ADDR_TYPE /*address*/, std::shared_ptr<cf_alias::IAliasPVD> /*pvd_alias*/, _Compare>;
 
 public:
     using AddrIterator = AddressMapType::iterator;
@@ -35,43 +36,47 @@ public:
 
     ~CAliasAddr(void);
 
-    AddrIterator begin(void) { return map_addr.begin(); };
+    AddrIterator begin(void) { return _mm_addr_.begin(); };
 
-    AddrIterator end(void) { return map_addr.end(); };
+    AddrIterator end(void) { return _mm_addr_.end(); };
 
-    bool is_there(std::string alias);
+    bool is_there(std::string pvd_full_path);
 
     bool is_there(const ADDR_TYPE &addr);
 
-    std::shared_ptr<ADDR_TYPE> get(std::string alias);
+    std::shared_ptr<ADDR_TYPE> get(std::string pvd_full_path);
 
-    const ADDR_TYPE * get_read_only(std::string alias);
+    const ADDR_TYPE * get_read_only(std::string pvd_full_path);
 
-    std::string get(const ADDR_TYPE &addr);
+    std::shared_ptr<cf_alias::IAliasPVD> get(const ADDR_TYPE &addr);
 
-    std::string get(const ADDR_TYPE &&addr);
+    std::shared_ptr<cf_alias::IAliasPVD> get(const ADDR_TYPE &&addr);
 
-    bool insert(std::string alias, 
+    bool insert(std::shared_ptr<cf_alias::IAliasPVD> pvd_alias, 
+                const ADDR_TYPE &address, 
+                bool &is_new, 
+                bool connect_flag=false);
+
+    bool insert(std::shared_ptr<cf_alias::IAliasPVD> pvd_alias, 
                 std::shared_ptr<ADDR_TYPE> &address, 
-                enum_c::ProviderType pvd_type, 
                 bool &is_new,
                 bool connect_flag=false);
 
-    void remove(std::string alias);
+    void remove(std::string pvd_full_path);
 
     void remove(ADDR_TYPE &addr);
 
     void clear(void);
 
-    void reset_connect_flag(std::string alias, bool &past_flag);
+    void reset_connect_flag(std::string pvd_full_path, bool &past_flag);
 
 private:
-    void remove_impl(std::string alias, ADDR_TYPE addr);
+    void remove_impl(std::string pvd_full_path, ADDR_TYPE addr);
 
 private:
-    AddressMapType map_addr;
+    AddressMapType _mm_addr_;
 
-    AliasMapType map_alias;
+    AliasMapType _mm_alias_;
 
     std::shared_mutex mtx_sync;
 

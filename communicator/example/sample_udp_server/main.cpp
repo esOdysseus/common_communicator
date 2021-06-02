@@ -31,8 +31,8 @@ int main(int argc, char *argv[])
     // Register Call-Back function pointer of CAppTest class.
     CAppTest sample_App(handler);
     handler->register_initialization_handler(std::bind(&CAppTest::cb_initialization, &sample_App, _1, _2));
-    handler->register_connection_handler(std::bind(&CAppTest::cb_connected, &sample_App, _1, _2));
-    handler->register_message_handler(std::bind(&CAppTest::cb_receive_msg_handle, &sample_App, _1, _2));
+    handler->register_connection_handler(std::bind(&CAppTest::cb_connected, &sample_App, _1, _2, _3));
+    handler->register_message_handler(std::bind(&CAppTest::cb_receive_msg_handle, &sample_App, _1, _2, _3));
     handler->register_unintended_quit_handler(std::bind(&CAppTest::cb_abnormally_quit, &sample_App, _1));
 
     handler->init();

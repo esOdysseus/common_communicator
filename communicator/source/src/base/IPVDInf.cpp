@@ -20,7 +20,7 @@ template bool IPVDInf::create_hprotocol<CHProtoBaseLan>(AppCallerType& app, std:
 class IPVDInf::CLooper {
 public:
     template <typename _Callable>
-    explicit CLooper(_Callable&& __f, std::string alias);
+    explicit CLooper(_Callable&& __f, std::shared_ptr<cf_alias::IAliasPVD> peer_alias);
 
     ~CLooper(void);
 
@@ -42,9 +42,9 @@ private:
  * Definition for Member-Function of CLooper Class.
  */
 template<typename _Callable>
-IPVDInf::CLooper::CLooper(_Callable&& __f, std::string alias) {
+IPVDInf::CLooper::CLooper(_Callable&& __f, std::shared_ptr<cf_alias::IAliasPVD> peer_alias) {
     this->is_continue = true;
-    this->h_thread = std::make_shared<std::thread>(std::forward<_Callable>(__f), alias, &is_continue);
+    this->h_thread = std::make_shared<std::thread>(std::forward<_Callable>(__f), peer_alias, &is_continue);
     assert(this->h_thread.get() != NULL);
 }
 
@@ -65,14 +65,16 @@ void IPVDInf::CLooper::force_join(void) {
 
 
 /**************************************************
- * Definition for Member-Function of IPVDInf Class.
+ * Definition for Public Member-Function of IPVDInf Class.
  */
 
-IPVDInf::IPVDInf(AliasPVDsType& alias_list) {
+IPVDInf::IPVDInf(std::shared_ptr<cf_alias::IAliasPVD>& pvd_alias) {
     try {
         LOGD("Called.");
-        id = "";
         clear();
+
+        assert( pvd_alias.get() != NULL );
+        _m_pvd_alias_ = pvd_alias; 
     }
     catch (const std::exception &e) {
         LOGERR("%s", e.what());
@@ -86,37 +88,36 @@ IPVDInf::~IPVDInf(void) {
 }
 
 bool IPVDInf::register_new_alias(const char* peer_ip, uint16_t peer_port, 
-                                    std::string &wanted_name) {
+                                 std::string& app_path, std::string &pvd_id) {
     using PvdType = cf_alias::CAliasTrans;
     std::string str_pvd_type;
-    AliasPVDsType alias_list;
+    enum_c::ProviderType pvd_type = get_provider_type();
     assert(peer_ip != NULL);
     assert(peer_port > 0);
-    assert(wanted_name.empty() == false);
+    assert(pvd_id.empty() == false);
 
     try {
-        if ( get_provider_type() != enum_c::ProviderType::E_PVDT_TRANS_TCP && 
-            get_provider_type() != enum_c::ProviderType::E_PVDT_TRANS_UDP && 
-            get_provider_type() != enum_c::ProviderType::E_PVDT_TRANS_UDS_TCP &&
-            get_provider_type() != enum_c::ProviderType::E_PVDT_TRANS_UDS_UDP ) {
+        if ( pvd_type != enum_c::ProviderType::E_PVDT_TRANS_TCP && 
+            pvd_type != enum_c::ProviderType::E_PVDT_TRANS_UDP && 
+            pvd_type != enum_c::ProviderType::E_PVDT_TRANS_UDS_TCP &&
+            pvd_type != enum_c::ProviderType::E_PVDT_TRANS_UDS_UDP ) {
             throw std::domain_error("IP/Port is only allowed within TCP/UDP/UDS.");
         }
 
         // convert String-type ip/port to Abstracted IAliasPVD-type.
-        str_pvd_type = PvdType::get_pvd_type(get_provider_type());
-        auto alias = std::make_shared<PvdType>(wanted_name.c_str(), str_pvd_type.c_str());
-        alias->set_ip( peer_ip );
-        alias->set_port( peer_port );
-        alias->set_mask( 24 );
-        alias_list.push_back(alias);
+        str_pvd_type = PvdType::convert(pvd_type);
+        auto new_alias = std::make_shared<PvdType>(app_path.data(), pvd_id.data(), str_pvd_type.data());
+        new_alias->set_ip( peer_ip );
+        new_alias->set_port( peer_port );
+        new_alias->set_mask( 24 );
 
         // append new alias to internal data-structure of Provider.
-        update_alias_mapper(alias_list, wanted_name);
+        update_alias_mapper(new_alias);
         return true;
     }
     catch( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 
     return false;
@@ -145,12 +146,27 @@ bool IPVDInf::quit(void) {
     return true;
 }
 
+enum_c::ProviderType IPVDInf::get_provider_type(void) { 
+    if( _m_pvd_alias_.get() != NULL ) {
+        return _m_pvd_alias_->type();
+    }
+
+    return enum_c::ProviderType::E_PVDT_NOT_DEFINE;
+}
+
+std::shared_ptr<cf_alias::IAliasPVD> IPVDInf::get_pvd_alias( void ) { 
+    return _m_pvd_alias_; 
+}
+
+
+/*******************************************************
+ * Private Function Definition of IPVDInf Class.
+ */
 void IPVDInf::clear(void) {
     // clear All-member-variables
     inited = false;
     started = false;
     sockfd = 0;
-    provider_type = enum_c::ProviderType::E_PVDT_NOT_DEFINE;
     listeningPort = 0;
     {
         std::unique_lock<std::mutex> guard(mtx_looperpool);
@@ -161,7 +177,7 @@ void IPVDInf::clear(void) {
         mLooperGarbage.clear();
     }
     hHprotocol.reset();
-    id.clear();
+    _m_pvd_alias_.reset();
 }
 
 template <typename PROTOCOL_H> 
@@ -179,15 +195,16 @@ bool IPVDInf::create_hprotocol(AppCallerType& app,
     return true;
 }
 
-bool IPVDInf::thread_create(std::string& client_id, FPreceiverType &&func) {
+bool IPVDInf::thread_create(std::shared_ptr<cf_alias::IAliasPVD>& peer_alias, FPreceiverType &&func) {
     try {
+        assert(peer_alias.get() != NULL);
         std::unique_lock<std::mutex> guard(mtx_looperpool);
 
-        if ( mLooperPool.find(client_id) == mLooperPool.end() ) {
-            mLooperPool.emplace(client_id, std::make_shared<CLooper>( func, client_id));
+        if ( mLooperPool.find(peer_alias->path()) == mLooperPool.end() ) {
+            mLooperPool.emplace(peer_alias->path(), std::make_shared<CLooper>( func, peer_alias));
         }
         else {
-            LOGW("Already, thread was created by %s", client_id.c_str());
+            LOGW("Already, thread was created by %s", peer_alias->path().data());
         }
         return true;
     } catch (const std::exception &e) {
@@ -196,31 +213,29 @@ bool IPVDInf::thread_create(std::string& client_id, FPreceiverType &&func) {
     return false;
 }
 
-bool IPVDInf::thread_this_migrate(std::string& client_id, FPreceiverType &&func, bool *is_continue) {
+bool IPVDInf::thread_this_migrate(std::shared_ptr<cf_alias::IAliasPVD>& peer_alias, FPreceiverType &&func, bool *is_continue) {
     assert(is_continue != NULL);
 
     try {
-        if (client_id.empty()) {
-            client_id = "ALL_CLIENT";
-        }
+        func( peer_alias, is_continue );
 
-        func(client_id, is_continue);
         return true;
     } catch (const std::exception &e) {
+        LOGERR("%s", e.what());
         LOGERR("%d: %s", errno, strerror(errno));
     }
     return false;
 }
 
-bool IPVDInf::thread_destroy(std::string client_id) {
+bool IPVDInf::thread_destroy(std::string peer_full_path) {
     try{
-        if ( mLooperPool.find(client_id) != mLooperPool.end() ) {
-            auto itor = mLooperPool.find(client_id);
+        if ( mLooperPool.find(peer_full_path) != mLooperPool.end() ) {
+            auto itor = mLooperPool.find(peer_full_path);
             itor->second->force_join();
             itor->second.reset();
             mLooperPool.erase(itor);
 
-            assert( mLooperPool.find(client_id) == mLooperPool.end() );
+            assert( mLooperPool.find(peer_full_path) == mLooperPool.end() );
         }
         return true;
     }
@@ -231,19 +246,21 @@ bool IPVDInf::thread_destroy(std::string client_id) {
     return false;
 }
 
-bool IPVDInf::zombi_thread_migrate(std::string client_id) {
+bool IPVDInf::zombi_thread_migrate(std::shared_ptr<cf_alias::IAliasPVD> peer_alias) {
     try{
+        assert(peer_alias.get() != NULL);
+        std::string peer_full_path = peer_alias->path();
         std::unique_lock<std::mutex> guard(mtx_looperpool);
 
-        if ( mLooperPool.find(client_id) != mLooperPool.end() ) {
-            auto itor = mLooperPool.find(client_id);
+        if ( mLooperPool.find(peer_full_path) != mLooperPool.end() ) {
+            auto itor = mLooperPool.find(peer_full_path);
             {
                 std::unique_lock<std::mutex> guard(mtx_loopergarbage);
                 mLooperGarbage[itor->first] = itor->second;
             }
             mLooperPool.erase(itor);
 
-            assert( mLooperPool.find(client_id) == mLooperPool.end() );
+            assert( mLooperPool.find(peer_full_path) == mLooperPool.end() );
         }
         return true;
     }
@@ -253,6 +270,5 @@ bool IPVDInf::zombi_thread_migrate(std::string client_id) {
 
     return false;
 }
-
 
 

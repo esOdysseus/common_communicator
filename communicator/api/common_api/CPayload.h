@@ -5,7 +5,6 @@
  * 
  * This file is part of the Common-Communicator framework.
  */
-
 #ifndef _CPAYLOAD_H_
 #define _CPAYLOAD_H_
 
@@ -35,6 +34,7 @@ namespace payload
     class CPayload : public std::enable_shared_from_this<CPayload> {
     public:
         static constexpr const char* Myself_Name = "_myself_";
+        using FlagDataType = uint32_t;
 
     public:
         CPayload(std::string name);
@@ -57,7 +57,7 @@ namespace payload
         bool is_empty(void);
 
         /** Get Flag with regard to Payload-Operating. */
-        uint32_t get_op_flag(E_PAYLOAD_FLAG target=E_PAYLOAD_FLAG::E_NONE);
+        FlagDataType get_op_flag(E_PAYLOAD_FLAG target=E_PAYLOAD_FLAG::E_NONE);
 
         /** Set Flag with regard to Payload-Operating. */
         void set_op_flag(E_PAYLOAD_FLAG target, bool value);

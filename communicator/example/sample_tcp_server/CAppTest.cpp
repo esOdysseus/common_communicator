@@ -38,12 +38,12 @@ void CAppTest::cb_abnormally_quit(const std::exception &e) {
 }
 
 // Client was connected.
-void CAppTest::cb_connected(std::string peer_id, bool flag_connect) {
-    cout << "[Debug] CAppTest::cb_connected() is called.(" << flag_connect << ")" << endl;
+void CAppTest::cb_connected(std::string peer_app_path, std::string peer_pvd_id, bool flag_connect) {
+    cout << "[Debug] CAppTest::cb_connected() is called (CONN: " << flag_connect << ") for " << peer_app_path << "/" << peer_pvd_id << endl;
 }
 
 // We receved a message from peer_id.
-void CAppTest::cb_receive_msg_handle(std::string peer_id, std::shared_ptr<payload::CPayload> payload) {
+void CAppTest::cb_receive_msg_handle(std::string peer_app_path, std::string peer_pvd_path, std::shared_ptr<payload::CPayload> payload) {
     cout << "[Debug] CAppTest::cb_receive_msg_handle() is called." << endl;
     rcv_count++;
 
@@ -52,7 +52,7 @@ void CAppTest::cb_receive_msg_handle(std::string peer_id, std::shared_ptr<payloa
     std::shared_ptr<IProtocolInf> protocol = payload->get(PROTOCOL_NAME);
     cout << "************************************" << endl;
     cout << "* 0. Receive-CNT : " << rcv_count << endl;
-    cout << "* 1. Peer-ID : " << peer_id << endl;
+    cout << "* 1. Peer-ID : " << peer_app_path << "/" << peer_pvd_path << endl;
     cout << "* 2. CPayload-Name : " << payload->get_name() << endl;
     cout << "* 3. payload-size : " << data_size << endl;
     cout << "* 4. payload : " << (const char*)data << endl;
@@ -68,7 +68,7 @@ void CAppTest::cb_receive_msg_handle(std::string peer_id, std::shared_ptr<payloa
     std::string new_msg = "Echo: " + std::string((const char*)data) + " : RcvCNT=" + std::to_string(rcv_count);
     payload->set_op_flag(payload::E_PAYLOAD_FLAG::E_KEEP_PAYLOAD_AFTER_TX, true);
     payload->set_payload(new_msg.data(), new_msg.length());
-    assert(h_communicator->send(peer_id, payload) == true);
+    assert(h_communicator->send(peer_app_path, peer_pvd_path, payload) == true);
 
     // Other method to send message
     // std::string new_msg = "Echo: " + std::string((const char*)data) + " : RcvCNT=" + std::to_string(rcv_count);
@@ -78,6 +78,6 @@ void CAppTest::cb_receive_msg_handle(std::string peer_id, std::shared_ptr<payloa
     // std::shared_ptr<IProtocolInf> new_protocol = new_payload->get(PROTOCOL_NAME);
     // assert( new_protocol->set_property("msg_id", protocol->get_property("msg_id")) == true );
     // new_protocol->set_payload(new_msg.c_str(), new_msg.length());
-    // assert(h_communicator->send(peer_id, new_payload) == true);
+    // assert(h_communicator->send(peer_app_path, peer_pvd_path, new_payload) == true);
 
 }

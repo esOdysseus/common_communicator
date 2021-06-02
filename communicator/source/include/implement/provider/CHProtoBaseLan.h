@@ -28,7 +28,7 @@ public:
 protected:
     bool set_app_call_back(void) override;
 
-    bool write_payload(std::string alias, std::shared_ptr<payload::CPayload>&& payload) override;
+    bool write_payload(std::string app_path, std::string pvd_path, std::shared_ptr<payload::CPayload>&& payload) override;
 
 private:
     ServerType s_server;

@@ -6,10 +6,12 @@
  * This file is part of the Common-Communicator framework.
  */
 #include <cassert>
+#include <string>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/types.h> 
 #include <sys/socket.h>
+#include <ifaddrs.h>
 
 #include <logger.h>
 #include <util.h>
@@ -93,7 +95,7 @@ std::shared_ptr<Cipport> Cinet_uds::get_ip_port(const struct sockaddr_un &addr) 
 	return res;
 }
 
-void Cinet_uds::set_ip_port(struct sockaddr_in &addr, const char* ip, uint16_t &port, PVDM mode) {
+void Cinet_uds::set_ip_port(struct sockaddr_in &addr, std::string &ip, uint16_t &port, PVDM mode) {
 	try {
 		if( port == 0 ) {
 			port = gen_random_num(1025, 65534);
@@ -101,22 +103,23 @@ void Cinet_uds::set_ip_port(struct sockaddr_in &addr, const char* ip, uint16_t &
 
 		addr.sin_family = _addr_type_;
 		addr.sin_port = htons(port);
-		if( ip == NULL ) {
+		if( ip.empty() == true ) {
 			addr.sin_addr.s_addr = htonl(INADDR_ANY);
+			ip = get_ipv4addr();
 		} else {
-			addr.sin_addr.s_addr = inet_addr(ip);
+			addr.sin_addr.s_addr = inet_addr(ip.data());
 		}
 		// set all bits of the padding field to 0
 		memset(addr.sin_zero, '\0', sizeof(addr.sin_zero));
 	}
 	catch( const std::exception &e ) {
 		LOGERR("%s", e.what());
-		throw ;
+		throw e;
 	}
 }
 
-void Cinet_uds::set_ip_port(struct sockaddr_un &addr, const char* ip, uint16_t &port, PVDM mode) {	// for UDS
-    if( ip == NULL ) {
+void Cinet_uds::set_ip_port(struct sockaddr_un &addr, std::string &ip, uint16_t &port, PVDM mode) {	// for UDS
+    if( ip.empty() == true ) {
         ip = DEF_UDS_ID;
     }
 
@@ -130,11 +133,11 @@ void Cinet_uds::set_ip_port(struct sockaddr_un &addr, const char* ip, uint16_t &
 		addr.sun_family  = _addr_type_;
 		switch( mode ) {
 		case PVDM::E_PVDM_CLIENT:
-			snprintf( addr.sun_path, UDS_PATH_MAXSIZE, UDS_CLIENT_FORM, ip, port, gen_random_num());
+			snprintf( addr.sun_path, UDS_PATH_MAXSIZE, UDS_CLIENT_FORM, ip.data(), port, gen_random_num());
 			break;
 		case PVDM::E_PVDM_BOTH:
 		case PVDM::E_PVDM_SERVER:
-			snprintf( addr.sun_path, UDS_PATH_MAXSIZE, UDS_SERVER_FORM, ip, port);
+			snprintf( addr.sun_path, UDS_PATH_MAXSIZE, UDS_SERVER_FORM, ip.data(), port);
 			break;
 		default:
 			{
@@ -149,7 +152,7 @@ void Cinet_uds::set_ip_port(struct sockaddr_un &addr, const char* ip, uint16_t &
 	}
 	catch( const std::exception &e ) {
 		LOGERR("%s", e.what());
-		throw ;
+		throw e;
 	}
 }
 
@@ -200,7 +203,7 @@ int Cinet_uds::Bind(int sock_fd, struct sockaddr_un &addr) {
 	return bind( sock_fd, (struct sockaddr*)&addr, sizeof(addr) );
 }
 
-int Cinet_uds::Bind_uds_client(int sock_fd, const char* ip, uint16_t port) {
+int Cinet_uds::Bind_uds_client(int sock_fd, std::string ip, uint16_t port) {
     struct sockaddr_un cliaddr;
 
     set_ip_port(cliaddr, ip, port);
@@ -297,4 +300,36 @@ void Cinet_uds::unlink_uds_file(std::string file_path) {
 		LOGD("Remove UDS-file(%s)\n", file_path.data());
 		unlink( file_path.data());
 	}
+}
+
+std::string Cinet_uds::get_ipv4addr( void ) {
+	std::string ipaddr;
+	struct ifaddrs * inf_addr=NULL;
+    struct ifaddrs * inf=NULL;
+    void * p_addr=NULL;
+
+    getifaddrs(&inf_addr);
+
+	for (inf = inf_addr; inf != NULL; inf = inf->ifa_next) {
+        if (!inf->ifa_addr || std::string(inf->ifa_name) == "lo") {
+            continue;
+        }
+
+        if (inf->ifa_addr->sa_family == AF_INET) { // check it is IP4
+			char buffer[INET_ADDRSTRLEN] ={0,};
+			// is a valid IP4 Address
+			p_addr=&((struct sockaddr_in *)inf->ifa_addr)->sin_addr;
+			inet_ntop(AF_INET, p_addr, buffer, INET_ADDRSTRLEN);
+			printf("%s IP Address %s\n", inf->ifa_name, buffer);
+
+			ipaddr = buffer;
+			break;
+		}
+	}
+
+	if (inf_addr!=NULL) {
+		freeifaddrs( inf_addr );
+	}
+
+	return ipaddr;
 }

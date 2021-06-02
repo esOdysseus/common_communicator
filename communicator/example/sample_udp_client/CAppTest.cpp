@@ -47,12 +47,12 @@ void CAppTest::cb_abnormally_quit(const std::exception &e) {
 }
 
 // Client was connected.
-void CAppTest::cb_connected(std::string client_id, bool flag_connect) {
-    cout << "[Debug] CAppTest::cb_connected() is called.(" << flag_connect << ")" << endl;
+void CAppTest::cb_connected(std::string peer_app_path, std::string peer_pvd_id, bool flag_connect) {
+    cout << "[Debug] CAppTest::cb_connected() is called (CONN: " << flag_connect << ") for " << peer_app_path << "/" << peer_pvd_id << endl;
 }
 
 // We receved a message from client_id.
-void CAppTest::cb_receive_msg_handle(std::string client_id, std::shared_ptr<payload::CPayload> payload) {
+void CAppTest::cb_receive_msg_handle(std::string peer_app_path, std::string peer_pvd_path, std::shared_ptr<payload::CPayload> payload) {
     cout << "[Debug] CAppTest::cb_receive_msg_handle() is called." << endl;
     rcv_count++;
 
@@ -61,7 +61,7 @@ void CAppTest::cb_receive_msg_handle(std::string client_id, std::shared_ptr<payl
     std::shared_ptr<IProtocolInf> protocol = payload->get(PBigEdian);
     cout << "************************************" << endl;
     cout << "* 0. Receive-CNT : " << rcv_count << endl;
-    cout << "* 1. Server-ID : " << client_id << endl;
+    cout << "* 1. Peer-ID : " << peer_app_path << "/" << peer_pvd_path << endl;
     cout << "* 2. CPayload-Name : " << payload->get_name() << endl;
     cout << "* 3. payload-size : " << data_size << endl;
     cout << "* 4. payload : " << (const char*)data << endl;
@@ -86,7 +86,7 @@ int CAppTest::run_period_send(void) {
         std::shared_ptr<IProtocolInf> new_protocol = new_payload->get(PBigEdian);
         assert( new_protocol->set_property("msg_id", 5678) == true );
         new_protocol->set_payload(msg.c_str(), msg.length());
-        assert(h_communicator->send("udp_01", new_payload) == true);
+        assert(h_communicator->send("APP-01", "udp_01", new_payload) == true);
 
         usleep(100000);     // wait 100 ms
     }

@@ -10,6 +10,18 @@
 
 namespace enum_c
 {
+    typedef enum AliasType {
+        E_ALIAST_NOT_DEFINE = 0,
+        E_ALIAST_APP = 1,
+        E_ALIAST_PROVIDER = 2
+    } AliasType;
+
+    typedef enum AppType {
+        E_APPT_NOT_DEFINE = 0,
+        E_APPT_SINGLE = 1,
+        E_APPT_MULTIPLE = 2
+    } AppType;
+
     typedef enum ProviderType {
         E_PVDT_NOT_DEFINE = 0,
         E_PVDT_TRANS_TCP = 1,

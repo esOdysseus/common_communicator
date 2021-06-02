@@ -48,7 +48,7 @@ IHProtocolInf::SegmentsType IHProtocolInf::encapsulation(IHProtocolInf::Protocol
                                         std::forward<std::string>(from_app));
     }catch(const std::exception &e) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 }
 
@@ -74,7 +74,7 @@ IHProtocolInf::ProtocolType IHProtocolInf::decapsulation(IHProtocolInf::RawMsgTy
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 
     return protocol;
@@ -94,21 +94,21 @@ bool IHProtocolInf::handle_initialization(enum_c::ProviderType pvd_type, bool fl
     }
     catch (const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
     return false;
 }
 
-void IHProtocolInf::handle_connection(std::string alias, bool flag) {
+void IHProtocolInf::handle_connection(std::string app_path, std::string pvd_path, bool flag) {
     try {
         AppCallerType& app = get_app_instance();
         assert(app.get() != NULL);
 
-        app->get_cb_handlers().cb_connection_handle( alias, flag );
+        app->get_cb_handlers().cb_connection_handle( app_path, pvd_path, flag );
     }
     catch (const std::exception &e) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 }
 
@@ -132,7 +132,7 @@ bool IHProtocolInf::handle_protocol_chain(RawMsgType msg_raw) {
             // message parsing with regard to PROTOCOL.
             assert( protocol->unpack_recurcive(data, msg_size) == true );
             if(protocol->is_empty() == false) {
-                app->get_cb_handlers().cb_message_payload_handle(msg_raw->get_source_alias(),
+                app->get_cb_handlers().cb_message_payload_handle(msg_raw->get_source_app(), msg_raw->get_source_pvd(), 
                                                                  protocol);  // trig app-function.
             }
 
@@ -151,7 +151,7 @@ bool IHProtocolInf::handle_protocol_chain(RawMsgType msg_raw) {
     }
     catch (const std::exception &e) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 
     return false;
@@ -167,7 +167,7 @@ bool IHProtocolInf::handle_unintended_quit(const std::exception &e) {
     }
     catch (const std::exception &e) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
     return false;
 }

@@ -28,10 +28,9 @@ class ICommunicator;
 // // @TODO : need Constructor API for Dynamic-Auto parsed Provider.
 // std::shared_ptr<ICommunicator> create_communicator(std::string& app_id, 
 //                                                    std::string& provider_id, 
-//                                                    enum_c::ProviderType provider_type, 
-//                                                    enum_c::ProviderMode mode=enum_c::ProviderMode::E_PVDM_BOTH,
+//                                                    const char* alias_desp_path,
 //                                                    const char* protocol_desp_path=NULL,
-//                                                    const char* alias_desp_path=NULL);
+//                                                    enum_c::ProviderMode mode=enum_c::ProviderMode::E_PVDM_BOTH);
 
 // Constructor API for Static-Defined Provider. (Only for Transaction-Communication)
 std::shared_ptr<ICommunicator> create_communicator(std::string app_id, 
@@ -57,9 +56,8 @@ public:
     // // @TODO : need Constructor API for Dynamic-Auto parsed Provider.
     // ICommunicator(std::string app_id, 
     //               std::string provider_id, 
-    //               enum_c::ProviderType provider_type, 
-    //               std::shared_ptr<cf_proto::CConfigProtocols> &proto_config,
     //               std::shared_ptr<cf_alias::CConfigAliases> &alias_config,
+    //               std::shared_ptr<cf_proto::CConfigProtocols> &proto_config,
     //               enum_c::ProviderMode mode=enum_c::ProviderMode::E_PVDM_BOTH);
 
     // Constructor API for Static-Defined Provider. (Only for Transaction-Communication)
@@ -71,8 +69,6 @@ public:
                   unsigned short port=0,
                   const char* ip=NULL,
                   enum_c::ProviderMode mode=enum_c::ProviderMode::E_PVDM_BOTH);
-
-    
 
     ~ICommunicator(void);
 
@@ -191,11 +187,11 @@ public:
     //   - Practice : [REQ/RESP] Send request-message to Server.
     //   - Postcondition : If Server reply with response-message,
     //                     then Handler registered by cb_register_message_handler() will be called.
-    bool send(std::string to_alias, std::shared_ptr<payload::CPayload>&& payload);      // Mandatory
+    bool send(std::string app_path, std::string pvd_path, std::shared_ptr<payload::CPayload>&& payload);      // Mandatory
 
-    bool send(std::string to_alias, std::shared_ptr<payload::CPayload>& payload);      // Mandatory
+    bool send(std::string app_path, std::string pvd_path, std::shared_ptr<payload::CPayload>& payload);      // Mandatory
 
-    bool send(std::string to_alias, const void* msg, size_t msg_size);                 // Mandatory
+    bool send(std::string app_path, std::string pvd_path, const void* msg, size_t msg_size);                 // Mandatory
 
     /**
      * Client-Side
@@ -205,18 +201,18 @@ public:
     //   - Postcondition : Handler registered by cb_register_connection_handler() will be called.
     //                   : If authentication mode is DISABLE,
     //                     then Handler registered by cb_register_available_handler() will be called.
-    bool connect_try(std::string &peer_ip, uint16_t peer_port, std::string &new_alias_name);  // Mandatory
+    bool connect_try(std::string &peer_ip, uint16_t peer_port, std::string& app_path, std::string &pvd_id);  // Mandatory
 
     // connect to peer that is pre-named as 'alias' variable.
-    bool connect_try(std::string && alias);  // Mandatory
+    bool connect_try(std::string &&app_path, std::string &&pvd_id);  // Mandatory
 
     //   - Precondition : connect() was called
     //   - Practice : disconnect from Cloud/Server/Service-Provider.
     //   - Postcondition : Handler registered by cb_register_available_handler() will be called.
     //                   : Handler registered by cb_register_connection_handler() will be called.
-    void disconnect(std::string & alias);   // Mandatory
+    void disconnect(std::string &app_path, std::string &pvd_id);   // Mandatory
 
-    void disconnect(std::string && alias);   // Mandatory
+    void disconnect(std::string &&app_path, std::string &&pvd_id);   // Mandatory
 
     //   - Precondition : Handler registered by cb_register_available_handler() was called.
     //   - Practice : [PUB/SUB] Delare Event-Accepting to Service-Provider.
@@ -268,6 +264,10 @@ private:
     int run(void);
 
     void force_exit_thread(std::thread &h_thread);
+
+    std::shared_ptr<cf_alias::IAliasPVD> get_provider( void );
+
+    void sync_trans_provider( std::shared_ptr<cf_alias::CAliasTrans>& pvd );
 
 private:
     CReceiver cb_handlers;  // It contains many kinds of Call-back functions for Application.

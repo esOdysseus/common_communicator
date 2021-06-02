@@ -494,7 +494,7 @@ std::string CTime::print(_IN_TYPE_ time, std::string format) {
     }
     catch ( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 
     return ret;
@@ -534,7 +534,7 @@ int CTime::calc_duration_day(unsigned int index, E_WEEK_TIME_VALVE week, time_t 
     }
     catch (const std::exception &e) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
     return diff_day;
 }

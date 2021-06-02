@@ -26,7 +26,7 @@ CHProtoBaseLan::~CHProtoBaseLan(void) {
 bool CHProtoBaseLan::set_app_call_back(void) {
     AppCallerType& app = get_app_instance();
 
-    app->set_send_payload_of_app(bind(&CHProtoBaseLan::write_payload, this, _1, _2));
+    app->set_send_payload_of_app(bind(&CHProtoBaseLan::write_payload, this, _1, _2, _3));
     return true;
 }
 
@@ -35,10 +35,11 @@ bool CHProtoBaseLan::set_app_call_back(void) {
  */ 
 
 /***
- * parameter alias [in] receiver-alias to receive the message.
+ * parameter app_path [in] path about receiver-APP to receive the message.
+ * parameter pvd_path [in] provider-path in receiver-APP to receive the message.
  * parameter payload [in] payload to send.
  */
-bool CHProtoBaseLan::write_payload(std::string alias, std::shared_ptr<payload::CPayload>&& payload) {
+bool CHProtoBaseLan::write_payload(std::string app_path, std::string pvd_path, std::shared_ptr<payload::CPayload>&& payload) {
     LOGD("It's called.");
 
     try {
@@ -49,7 +50,7 @@ bool CHProtoBaseLan::write_payload(std::string alias, std::shared_ptr<payload::C
 
         // message write.
         for(SegmentsType::iterator itor = segments.begin(); itor != segments.end(); itor++) {
-            if(s_server->write_msg(alias, *itor) != true) {
+            if(s_server->write_msg(app_path, pvd_path, *itor) != true) {
                 throw std::logic_error("write message is failed.");
             }
         }

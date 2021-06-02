@@ -15,7 +15,7 @@
                     "address": {                // describe address of alias.
                         "ip": "192.168.1.2", // ip of alias that is destination.
                         "mask": "24",           // Network mask.
-                        "port": "12346"         // port of alias.
+                        "port": "12347"         // port of alias.
                     }
                 },
                 "tcp_01": {               // name of provider.
@@ -31,7 +31,7 @@
                     "address": {                // describe address of alias.
                         "ip": "192.168.1.2", // ip of alias that is destination.
                         "mask": "24",           // Network mask.
-                        "port": "12346"         // port of alias.
+                        "port": "12344"         // port of alias.
                     }
                 },
                 "uds_tcp_01": {               // name of provider.
@@ -39,7 +39,7 @@
                     "address": {                // describe address of alias.
                         "ip": "192.168.1.2", // ip of alias that is destination.
                         "mask": "24",           // Network mask.
-                        "port": "12346"         // port of alias.
+                        "port": "12345"         // port of alias.
                     }
                 },
                 "water_valve": {             // name of service.

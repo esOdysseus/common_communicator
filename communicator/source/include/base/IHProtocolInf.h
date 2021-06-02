@@ -38,7 +38,7 @@ public:
 
     bool handle_initialization(enum_c::ProviderType pvd_type, bool flag);
 
-    void handle_connection(std::string alias, bool flag);
+    void handle_connection(std::string app_path, std::string pvd_path, bool flag);
 
     bool handle_protocol_chain(RawMsgType msg_raw);
 
@@ -47,7 +47,7 @@ public:
 protected:
     virtual bool set_app_call_back(void) = 0;
 
-    virtual bool write_payload(std::string alias, std::shared_ptr<payload::CPayload>&& payload) = 0;
+    virtual bool write_payload(std::string app_path, std::string pvd_path, std::shared_ptr<payload::CPayload>&& payload) = 0;
 
     SegmentsType encapsulation(ProtocolType& protocol, enum_c::ProviderType provider_type,
                                std::string &&from_app);

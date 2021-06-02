@@ -14,6 +14,7 @@
 #include <memory>
 #include <cassert>
 
+#include <IAliasPVD.h>
 #include <json_manipulator.h>
 #include <Enum_common.h>
 
@@ -34,54 +35,6 @@ namespace cf_alias {
         std::string name;
         std::string where;
     } Sproperties;
-
-    /***
-     * Alias & Provider Interface.
-     */
-    class IAlias {
-    public:
-        IAlias(const char* alias_, enum_c::AliasType type_, std::shared_ptr<IAlias> parent_=std::shared_ptr<IAlias>());
-
-        ~IAlias(void);
-
-        // getter
-        std::string name( void );
-
-        std::string path( void );
-
-        std::string path_parent( void );
-
-        enum_c::AliasType alias_type( void );
-
-    private:
-        // setter
-        void set_path_parent( IAlias& parent_ );
-
-    private:
-        std::string _m_name_;       // Current name.
-        std::string _m_path_;       // Path of naming from resource to APP.
-        enum_c::AliasType _m_type_;
-
-    };
-
-    class IAliasPVD : public IAlias {
-    public:
-        IAliasPVD(const char* alias_, const char* pvd_type_, std::shared_ptr<IAlias> parent_);
-
-        ~IAliasPVD(void);
-
-        // getter
-        enum_c::ProviderType type( void );
-
-        static std::string get_pvd_type(enum_c::ProviderType pvd_type);
-
-    private:
-        enum_c::ProviderType convert(std::string type_);
-
-    private:
-       enum_c::ProviderType _m_type_;
-
-    };
 
 
     /***
@@ -151,14 +104,20 @@ namespace cf_alias {
     public:
         CAliasTrans(const char* alias, const char* pvd_type, std::shared_ptr<IAlias> parent_=std::shared_ptr<IAlias>() );
 
+        CAliasTrans(const char* app_path, const char* pvd_id, const char* pvd_type);
+
         ~CAliasTrans(void);
 
         // getter
-        std::string& get_ip( void );
+        std::string get_ip( void );
 
         uint32_t get_mask( void );
 
         uint32_t get_port( void );
+
+        std::string& get_ip_ref( void );
+
+        uint32_t& get_port_ref( void );
 
         // setter
         void set_ip( std::string ip_ );
@@ -194,6 +153,8 @@ namespace cf_alias {
 
     public:
         CAliasService(const char* alias, const char* pvd_type, std::shared_ptr<IAlias> parent_=std::shared_ptr<IAlias>() );
+
+        CAliasService(const char* app_path, const char* pvd_id, const char* pvd_type);
 
         ~CAliasService(void);
 
@@ -234,12 +195,6 @@ namespace cf_alias {
      */
     class CConfigAliases {
     public:
-        // for svc-pvd/XXX/provider-type
-        static constexpr const char* UDP = "udp";
-        static constexpr const char* UDP_UDS = "udp_uds";
-        static constexpr const char* TCP = "tcp";
-        static constexpr const char* TCP_UDS = "tcp_uds";
-        static constexpr const char* VSOMEIP = "vsomeip";
         // for properties/type
         static constexpr const char* SINGLE = "single";
         static constexpr const char* MULTIPLE = "multi";
@@ -263,6 +218,14 @@ namespace cf_alias {
         PVDListType& get_providers(std::string type);
 
         PVDListType& get_providers(std::string app_path, std::string type);
+
+        PVDListType& get_providers(std::string app_path, enum_c::ProviderType pvd_type);
+
+        std::shared_ptr<IAliasPVD> get_provider(std::string app_path, std::string pvd_id, std::string pvd_type);
+
+        std::shared_ptr<IAliasPVD> get_provider(std::string app_path, std::string pvd_id, enum_c::ProviderType pvd_type);
+
+        std::shared_ptr<IAliasPVD> create_provider(std::string app_path, std::string pvd_id, enum_c::ProviderType pvd_type);
 
     private:
         CConfigAliases(void) = delete;

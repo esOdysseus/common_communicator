@@ -24,16 +24,19 @@ public:
 
     template <typename ADDR_TYPE> 
     void init(std::shared_ptr<ADDR_TYPE> addr, 
-              const char* alias, 
+              const char* app_path, 
+              const char* pvd_path, 
               enum_c::ProviderType provider_type,
               bool connect_flag=false);
 
     template <typename ADDR_TYPE> 
     std::shared_ptr<ADDR_TYPE> get_address(void);
 
-    std::string get_alias(void);
-
     EADDR_TYPE get_addr_type(void);
+
+    std::string get_app_path(void);
+
+    std::string get_pvd_path(void);
 
     bool get_connect_flag(void);
 
@@ -42,7 +45,9 @@ public:
 private:
     std::shared_ptr<void> address;
 
-    std::string alias;
+    std::string _m_app_path_;
+
+    std::string _m_pvd_path_;
 
     EADDR_TYPE addr_type;
 

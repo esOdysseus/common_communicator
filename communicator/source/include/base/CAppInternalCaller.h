@@ -15,8 +15,7 @@
 
 class CAppInternalCaller {
 public:
-    using SendPayloadType = std::function<bool(std::string client_id, std::shared_ptr<payload::CPayload>&& payload)>;
-
+    using SendPayloadType = std::function<bool(std::string /*app_path*/, std::string /*pvd_path*/, std::shared_ptr<payload::CPayload>&& /*payload*/)>;
     using AppSendPayload_SetterType = std::function<void (SendPayloadType fp)>;
     using AppCBhandler_GetterType = std::function<CReceiver& (void)>;
     using AppID_GetterType = std::function<std::string (void)>;

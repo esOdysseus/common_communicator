@@ -89,7 +89,7 @@ void IProtocolInf::clean_data(bool tx_data, bool rx_data) {
     }
     catch( const std::exception &e ) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 }
 

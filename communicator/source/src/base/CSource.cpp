@@ -11,9 +11,9 @@
 #include <logger.h>
 #include <CSource.h>
 
-template void CSource::init(std::shared_ptr<struct sockaddr_in> addr, const char* alias, enum_c::ProviderType provider_type, bool connect_flag);
-template void CSource::init(std::shared_ptr<struct sockaddr_un> addr, const char* alias, enum_c::ProviderType provider_type, bool connect_flag);
-template void CSource::init(std::shared_ptr<int> addr, const char* alias, enum_c::ProviderType provider_type, bool connect_flag);
+template void CSource::init(std::shared_ptr<struct sockaddr_in> addr, const char* app_path, const char* pvd_path, enum_c::ProviderType provider_type, bool connect_flag);
+template void CSource::init(std::shared_ptr<struct sockaddr_un> addr, const char* app_path, const char* pvd_path, enum_c::ProviderType provider_type, bool connect_flag);
+template void CSource::init(std::shared_ptr<int> addr, const char* app_path, const char* pvd_path, enum_c::ProviderType provider_type, bool connect_flag);
 template std::shared_ptr<struct sockaddr_in> CSource::get_address(void);
 template std::shared_ptr<struct sockaddr_un> CSource::get_address(void);
 template std::shared_ptr<int> CSource::get_address(void);
@@ -23,7 +23,8 @@ template std::shared_ptr<int> CSource::get_address(void);
  * */
 CSource::CSource(void) {
     addr_type = EADDR_TYPE::E_PVDT_NOT_DEFINE;
-    alias.clear();
+    _m_app_path_.clear();
+    _m_pvd_path_.clear();
     address.reset();
     connect_flag = false;
 }
@@ -34,7 +35,8 @@ CSource::~CSource(void){
             address.reset();
         }
         addr_type = EADDR_TYPE::E_PVDT_NOT_DEFINE;
-        alias.clear();
+        _m_app_path_.clear();
+        _m_pvd_path_.clear();
         connect_flag = false;
     }
     catch(const std::exception &e) {
@@ -43,15 +45,17 @@ CSource::~CSource(void){
 }
 
 template <typename ADDR_TYPE> 
-void CSource::init(std::shared_ptr<ADDR_TYPE> addr, 
-                                const char* alias, 
-                                enum_c::ProviderType provider_type,
-                                bool connect_flag) {
+void CSource::init( std::shared_ptr<ADDR_TYPE> addr, 
+                    const char* app_path, 
+                    const char* pvd_path, 
+                    enum_c::ProviderType provider_type,
+                    bool connect_flag) {
     try {
         std::shared_ptr<void> dumy = std::static_pointer_cast<void>(addr);
         this->address = move(dumy);
         this->addr_type = provider_type;
-        this->alias = alias;
+        this->_m_app_path_ = app_path;
+        this->_m_pvd_path_ = pvd_path;
         this->connect_flag = connect_flag;
     }
     catch(const std::exception &e) {
@@ -68,12 +72,16 @@ std::shared_ptr<ADDR_TYPE> CSource::get_address(void) {
     }
 }
 
-std::string CSource::get_alias(void) {
-    return alias;
-}
-
 CSource::EADDR_TYPE CSource::get_addr_type(void) {
     return addr_type;
+}
+
+std::string CSource::get_app_path(void) {
+    return _m_app_path_;
+}
+
+std::string CSource::get_pvd_path(void) {
+    return _m_pvd_path_;
 }
 
 bool CSource::get_connect_flag(void) {

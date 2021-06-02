@@ -46,11 +46,11 @@ template class CPVD_UDP<struct sockaddr_un>;
  * Definition of Public Function.
  */ 
 template <>
-CPVD_UDP<struct sockaddr_in>::CPVD_UDP(AliasPVDsType& alias_list)
-: IPVDInf(alias_list), Cinet_uds(PF_INET, SOCK_DGRAM, AF_INET) {
+CPVD_UDP<struct sockaddr_in>::CPVD_UDP(std::shared_ptr<cf_alias::IAliasPVD> self_alias, AliasPVDsType& alias_list)
+: IPVDInf(self_alias), Cinet_uds(PF_INET, SOCK_DGRAM, AF_INET) {
     try{
         LOGD("Called.");
-        set_provider_type(enum_c::ProviderType::E_PVDT_TRANS_UDP);
+        _mm_ali4addr_.clear();
         assert( update_alias_mapper(alias_list) == true );
         _is_continue_ = false;
     }
@@ -61,11 +61,11 @@ CPVD_UDP<struct sockaddr_in>::CPVD_UDP(AliasPVDsType& alias_list)
 }
 
 template <>
-CPVD_UDP<struct sockaddr_un>::CPVD_UDP(AliasPVDsType& alias_list)
-: IPVDInf(alias_list), Cinet_uds(PF_FILE, SOCK_DGRAM, AF_UNIX) {
+CPVD_UDP<struct sockaddr_un>::CPVD_UDP(std::shared_ptr<cf_alias::IAliasPVD> self_alias, AliasPVDsType& alias_list)
+: IPVDInf(self_alias), Cinet_uds(PF_FILE, SOCK_DGRAM, AF_UNIX) {
     try{
         LOGD("Called.");
-        set_provider_type(enum_c::ProviderType::E_PVDT_TRANS_UDS_UDP);
+        _mm_ali4addr_.clear();
         assert( update_alias_mapper(alias_list) == true );
         _is_continue_ = false;
     }
@@ -77,17 +77,14 @@ CPVD_UDP<struct sockaddr_un>::CPVD_UDP(AliasPVDsType& alias_list)
 
 template <typename ADDR_TYPE>
 CPVD_UDP<ADDR_TYPE>::~CPVD_UDP(void) {
-    set_provider_type(enum_c::ProviderType::E_PVDT_NOT_DEFINE);
     _is_continue_ = false;
+    _mm_ali4addr_.clear();
     bzero(&servaddr, sizeof(servaddr));
 }
 
 template <typename ADDR_TYPE>
-bool CPVD_UDP<ADDR_TYPE>::init(std::string id, uint16_t port, const char* ip, ProviderMode mode) {
+bool CPVD_UDP<ADDR_TYPE>::init(uint16_t port, std::string ip, ProviderMode mode) {
     /** UDP don't car about mode. Because, UDP has not classification of SERVER/CLIENT. */ 
-
-    set_id(id);
-
     if (inited == true) {
         LOGERR("Already Init() is called. Please check it.");
         return inited;
@@ -106,6 +103,7 @@ bool CPVD_UDP<ADDR_TYPE>::init(std::string id, uint16_t port, const char* ip, Pr
     // make serveraddr struct
     set_ip_port(servaddr, ip, port, ProviderMode::E_PVDM_SERVER);
     listeningPort = port;
+    update_provider( get_pvd_alias(), ip, port );
 
     // tag flag
     started = false;
@@ -147,11 +145,11 @@ bool CPVD_UDP<ADDR_TYPE>::stop(void) {
 template <typename ADDR_TYPE>
 bool CPVD_UDP<ADDR_TYPE>::accept(void) {
     if(started) {
-        std::string client_addr;
+        std::shared_ptr<cf_alias::IAliasPVD> peer_alias;
 
         // sockfd is not client-socket-fd so, We will insert value-Zero(0) to parameter-2.
         _is_continue_ = true;
-        if (thread_this_migrate(client_addr, std::bind(&CPVD_UDP<ADDR_TYPE>::run_receiver, this, _1, _2), &_is_continue_) == false) {
+        if (thread_this_migrate(peer_alias, std::bind(&CPVD_UDP<ADDR_TYPE>::run_receiver, this, _1, _2), &_is_continue_) == false) {
             LOGERR("%d: %s", errno, strerror(errno));
             return false;
         }
@@ -162,43 +160,45 @@ bool CPVD_UDP<ADDR_TYPE>::accept(void) {
 }
 
 template <typename ADDR_TYPE>
-int CPVD_UDP<ADDR_TYPE>::make_connection(std::string alias) {
+int CPVD_UDP<ADDR_TYPE>::make_connection(std::string peer_full_path) {
     bool is_new = false;
     try{
-        if( mAddr.is_there(alias) ) {
-            auto address = mAddr.get(alias);
-            assert( mAddr.insert(alias, address, get_provider_type(), is_new, true) == true );
+        if( _mm_ali4addr_.is_there(peer_full_path) == true ) {
+            auto addr = _mm_ali4addr_.get(peer_full_path);
+            auto peer_alias = _mm_ali4addr_.get(*addr);
+            assert( _mm_ali4addr_.insert(peer_alias, addr, is_new, true) == true );
             if( is_new == true ) {
                 // trig connected call-back to app.
-                hHprotocol->handle_connection(alias, true);
+                hHprotocol->handle_connection(peer_alias->path_parent(), peer_alias->name(), true);
             }
             return true;
         }
     }
     catch (const std::exception &e) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
     return false;
 }
 
 template <typename ADDR_TYPE>
-void CPVD_UDP<ADDR_TYPE>::disconnection(std::string alias) {
+void CPVD_UDP<ADDR_TYPE>::disconnection(std::string app_path, std::string pvd_id) {
     bool had_connected = false;
+    std::string peer_full_path = cf_alias::IAlias::make_full_path(app_path, pvd_id);
 
     try{
-        if( mAddr.is_there(alias) ) {
-            mAddr.reset_connect_flag(alias, had_connected);
+        if( _mm_ali4addr_.is_there(peer_full_path) ) {
+            _mm_ali4addr_.reset_connect_flag(peer_full_path, had_connected);
 
             if ( had_connected ) {
                 // trig connected call-back to app.
-                hHprotocol->handle_connection(alias, false);
+                hHprotocol->handle_connection(app_path, pvd_id, false);
             }
         }
     }
     catch (const std::exception &e) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 }
 
@@ -215,11 +215,13 @@ typename CPVD_UDP<ADDR_TYPE>::MessageType CPVD_UDP<ADDR_TYPE>::read_msg(int u_so
         auto cliaddr = std::make_shared<ADDR_TYPE>();
         ADDR_TYPE * p_cliaddr = cliaddr.get();
         socklen_t clilen = sizeof( *p_cliaddr );
-        std::string client_addr_str;
+        std::string peer_full_path;
+        std::shared_ptr<cf_alias::IAliasPVD> peer_alias;
         std::lock_guard<std::mutex> guard(mtx_read);
 
         while(msg_size == read_bufsize) {
             bzero(p_cliaddr, clilen);
+            peer_alias.reset();
 
             // >>>> Return value description
             // -1 : Error.
@@ -233,31 +235,31 @@ typename CPVD_UDP<ADDR_TYPE>::MessageType CPVD_UDP<ADDR_TYPE>::read_msg(int u_so
             assert( msg_size >= 0 && msg_size <= read_bufsize);
 
             // Get client-ID
-            std::string client_id = make_client_id(*p_cliaddr);
-            assert( client_id.empty() == false );
+            peer_alias = make_client_id(*p_cliaddr);
+            assert( peer_alias.get() != NULL );
             
             // Assumption : We will receive continuous-messages from identical-one-client.
-            assert( client_addr_str.empty() == true || client_addr_str.compare(client_id) == 0);
-            client_addr_str = client_id;
+            assert( peer_full_path.empty() == true || peer_full_path.compare(peer_alias->path()) == 0);
+            peer_full_path = peer_alias->path();
 
             if( msg_size > 0 ) {
                 assert(msg->append_msg(read_buf, msg_size) == true);
             }
         }
 
-        assert( mAddr.insert(client_addr_str, cliaddr, get_provider_type(), is_new, true) == true );
-        msg->set_source(cliaddr, client_addr_str.c_str(), get_provider_type());
+        assert( _mm_ali4addr_.insert(peer_alias, cliaddr, is_new, true) == true );
+        msg->set_source(cliaddr, peer_alias);
     }
     catch(const std::exception &e) {
         LOGERR("%d: %s", errno, strerror(errno));
         msg->destroy();
-        throw ;
+        throw e;
     }
     return msg;
 }
 
 template <typename ADDR_TYPE>
-bool CPVD_UDP<ADDR_TYPE>::write_msg(std::string alias, MessageType msg) {
+bool CPVD_UDP<ADDR_TYPE>::write_msg(std::string app_path, std::string pvd_path, MessageType msg) {
     assert( msg.get() != NULL );
     using RawDataType = CRawMessage::MsgDataType;
 
@@ -266,24 +268,27 @@ bool CPVD_UDP<ADDR_TYPE>::write_msg(std::string alias, MessageType msg) {
     RawDataType* buffer = (RawDataType*)msg->get_msg_read_only();
     ADDR_TYPE* p_cliaddr = NULL;
     socklen_t clilen = sizeof( ADDR_TYPE );
+    std::string peer_full_path;
 
     // soket check. if socket == 0, then we will copy default socket-number.
     assert(u_sockfd != 0 && buffer != NULL && msg_size > 0);
 
-    // alias is prepered. but, if alias is null, then we will use alias registed by msg.
-    if ( alias.empty() == true ) {
-        alias = msg->get_source_alias();
-        if (alias.empty() == true) {
-            throw std::invalid_argument("alias is NULL & msg doesn't have alias. Please check it.");
+    // pvd_path is prepered. but, if pvd_path is null, then we will use pvd_path registed by msg.
+    if ( pvd_path.empty() == true ) {
+        app_path = msg->get_source_app();
+        pvd_path = msg->get_source_pvd();
+        if (pvd_path.empty() == true) {
+            throw std::invalid_argument("pvd_path is NULL & msg doesn't have pvd_path. Please check it.");
         }
     }
+    peer_full_path = cf_alias::IAlias::make_full_path(app_path, pvd_path);
 
     // if need trig about connection-call-back, then try it.
-    if( make_connection(alias) == true ) {
-        p_cliaddr = mAddr.get(alias).get();
+    if( make_connection(peer_full_path) == true ) {
+        p_cliaddr = _mm_ali4addr_.get(peer_full_path).get();
     }
     else {
-        std::string err_str = "alias("+alias+") is not pre-naming in provider-pkg.";
+        std::string err_str = "peer_full_path("+peer_full_path+") is not pre-naming in provider-pkg.";
         throw std::out_of_range(err_str);
     }
 
@@ -332,40 +337,31 @@ int CPVD_UDP<ADDR_TYPE>::enable_keepalive(int sock) {
 }
 
 template <typename ADDR_TYPE>
-void CPVD_UDP<ADDR_TYPE>::update_alias_mapper(AliasPVDsType& alias_list, 
-                                     std::string &res_alias_name) {
+void CPVD_UDP<ADDR_TYPE>::update_alias_mapper(std::shared_ptr<cf_alias::IAliasPVD> new_pvd) {
     LOGD("Called.");
     bool is_new = false;
+    std::string ip;
     uint16_t port_num = 0;
-    AliasPVDsType::iterator itor;
-    std::string alias_name;
-    std::shared_ptr<cf_alias::CAliasTrans> alias;
+    std::shared_ptr<cf_alias::CAliasTrans> pvd_alias;
     std::shared_ptr<ADDR_TYPE> destaddr;
-    assert(alias_list.size() == 1);
 
     try {
-        for ( itor = alias_list.begin(); itor != alias_list.end(); itor++ ) {
-            alias.reset();
-            destaddr.reset();
-            is_new = false;
-            
-            alias = std::static_pointer_cast<cf_alias::CAliasTrans>(*itor);
-            assert(alias.get() != NULL);
-            destaddr = std::make_shared<ADDR_TYPE>();
-            assert( alias->type() == get_provider_type());
+        pvd_alias = std::static_pointer_cast<cf_alias::CAliasTrans>(new_pvd);
+        assert(pvd_alias.get() != NULL);
+        destaddr = std::make_shared<ADDR_TYPE>();
+        assert( pvd_alias->type() == get_provider_type());
 
-            // make ADDR_TYPE variables.
-            port_num = alias->get_port();
-            set_ip_port(*destaddr.get(), alias->get_ip().c_str(), port_num, ProviderMode::E_PVDM_SERVER);
+        // make ADDR_TYPE variables.
+        ip = pvd_alias->get_ip();
+        port_num = pvd_alias->get_port();
+        set_ip_port(*destaddr.get(), ip, port_num, ProviderMode::E_PVDM_SERVER);
 
-            // append pair(alias & address) to mapper.
-            mAddr.insert(alias->name(), destaddr, alias->type(), is_new);
-            res_alias_name = mAddr.get( std::forward<const ADDR_TYPE>(*destaddr.get()) );
-        }
+        // append pair(pvd_alias & address) to mapper.
+        _mm_ali4addr_.insert(pvd_alias, destaddr, is_new);
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
-        throw ;
+        throw e;
     }
 }
 
@@ -374,43 +370,50 @@ bool CPVD_UDP<ADDR_TYPE>::update_alias_mapper(AliasPVDsType& alias_list) {
     LOGD("Called.");
     bool res = true;
     bool is_new = false;
+    std::string ip;
     uint16_t port_num = 0;
     AliasPVDsType::iterator itor;
     std::string alias_name;
-    std::shared_ptr<cf_alias::CAliasTrans> alias;
+    std::shared_ptr<cf_alias::CAliasTrans> pvd_alias;
     std::shared_ptr<ADDR_TYPE> destaddr;
     
     try {
         for ( itor = alias_list.begin(); itor != alias_list.end(); itor++ ) {
-            alias.reset();
+            pvd_alias.reset();
             destaddr.reset();
             is_new = false;
 
-            alias = std::static_pointer_cast<cf_alias::CAliasTrans>(*itor);
-            assert(alias.get() != NULL);
+            pvd_alias = std::static_pointer_cast<cf_alias::CAliasTrans>(*itor);
+            assert(pvd_alias.get() != NULL);
             destaddr = std::make_shared<ADDR_TYPE>();
-            assert( alias->type() == get_provider_type());
+            assert( pvd_alias->type() == get_provider_type());
 
             // make ADDR_TYPE variables.
-            port_num = alias->get_port();
-            set_ip_port(*destaddr.get(), alias->get_ip().c_str(), port_num, ProviderMode::E_PVDM_SERVER);
+            ip = pvd_alias->get_ip();
+            port_num = pvd_alias->get_port();
+            set_ip_port(*destaddr.get(), ip, port_num, ProviderMode::E_PVDM_SERVER);
 
-            // append pair(alias & address) to mapper.
-            mAddr.insert(alias->name(), destaddr, alias->type(), is_new);
+            // append pair(pvd_alias & address) to mapper.
+            _mm_ali4addr_.insert(pvd_alias, destaddr, is_new);
         }
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
         res = false;
-        throw ;
+        throw e;
     }
 
     return res;
 }
 
 template <typename ADDR_TYPE>
-void CPVD_UDP<ADDR_TYPE>::run_receiver(std::string alias, bool *is_continue) {
-    LOGI("Called with alias(%s)", alias.c_str());
+void CPVD_UDP<ADDR_TYPE>::run_receiver(std::shared_ptr<cf_alias::IAliasPVD> peer_alias, bool *is_continue) {
+    if( peer_alias.get() == NULL ) {
+        LOGI("Called without peer_alias(for All-Peers)");
+    }
+    else {
+        LOGI("Called with peer_alias(%s)", peer_alias->path().data());
+    }
 
     try {
         assert( is_continue != NULL );
@@ -428,7 +431,7 @@ void CPVD_UDP<ADDR_TYPE>::run_receiver(std::string alias, bool *is_continue) {
             if( msg_raw->get_msg_size() > 0 ) {
                 if( is_new == true ) {
                     // trig connected call-back to app.
-                    hHprotocol->handle_connection(msg_raw->get_source_alias(), true);
+                    hHprotocol->handle_connection(msg_raw->get_source_app(), msg_raw->get_source_pvd(), true);
                 }
                 // trig handling of protocol & Call-back to app
                 assert( hHprotocol->handle_protocol_chain(msg_raw) == true );
@@ -443,36 +446,95 @@ void CPVD_UDP<ADDR_TYPE>::run_receiver(std::string alias, bool *is_continue) {
     *is_continue = false;
 }
 
+template <typename ADDR_TYPE>
+void CPVD_UDP<ADDR_TYPE>::disconnection(std::shared_ptr<cf_alias::IAliasPVD> peer_alias) {
+    assert(peer_alias.get() != NULL);
+    disconnection(peer_alias->path_parent(), peer_alias->name());
+}
+
 /******************************************
  * Definition of Private Function.
  */ 
 template <typename ADDR_TYPE>
-std::string CPVD_UDP<ADDR_TYPE>::make_client_id(const ADDR_TYPE& cliaddr) {
-    std::string client_id;
+std::shared_ptr<cf_alias::IAliasPVD> CPVD_UDP<ADDR_TYPE>::make_new_client_alias(std::string pvd_id, const char* ip, const uint16_t port) {
+    std::shared_ptr<cf_alias::CAliasTrans> client;
+
+    try {
+        client = std::make_shared<cf_alias::CAliasTrans>( "", pvd_id.data(), cf_alias::IAliasPVD::convert(get_provider_type()).data() );
+        assert(client.get() != NULL);
+
+        client->set_ip(ip);
+        client->set_port(port);
+        client->set_mask(24);
+    }
+    catch( const std::exception& e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+
+    return client;
+}
+
+template <typename ADDR_TYPE>
+std::shared_ptr<cf_alias::IAliasPVD> CPVD_UDP<ADDR_TYPE>::make_client_id(const ADDR_TYPE& cliaddr) {
+    std::shared_ptr<cf_alias::IAliasPVD> peer;
 
     // Only support UDP/UDS_UDP M2M communication.
     assert( get_provider_type() == enum_c::ProviderType::E_PVDT_TRANS_UDP || 
             get_provider_type() == enum_c::ProviderType::E_PVDT_TRANS_UDS_UDP );
 
     try{
-        if ( mAddr.is_there(cliaddr) == true ) {
+        if ( _mm_ali4addr_.is_there(cliaddr) == true ) {
             // Already exist address, then get alias in map.
-            client_id = mAddr.get(cliaddr);
+            peer = _mm_ali4addr_.get(cliaddr);
         }
         else {
             // If unknown destination, then make new alias.
+            bool is_new = false;
+            std::string client_id;
             auto ipport = get_ip_port(cliaddr);
 
-            if (strcmp(ipport->ip, "0.0.0.0") != 0) {
-                client_id = ipport->ip;
-                client_id += ':' + std::to_string(ipport->port);
+            if (strcmp(ipport->ip, "0.0.0.0") == 0) {
+                throw std::out_of_range("Can not don't care 0.0.0.0 IP-peer.");
             }
+
+            client_id = ipport->ip;
+            client_id += ':' + std::to_string(ipport->port);
+            peer = make_new_client_alias(client_id, ipport->ip, ipport->port);
+            // append pair(pvd_alias & address) to mapper.
+            _mm_ali4addr_.insert(peer, cliaddr, is_new);
         }
+    }
+    catch(const std::out_of_range &e) {
+        LOGW("%s", e.what());
     }
     catch(const std::exception &e){
         LOGERR("%s", e.what());
     }
 
-    LOGD("%s is connected.", client_id.c_str());
-    return client_id;
+    return peer;
+}
+
+template <typename ADDR_TYPE>
+void CPVD_UDP<ADDR_TYPE>::update_provider(std::shared_ptr<cf_alias::IAliasPVD> peer_alias, 
+                                          std::string &ip, uint16_t &port ) {
+    assert( peer_alias.get() != NULL );
+    std::string pvd_type = peer_alias->convert(peer_alias->type());
+    assert( pvd_type == cf_alias::IAliasPVD::UDP || pvd_type == cf_alias::IAliasPVD::UDP_UDS );
+
+    try {
+        auto pvd_trans = std::dynamic_pointer_cast<cf_alias::CAliasTrans>( peer_alias );
+        std::string& pvd_ip = pvd_trans->get_ip_ref();
+        uint32_t& pvd_port = pvd_trans->get_port_ref();
+
+        if( pvd_ip.empty() == true || pvd_port == 0 ) {
+            pvd_ip = ip;
+            pvd_port = port;
+            pvd_trans->set_mask(24);
+        }
+    }
+    catch( const std::exception& e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
 }

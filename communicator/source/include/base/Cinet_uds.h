@@ -75,11 +75,11 @@ public:
     static std::shared_ptr<Cipport> get_ip_port(const struct sockaddr_un &addr);
 
     void set_ip_port(struct sockaddr_in &addr, 
-                     const char* ip, uint16_t &port, 
+                     std::string &ip, uint16_t &port, 
                      PVDM mode=PVDM::E_PVDM_CLIENT);
 
     void set_ip_port(struct sockaddr_un &addr, 
-                     const char* ip, uint16_t &port, 
+                     std::string &ip, uint16_t &port, 
                      PVDM mode=PVDM::E_PVDM_CLIENT);
 
     /** socket processing */
@@ -91,7 +91,7 @@ public:
 
     int Bind(int sock_fd, struct sockaddr_un &addr);
 
-    int Bind_uds_client(int sock_fd, const char* ip=NULL, uint16_t port=0);
+    int Bind_uds_client(int sock_fd, std::string ip=std::string(), uint16_t port=0);
 
     int Listen(int sock_fd, int concurrent_peer);
 
@@ -113,6 +113,8 @@ private:
     bool check_port_available(struct sockaddr *addr, socklen_t length, const char *uds_file_path);
 
     void unlink_uds_file(std::string file_path);
+
+    std::string get_ipv4addr( void );
 
 private:
     int _sock_domain_;

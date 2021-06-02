@@ -41,7 +41,7 @@ limitations under the License.
 - esOdysseus (email: es.odysseus@gmail.com)
 
 ### Latest Release
-- version 0.2.4 (Date: 2021-05-22)
+- version 0.2.5 (Date: 2021-06-02)
 ---
 ## Installation
 > Please refer following commands.
@@ -140,6 +140,7 @@ Date | Version | Description
 `2021-05-18` | Ver 0.2.2 | [Protocol] Add UniversalCMD & improve structure of Protocol-Handling.
 `2021-05-20` | Ver 0.2.3 | Improve ConfigAlias class.
 `2021-05-22` | Ver 0.2.4 | [Bug-Fix] Fix memory-corruption of CRawMessage Class.<br> [Protocol] Change structure of protocol-header in UniversalCMD protocol.
+`2021-06-02` | Ver 0.2.5 | Refactoring Code-Structure to apply for Alias-Policy pair of App-path & PVD-id.
 
 
 ### TBD-list
