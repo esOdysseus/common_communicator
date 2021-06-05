@@ -18,6 +18,11 @@ equals(CPU_ARCH, "x86") {
     LIBS += -lpthread
 }
 
+equals(CPU_ARCH, "aarch64") {
+    # If OS-type is Ubuntu, then need these libraries.
+    LIBS += -lpthread
+}
+
 INCLUDEPATH += \
     $$_PRO_FILE_PWD_    \
     $$DESTDIR/../include

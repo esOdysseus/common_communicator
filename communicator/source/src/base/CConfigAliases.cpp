@@ -591,14 +591,14 @@ void CConfigAliases::set_pvd_service_with_function( std::shared_ptr<CAliasServic
         // Define lamda to parsing json.
         auto lamda_parsing_functions = [&]( const char* func_key_, std::function<void(std::string&, std::shared_ptr<json_mng::CMjson>&)> cb_sub_routine_ ) -> void {
             if( func_key_ == NULL || cb_sub_routine_ == nullptr ) {
-                LOGERR("func_key_=0x%X, cb_sub_routine_=0x%X", func_key_, cb_sub_routine_);
-                throw std::invalid_argument("func_key or cb_sub_routine_ is NULL.");
+                std::string err = "func_key_=" + (func_key_==NULL?"NULL":std::string(func_key_)) + ", cb_sub_routine_=" + (cb_sub_routine_==nullptr?"nullptr":"NO-nullptr");
+                throw std::invalid_argument(err);
             }
 
             auto obj_value = obj_->get_member< std::shared_ptr<json_mng::CMjson> >(func_key_);
             if( obj_value.get() == NULL ) {
-                LOGERR("There are not exist Key(%s) in desp_alias.json file.", func_key_);
-                throw std::logic_error("KEY is not exist. Please check desp_alias.json file.");
+                std::string err = "There are not exist Key(" + std::string(func_key_) + ") in desp_alias.json file.";
+                throw std::logic_error(err);
             }
 
             for( auto itr=obj_value->begin(); itr!=obj_value->end(); itr++ ) {
