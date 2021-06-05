@@ -18,10 +18,30 @@ public:
     using CommHandler = std::shared_ptr<ICommunicator>;
     static constexpr const char* PROTOCOL_NAME = "CPUniversalCMD";
 
+private:
+    typedef struct s_trans_info {
+        std::string ip;
+        uint16_t port;
+        std::string app_path;
+        std::string pvd_id;
+        bool flag;
+
+    public:
+        s_trans_info( void ) {
+            ip.clear();
+            port = 0;
+            app_path.clear();
+            pvd_id.clear();
+            flag = false;
+        }
+    } s_trans_info;
+
 public:
     CAppTest(CommHandler handler);
 
     ~CAppTest(void);
+
+    void set_peer( std::string ip, uint16_t port, std::string app_path, std::string pvd_id);
 
     void cb_initialization(enum_c::ProviderType provider_type, bool flag_init);
 
@@ -42,6 +62,8 @@ private:
     bool is_continue;
     
     std::thread runner;
+
+    s_trans_info _m_peer_;
 
 };
 

@@ -38,6 +38,8 @@ namespace cf_alias {
 
         static std::string make_full_path(std::string &app_path, std::string &pvd_path);
 
+        static std::string make_full_path(std::string &&app_path, std::string &&pvd_path);
+
     private:
         // setter
         void set_path_parent( IAlias& parent_ );
@@ -74,6 +76,11 @@ namespace cf_alias {
         template <typename PVD_TYPE>
         PVD_TYPE* get( void ) {
             return dynamic_cast<PVD_TYPE*>(this);
+        }
+
+        template <typename PVD_TYPE>
+        static std::shared_ptr<PVD_TYPE> convert( std::shared_ptr<IAliasPVD> target ) {
+            return std::dynamic_pointer_cast<PVD_TYPE>( target );
         }
 
         static std::string convert(enum_c::ProviderType pvd_type);

@@ -72,6 +72,14 @@ std::string IAlias::make_full_path(std::string &app_path, std::string &pvd_path)
     return pvd_path;
 }
 
+std::string IAlias::make_full_path(std::string &&app_path, std::string &&pvd_path) {
+    if( app_path.empty() != true ) {
+        return app_path + '/' + pvd_path;
+    }
+
+    return pvd_path;
+}
+
 // setter
 void IAlias::set_path_parent( IAlias& parent_ ) {
     _m_path_ = parent_.path();

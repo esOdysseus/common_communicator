@@ -41,7 +41,7 @@ limitations under the License.
 - esOdysseus (email: es.odysseus@gmail.com)
 
 ### Latest Release
-- version 0.2.6 (Date: 2021-06-05)
+- version 0.2.7 (Date: 2021-06-05)
 ---
 ## Installation
 > Please refer following commands.
@@ -142,6 +142,7 @@ Date | Version | Description
 `2021-05-22` | Ver 0.2.4 | [Bug-Fix] Fix memory-corruption of CRawMessage Class.<br> [Protocol] Change structure of protocol-header in UniversalCMD protocol.
 `2021-06-02` | Ver 0.2.5 | Refactoring Code-Structure to apply for Alias-Policy pair of App-path & PVD-id.
 `2021-06-05` | Ver 0.2.6 | Refactoring API-Structure to apply for API-Consistency.
+`2021-06-05` | Ver 0.2.7 | Modify legacy Sample-Test Program to Variable Sample-Test.
 
 
 ### TBD-list

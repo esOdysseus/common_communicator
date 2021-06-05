@@ -90,7 +90,6 @@ IPVDInf::~IPVDInf(void) {
 bool IPVDInf::register_new_alias(const char* peer_ip, uint16_t peer_port, 
                                  std::string& app_path, std::string &pvd_id) {
     using PvdType = cf_alias::CAliasTrans;
-    std::string str_pvd_type;
     enum_c::ProviderType pvd_type = get_provider_type();
     assert(peer_ip != NULL);
     assert(peer_port > 0);
@@ -105,8 +104,7 @@ bool IPVDInf::register_new_alias(const char* peer_ip, uint16_t peer_port,
         }
 
         // convert String-type ip/port to Abstracted IAliasPVD-type.
-        str_pvd_type = PvdType::convert(pvd_type);
-        auto new_alias = std::make_shared<PvdType>(app_path.data(), pvd_id.data(), str_pvd_type.data());
+        auto new_alias = std::make_shared<PvdType>(app_path.data(), pvd_id.data(), PvdType::convert(pvd_type).data());
         new_alias->set_ip( peer_ip );
         new_alias->set_port( peer_port );
         new_alias->set_mask( 24 );

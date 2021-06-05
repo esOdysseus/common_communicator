@@ -71,7 +71,7 @@ std::string CPUniversalCMD::get_property(const std::string key) {
  * Protected Function Definition
  */
 bool CPUniversalCMD::pack(const void* msg_raw, size_t msg_size, enum_c::ProviderType provider_type,
-                          std::string &&from_app) {
+                          std::string &&from_full_path) {
     LOGD("It's called.");
 
     try {
@@ -80,7 +80,9 @@ bool CPUniversalCMD::pack(const void* msg_raw, size_t msg_size, enum_c::Provider
 
         // set protocol header
         set_when();
-        set_from(std::forward<std::string>(from_app));
+        if( from_full_path.empty() == false ) {
+            set_from(std::forward<std::string>(from_full_path));
+        }
         set_length(msg_size);
         raw_size = msg_size + set_header_size();
 

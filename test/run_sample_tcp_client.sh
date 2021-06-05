@@ -23,8 +23,8 @@ touch ${VAL_FILE}
 
 cd ${ROOT_PATH}/${BUILD_MODE}/bin
 # run program.
-./${TARGET} ${DESP_ALIAS} ${DESP_PROTOCOL}   # for simple run program
+./${TARGET} ${DESP_ALIAS} ${DESP_PROTOCOL} "192.168.1.2" "12000"   # for simple run program
 #${GDB_BIN} ./${TARGET}  ${GDB_FILE}        # for gdb debug
-#${VAL_BIN} ${VAL_OPT} ./${TARGET} ${DESP_ALIAS} ${DESP_PROTOCOL}  >& ${VAL_FILE} # for valgrind debug
+#${VAL_BIN} ${VAL_OPT} ./${TARGET} ${DESP_ALIAS} ${DESP_PROTOCOL} "192.168.1.2" "12000"  >& ${VAL_FILE} # for valgrind debug
 
 

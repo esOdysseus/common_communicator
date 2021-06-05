@@ -33,6 +33,14 @@ CAppTest::~CAppTest(void) {
     rcv_count = 0;
 }
 
+void CAppTest::set_peer( std::string ip, uint16_t port, std::string app_path, std::string pvd_id) {
+    _m_peer_.ip = ip;
+    _m_peer_.port = port;
+    _m_peer_.app_path = app_path;
+    _m_peer_.pvd_id = pvd_id;
+    cout << "Peer-Setting is done with context. (IP=" << _m_peer_.ip << "/" << std::to_string(_m_peer_.port) << ")" << endl;
+}
+
 // This-APP was normal-ready/quit to communicate between VMs.
 void CAppTest::cb_initialization(enum_c::ProviderType provider_type, bool flag_init) {
     cout << "[Debug] CAppTest::cb_initialization() is called.(" << flag_init << ")" << endl;
@@ -49,6 +57,10 @@ void CAppTest::cb_abnormally_quit(const std::exception &e) {
 // Client was connected.
 void CAppTest::cb_connected(std::string peer_app_path, std::string peer_pvd_id, bool flag_connect) {
     cout << "[Debug] CAppTest::cb_connected() is called (CONN: " << flag_connect << ") for " << peer_app_path << "/" << peer_pvd_id << endl;
+
+    if( peer_app_path == _m_peer_.app_path && peer_pvd_id == _m_peer_.pvd_id ) {
+        _m_peer_.flag = flag_connect;
+    }
 }
 
 // We receved a message from peer_id.
@@ -81,6 +93,20 @@ int CAppTest::run_period_send(void) {
     int send_count = 0;
     std::string msg_origin = "msg from sample-client.";
 
+    // Connection Operation.
+    while(is_continue) {
+        if( _m_peer_.flag == true ) {
+            cout << "Peer(" << _m_peer_.app_path << ", " << _m_peer_.pvd_id << ") is connected." << endl;
+            break;
+        }
+
+        // Try to connect to Peer
+        h_communicator->connect_try( _m_peer_.ip, _m_peer_.port, 
+                                     _m_peer_.app_path, _m_peer_.pvd_id );
+        sleep(1);
+    }
+
+    // TX Operation.
     while(is_continue) {
         // Send Message
         std::string msg = msg_origin + " : SendCNT=" + std::to_string(++send_count);
@@ -93,7 +119,7 @@ int CAppTest::run_period_send(void) {
         new_protocol->set_property("state", 2);
         new_protocol->set_property("msg_id", 5678);
         new_protocol->set_payload(msg.data(), msg.length());
-        assert(h_communicator->send("APP-01", "tcp_01", new_payload) == true);
+        assert(h_communicator->send(_m_peer_.app_path, _m_peer_.pvd_id, new_payload) == true);
 
         usleep(100000);     // wait 100 ms
     }

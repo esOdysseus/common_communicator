@@ -9,6 +9,7 @@
 #include <logger.h>
 #include <Enum_common.h>
 #include <provider/CHProtoBaseLan.h>
+#include <IAliasPVD.h>
 
 using namespace std::placeholders;
 
@@ -43,9 +44,9 @@ bool CHProtoBaseLan::write_payload(std::string app_path, std::string pvd_path, s
 
     try {
         AppCallerType& app = get_app_instance();
+        std::string from_full_path = cf_alias::IAlias::make_full_path( app->get_app_id(), app->get_provider_id() );
         ProtocolType pro_payload = std::dynamic_pointer_cast<IProtocolInf>(payload);
-        SegmentsType segments = encapsulation(pro_payload, s_server->get_provider_type(), 
-                                              app->get_provider_id());
+        SegmentsType segments = encapsulation(pro_payload, s_server->get_provider_type(), std::move(from_full_path));
 
         // message write.
         for(SegmentsType::iterator itor = segments.begin(); itor != segments.end(); itor++) {

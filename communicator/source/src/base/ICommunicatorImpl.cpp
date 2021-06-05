@@ -183,7 +183,7 @@ bool ICommunicatorImpl::connect_try(std::string &peer_ip, uint16_t peer_port, st
             throw std::runtime_error("Provider instance is NULL, Please check it.");
         }
         
-        assert( h_pvd->register_new_alias(peer_ip.c_str(), peer_port, app_path, pvd_id) == true );
+        assert( h_pvd->register_new_alias(peer_ip.data(), peer_port, app_path, pvd_id) == true );
         if( h_pvd->make_connection(peer_full_path) <= 0 ) {
             ret = false;
         }
@@ -398,7 +398,7 @@ std::shared_ptr<cf_alias::IAliasPVD> ICommunicatorImpl::get_provider( void ) {
             provider_type == enum_c::ProviderType::E_PVDT_TRANS_UDP ) {
             // if type is transaction-type, then check ip/port validation.
             // if need, then update empty ip/port variables.
-            auto pvd_trans = std::dynamic_pointer_cast<cf_alias::CAliasTrans>( res );
+            auto pvd_trans = res->convert<cf_alias::CAliasTrans>( res );
             sync_trans_provider( pvd_trans );
         }
     }

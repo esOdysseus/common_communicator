@@ -346,7 +346,7 @@ void CPVD_UDP<ADDR_TYPE>::update_alias_mapper(std::shared_ptr<cf_alias::IAliasPV
     std::shared_ptr<ADDR_TYPE> destaddr;
 
     try {
-        pvd_alias = std::static_pointer_cast<cf_alias::CAliasTrans>(new_pvd);
+        pvd_alias = new_pvd->convert<cf_alias::CAliasTrans>( new_pvd );
         assert(pvd_alias.get() != NULL);
         destaddr = std::make_shared<ADDR_TYPE>();
         assert( pvd_alias->type() == get_provider_type());
@@ -383,7 +383,7 @@ bool CPVD_UDP<ADDR_TYPE>::update_alias_mapper(AliasPVDsType& alias_list) {
             destaddr.reset();
             is_new = false;
 
-            pvd_alias = std::static_pointer_cast<cf_alias::CAliasTrans>(*itor);
+            pvd_alias = (*itor)->convert<cf_alias::CAliasTrans>( *itor );
             assert(pvd_alias.get() != NULL);
             destaddr = std::make_shared<ADDR_TYPE>();
             assert( pvd_alias->type() == get_provider_type());
@@ -523,7 +523,7 @@ void CPVD_UDP<ADDR_TYPE>::update_provider(std::shared_ptr<cf_alias::IAliasPVD> p
     assert( pvd_type == cf_alias::IAliasPVD::UDP || pvd_type == cf_alias::IAliasPVD::UDP_UDS );
 
     try {
-        auto pvd_trans = std::dynamic_pointer_cast<cf_alias::CAliasTrans>( peer_alias );
+        auto pvd_trans = peer_alias->convert<cf_alias::CAliasTrans>( peer_alias );
         std::string& pvd_ip = pvd_trans->get_ip_ref();
         uint32_t& pvd_port = pvd_trans->get_port_ref();
 
