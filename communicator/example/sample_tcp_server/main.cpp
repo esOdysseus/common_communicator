@@ -7,7 +7,7 @@
 #include <iostream>
 #include <unistd.h>
 
-#include <IAppInf.h>
+#include <ICommunicator.h>
 #include <CAppTest.h>
 
 using namespace std::placeholders;
@@ -17,14 +17,14 @@ int main(int argc, char *argv[])
     std::cout << "Sample-Server for check operating of TCP provider." << std::endl;
 
     // Create Communicator instance.
-    auto handler = create_communicator("APP-01_X", 
-                                       "tcp_01_X", 
-                                       enum_c::ProviderType::E_PVDT_TRANS_TCP,
-                                       atoi(argv[2]), 
-                                       argv[1],
-                                       enum_c::ProviderMode::E_PVDM_BOTH,
-                                       argv[3],
-                                       argv[4]);
+    auto handler = std::make_shared<ICommunicator>( "APP-01_X", 
+                                                    "tcp_01_X", 
+                                                    argv[3],
+                                                    argv[4],
+                                                    enum_c::ProviderType::E_PVDT_TRANS_TCP,
+                                                    atoi(argv[2]),
+                                                    argv[1],
+                                                    enum_c::ProviderMode::E_PVDM_BOTH);
 
     std::cout << "Common-API Version = " << handler->get_version() << std::endl;
 

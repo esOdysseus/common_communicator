@@ -41,7 +41,7 @@ limitations under the License.
 - esOdysseus (email: es.odysseus@gmail.com)
 
 ### Latest Release
-- version 0.2.5 (Date: 2021-06-02)
+- version 0.2.6 (Date: 2021-06-05)
 ---
 ## Installation
 > Please refer following commands.
@@ -63,10 +63,10 @@ $ bash ./build.sh -m release -t example -arch x86
 ## Common-API
    > API for loose-dependency between Middleware-Communication library and Application.
    ```shell
-   $ cd ${work}/api/common_api
-   $ cat IAppInf.h
+   $ cd ${work}/api/include
+   $ cat ICommunicator.h
    ```
-   - Common-API is described in "IAppInf.h file".
+   - Common-API is described in "ICommunicator.h file".
 
 ### Example (UDP)
 - You can test the communicator SDK library by using following guide-line.
@@ -141,6 +141,7 @@ Date | Version | Description
 `2021-05-20` | Ver 0.2.3 | Improve ConfigAlias class.
 `2021-05-22` | Ver 0.2.4 | [Bug-Fix] Fix memory-corruption of CRawMessage Class.<br> [Protocol] Change structure of protocol-header in UniversalCMD protocol.
 `2021-06-02` | Ver 0.2.5 | Refactoring Code-Structure to apply for Alias-Policy pair of App-path & PVD-id.
+`2021-06-05` | Ver 0.2.6 | Refactoring API-Structure to apply for API-Consistency.
 
 
 ### TBD-list

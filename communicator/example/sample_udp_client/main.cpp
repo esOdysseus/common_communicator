@@ -7,7 +7,7 @@
 #include <iostream>
 #include <unistd.h>
 
-#include <IAppInf.h>
+#include <ICommunicator.h>
 #include <CAppTest.h>
 
 using namespace std::placeholders;
@@ -17,14 +17,11 @@ int main(int argc, char *argv[])
     std::cout << "Sample-Client for check operating of UDP provider." << std::endl;
 
     // Create Communicator instance.
-    auto handler = create_communicator("TestApp02", 
-                                       "UDP_provider", 
-                                       enum_c::ProviderType::E_PVDT_TRANS_UDP,
-                                       0,
-                                       NULL,
-                                       enum_c::ProviderMode::E_PVDM_BOTH,
-                                       argv[1],
-                                       argv[2]);
+    auto handler = std::make_shared<ICommunicator>( "APP-01", 
+                                                    "udp_01", 
+                                                    argv[1],
+                                                    argv[2],
+                                                    enum_c::ProviderMode::E_PVDM_BOTH);
 
     std::cout << "Common-API Version = " << handler->get_version() << std::endl;
 

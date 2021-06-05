@@ -14,7 +14,7 @@
 #if __cplusplus > 201402L
     #include <shared_mutex> // for c++17
 #else
-    #include <shared_mutex_kes.h>   // for c++11
+    #include <shared_mutex_kes.h>   // for c++11 , c++14
 #endif
 
 #include <CSource.h>

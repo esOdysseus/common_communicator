@@ -9,7 +9,7 @@
 #define C_APP_TEST_H_
 
 #include <string>
-#include <IAppInf.h>
+#include <ICommunicator.h>
 
 class CAppTest {
 public:

@@ -11,7 +11,7 @@
 #include <string>
 #include <thread>
 
-#include <IAppInf.h>
+#include <ICommunicator.h>
 
 class CAppTest {
 public:

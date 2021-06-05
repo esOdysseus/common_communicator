@@ -71,6 +71,11 @@ namespace cf_alias {
         // getter
         enum_c::ProviderType type( void );
 
+        template <typename PVD_TYPE>
+        PVD_TYPE* get( void ) {
+            return dynamic_cast<PVD_TYPE*>(this);
+        }
+
         static std::string convert(enum_c::ProviderType pvd_type);
 
     private:

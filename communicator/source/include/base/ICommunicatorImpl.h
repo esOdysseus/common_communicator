@@ -1,13 +1,13 @@
 
 /***
- * IAppInf.h
- * Copyright [2019-] 
+ * ICommunicatorImpl.h
+ * Copyright [2021-] 
  * Written by EunSeok Kim <es.odysseus@gmail.com>
  * 
  * This file is part of the Common-Communicator framework.
  */
-#ifndef IAPP_INTERFACE_H_
-#define IAPP_INTERFACE_H_
+#ifndef ICOMMUNICATOR_IMPLEMENTATION_H_
+#define ICOMMUNICATOR_IMPLEMENTATION_H_
 
 #include <string>
 #include <thread>
@@ -17,68 +17,46 @@
 
 #include <Enum_common.h>
 #include <CReceiver.h>
-#include <CAppInternalCaller.h>
 #include <CConfigProtocols.h>
 #include <CConfigAliases.h>
 
+#include <CAppInternalCaller.h>
 #include <IPVDInf.h>
 
-class ICommunicator;
 
-// // @TODO : need Constructor API for Dynamic-Auto parsed Provider.
-// std::shared_ptr<ICommunicator> create_communicator(std::string& app_id, 
-//                                                    std::string& provider_id, 
-//                                                    const char* alias_desp_path,
-//                                                    const char* protocol_desp_path=NULL,
-//                                                    enum_c::ProviderMode mode=enum_c::ProviderMode::E_PVDM_BOTH);
-
-// Constructor API for Static-Defined Provider. (Only for Transaction-Communication)
-std::shared_ptr<ICommunicator> create_communicator(std::string app_id, 
-                                                   std::string provider_id, 
-                                                   enum_c::ProviderType provider_type, 
-                                                   unsigned short port=0, 
-                                                   const char* ip=NULL,
-                                                   enum_c::ProviderMode mode=enum_c::ProviderMode::E_PVDM_BOTH,
-                                                   const char* protocol_desp_path=NULL,
-                                                   const char* alias_desp_path=NULL);
-
-class ICommunicator {
+class ICommunicatorImpl {
 public:
     using SendPayloadType = CAppInternalCaller::SendPayloadType;
-    using SharedThisType = std::enable_shared_from_this<ICommunicator>;
+
     using InitialCB_Type = CReceiver::InitialCB_Type;
     using ConnectionCB_Type = CReceiver::ConnectionCB_Type;
     using MessagePayloadCB_Type = CReceiver::MessagePayloadCB_Type;
     using QuitCB_Type = CReceiver::QuitCB_Type;
-    using ProtocolProperties = std::shared_ptr<std::map<std::string, std::string>>;
 
 public:
-    // // @TODO : need Constructor API for Dynamic-Auto parsed Provider.
-    // ICommunicator(std::string app_id, 
-    //               std::string provider_id, 
-    //               std::shared_ptr<cf_alias::CConfigAliases> &alias_config,
-    //               std::shared_ptr<cf_proto::CConfigProtocols> &proto_config,
-    //               enum_c::ProviderMode mode=enum_c::ProviderMode::E_PVDM_BOTH);
+    // Constructor API for Dynamic-Auto parsed Provider.
+    ICommunicatorImpl(std::string app_id, 
+                      std::string provider_id, 
+                      std::shared_ptr<cf_alias::CConfigAliases> &alias_config,
+                      std::shared_ptr<cf_proto::CConfigProtocols> &proto_config,
+                      enum_c::ProviderMode mode=enum_c::ProviderMode::E_PVDM_BOTH);
 
-    // Constructor API for Static-Defined Provider. (Only for Transaction-Communication)
-    ICommunicator(std::string app_id, 
-                  std::string provider_id, 
-                  enum_c::ProviderType provider_type, 
-                  std::shared_ptr<cf_proto::CConfigProtocols> &proto_config,
-                  std::shared_ptr<cf_alias::CConfigAliases> &alias_config,
-                  unsigned short port=0,
-                  const char* ip=NULL,
-                  enum_c::ProviderMode mode=enum_c::ProviderMode::E_PVDM_BOTH);
+    // Constructor API for Static-Defined Provider. (Only for Unregisted Transaction-Communication)
+    ICommunicatorImpl(std::string app_id, 
+                      std::string provider_id, 
+                      std::shared_ptr<cf_alias::CConfigAliases> &alias_config,
+                      std::shared_ptr<cf_proto::CConfigProtocols> &proto_config,
+                      enum_c::ProviderType provider_type, 
+                      unsigned short port=0,
+                      const char* ip=NULL,
+                      enum_c::ProviderMode mode=enum_c::ProviderMode::E_PVDM_BOTH);
 
-    ~ICommunicator(void);
+    ~ICommunicatorImpl(void);
 
     // Get Application-ID which contain this Communicator.
     std::string get_app_id(void);
 
     std::string get_provider_id(void);
-
-    // Get Version-infomation of Common-API.
-    std::string get_version(void);
 
     /******************************
      * Communicator-Base API
@@ -191,8 +169,6 @@ public:
 
     bool send(std::string app_path, std::string pvd_path, std::shared_ptr<payload::CPayload>& payload);      // Mandatory
 
-    bool send(std::string app_path, std::string pvd_path, const void* msg, size_t msg_size);                 // Mandatory
-
     /**
      * Client-Side
      */
@@ -245,14 +221,13 @@ public:
      * Discovery API
      ******************************/
 
-protected:
+private:
     // Regist function-point for "send" member-function.
     void set_send_payload_fp(SendPayloadType &&fp);
 
     // Get group-point for Call-back functions.
     CReceiver& get_cb_handlers(void);
 
-private:
     void clear(void);
 
     void validation_check(void);
@@ -298,4 +273,4 @@ private:
 
 };
 
-#endif // IAPP_INTERFACE_H_
+#endif // ICOMMUNICATOR_IMPLEMENTATION_H_

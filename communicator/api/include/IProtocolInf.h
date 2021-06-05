@@ -12,15 +12,18 @@
 #include <map>
 #include <memory>
 
-#include <CRawMessage.h>
 #include <CPayload.h>
 #include <Enum_common.h>
+
+class CRawMessage;
 
 
 class IProtocolInf : public payload::CPayload {
 public:
+    using RawMsgType = std::shared_ptr<CRawMessage>;
     using SegmentType = CRawMessage;
     using SegmentsType = std::list<std::shared_ptr<SegmentType>>;
+    using ProtoChainType = payload::CPayload::ProtoChainType;
 
 public:
     IProtocolInf(void);
@@ -63,6 +66,11 @@ protected:
     virtual size_t get_msg_size(const void* data, size_t data_size);
 
     SegmentsType& get_segments(void);
+
+    friend class IHProtocolInf;
+
+private:
+    SegmentsType _m_segments_;   // packed messages.
 
 };
 

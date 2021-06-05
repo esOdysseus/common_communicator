@@ -11,7 +11,6 @@
 #include <map>
 #include <string>
 #include <IPVDInf.h>
-#include <IAppInf.h>
 #include <IProtocolInf.h>
 #include <CAliasAddr.h>
 #include <IAliasPVD.h>

@@ -12,28 +12,17 @@
 #include <string>
 #include <memory>
 
-#include <CRawMessage.h>
+#include <Enum_common.h>
 
-
+class CRawMessage;
 class IProtocolInf;
 namespace cf_proto {
     class CConfigProtocols;
 }
 
+
 namespace payload
 {
-    typedef enum E_ERROR {
-        E_NO_ERROR = 0,
-        E_INVALID_MEMBER_VARIABLES = 2,
-        E_ITS_NOT_SUPPORTED_TYPE = 3,
-        E_INVALID_VALUE = 4
-    }E_ERROR;
-
-    typedef enum E_PAYLOAD_FLAG {   // We will use it as Bit-Masking type flag.
-        E_NONE = 0,
-        E_KEEP_PAYLOAD_AFTER_TX = 1
-    } E_PAYLOAD_FLAG;
-
     /******************************
      * Class of Payload.
      */
@@ -101,7 +90,7 @@ namespace payload
     private:
         std::string _name_;
 
-        std::shared_ptr<DataType> _payload_;
+        std::shared_ptr<CRawMessage> _payload_;
 
         std::string _protocol_chain_name_;      // link to external list-object.
 

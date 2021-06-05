@@ -1,5 +1,5 @@
 /***
- * IAppInf.cpp
+ * ICommunicator.cpp
  * Copyright [2019-] 
  * Written by EunSeok Kim <es.odysseus@gmail.com>
  * 
@@ -12,43 +12,74 @@
 #include <logger.h>
 #include <CConfigProtocols.h>
 #include <CConfigAliases.h>
-#include <IAppInf.h>
+#include <ICommunicatorImpl.h>
 #include <provider/CPVD_TCP.h>
 #include <provider/CPVD_UDP.h>
 
+
 /*****
- * Static Function.
+ * Public Member Function.
  */ 
-std::shared_ptr<ICommunicator> create_communicator(std::string app_id, 
-                                                   std::string provider_id, 
-                                                   enum_c::ProviderType provider_type, 
-                                                   unsigned short port, 
-                                                   const char* ip,
-                                                   enum_c::ProviderMode mode,
-                                                   const char* protocol_desp_path,
-                                                   const char* alias_desp_path) {
+// Constructor API for Dynamic-Auto parsed Provider.
+ICommunicatorImpl::ICommunicatorImpl(std::string app_id, 
+                                     std::string provider_id, 
+                                     std::shared_ptr<cf_alias::CConfigAliases> &alias_config,
+                                     std::shared_ptr<cf_proto::CConfigProtocols> &proto_config,
+                                     enum_c::ProviderMode mode) {
+    clear();
+
     try {
-            std::shared_ptr<cf_proto::CConfigProtocols> proto_config = std::make_shared<cf_proto::CConfigProtocols>(protocol_desp_path);
-            std::shared_ptr<cf_alias::CConfigAliases> alias_config = std::make_shared<cf_alias::CConfigAliases>(alias_desp_path);
-            return std::make_shared<ICommunicator>(std::move(app_id), std::move(provider_id), provider_type, proto_config, alias_config, port, ip, mode);
+        // Get Provider-Type info.
+        auto pvd_alias = alias_config->get_provider( app_id, provider_id );
+        if ( pvd_alias.get() == NULL ) {
+            std::string err = "Provider is not exist. (" + cf_alias::IAlias::make_full_path(app_id, provider_id ) + ")";
+            throw std::out_of_range(err);
+        }
+        this->provider_type = pvd_alias->type();
+
+        // Set Provider Info.
+        switch ( this->provider_type ) {
+        case enum_c::ProviderType::E_PVDT_TRANS_TCP:
+        case enum_c::ProviderType::E_PVDT_TRANS_UDP:
+        case enum_c::ProviderType::E_PVDT_TRANS_UDS_TCP:
+        case enum_c::ProviderType::E_PVDT_TRANS_UDS_UDP:
+            {
+                auto pvd_trans = pvd_alias->get<cf_alias::CAliasTrans>();
+                this->port = pvd_trans->get_port();
+                this->ip = pvd_trans->get_ip_ref();
+            }
+            break;
+        default :
+            std::string err = "Can not Supporte Provider Type. (" + std::to_string(provider_type) + ")";
+            throw std::out_of_range(err);
+        }
+
+        this->app_id = std::move(app_id);
+        this->provider_id = std::move(provider_id);
+        this->mode = mode;
+        this->proto_config = proto_config;
+        this->alias_config = alias_config;
+
+        validation_check();
     }
-    catch (const std::exception &e) {
+    catch( const std::out_of_range &e ) {
+        LOGERR("%s", e.what());
+        clear();
+    }
+    catch( const std::exception &e ) {
         LOGERR("%s", e.what());
         throw e;
     }
 }
 
-/*****
- * Public Member Function.
- */ 
-ICommunicator::ICommunicator(std::string app_id, 
-              std::string provider_id, 
-              enum_c::ProviderType provider_type, 
-              std::shared_ptr<cf_proto::CConfigProtocols> &proto_config,
-              std::shared_ptr<cf_alias::CConfigAliases> &alias_config,
-              unsigned short port, 
-              const char* ip,
-              enum_c::ProviderMode mode) {
+ICommunicatorImpl::ICommunicatorImpl(std::string app_id, 
+                                     std::string provider_id, 
+                                     std::shared_ptr<cf_alias::CConfigAliases> &alias_config,
+                                     std::shared_ptr<cf_proto::CConfigProtocols> &proto_config,
+                                     enum_c::ProviderType provider_type, 
+                                     unsigned short port, 
+                                     const char* ip,
+                                     enum_c::ProviderMode mode) {
     clear();
 
     try {
@@ -71,62 +102,58 @@ ICommunicator::ICommunicator(std::string app_id,
     }
 }
 
-ICommunicator::~ICommunicator(void) {
+ICommunicatorImpl::~ICommunicatorImpl(void) {
     quit();     // thread quit
     clear();    // variables clear
 }
 
-std::string ICommunicator::get_app_id(void) { 
+std::string ICommunicatorImpl::get_app_id(void) { 
     return app_id; 
 }
 
-std::string ICommunicator::get_provider_id(void) { 
+std::string ICommunicatorImpl::get_provider_id(void) { 
     return provider_id; 
 }
 
-std::string ICommunicator::get_version(void) {
-    return STRING_OF_COMMON_API_VERSION;
-}
-
-void ICommunicator::init(void) {
+void ICommunicatorImpl::init(void) {
     LOGD("Called.");
     this->runner_continue = true;
-    this->runner = std::thread(&ICommunicator::run, this);
+    this->runner = std::thread(&ICommunicatorImpl::run, this);
 }
 
-void ICommunicator::quit(void) {
+void ICommunicatorImpl::quit(void) {
     if( runner.joinable() == true ) {
         this->runner_continue = false;
         force_exit_thread(runner);
     }
 }
 
-void ICommunicator::register_initialization_handler(InitialCB_Type &&handler) {
+void ICommunicatorImpl::register_initialization_handler(InitialCB_Type &&handler) {
     assert( handler != NULL );
     cb_handlers.cb_initialization_handle = handler;
 }
 
-void ICommunicator::register_connection_handler(ConnectionCB_Type &&handler) {
+void ICommunicatorImpl::register_connection_handler(ConnectionCB_Type &&handler) {
     assert( handler != NULL );
     cb_handlers.cb_connection_handle = handler;
 }
 
-void ICommunicator::register_message_handler(MessagePayloadCB_Type &&handler) {
+void ICommunicatorImpl::register_message_handler(MessagePayloadCB_Type &&handler) {
     assert( handler != NULL );
     cb_handlers.cb_message_payload_handle = handler;
 }
 
-void ICommunicator::register_unintended_quit_handler(QuitCB_Type &&handler) {
+void ICommunicatorImpl::register_unintended_quit_handler(QuitCB_Type &&handler) {
     assert( handler != NULL );
     cb_handlers.cb_quit_handle = handler;
 }
 
-std::shared_ptr<payload::CPayload> ICommunicator::create_payload(void) {
+std::shared_ptr<payload::CPayload> ICommunicatorImpl::create_payload(void) {
     assert( proto_config->is_ready() == true );
     return proto_config->create_protocols_chain();
 }
 
-bool ICommunicator::send(std::string app_path, std::string pvd_path, std::shared_ptr<payload::CPayload>&& payload) {
+bool ICommunicatorImpl::send(std::string app_path, std::string pvd_path, std::shared_ptr<payload::CPayload>&& payload) {
     if (m_send_payload == NULL) {
         return false;
     }
@@ -135,7 +162,7 @@ bool ICommunicator::send(std::string app_path, std::string pvd_path, std::shared
     return true;
 }
 
-bool ICommunicator::send(std::string app_path, std::string pvd_path, std::shared_ptr<payload::CPayload>& payload) {
+bool ICommunicatorImpl::send(std::string app_path, std::string pvd_path, std::shared_ptr<payload::CPayload>& payload) {
     if (m_send_payload == NULL) {
         return false;
     }
@@ -144,21 +171,7 @@ bool ICommunicator::send(std::string app_path, std::string pvd_path, std::shared
     return true;
 }
 
-bool ICommunicator::send(std::string app_path, std::string pvd_path, const void* msg, size_t msg_size) {
-    try {
-        auto payload = create_payload();
-        assert( payload->set_payload(msg, msg_size) == true );
-        return send( std::move(app_path), std::move(pvd_path), payload );
-    }
-    catch( const std::exception &e ) {
-        LOGERR("%s", e.what());
-        throw e;
-    }
-
-    return false;
-}
-
-bool ICommunicator::connect_try(std::string &peer_ip, uint16_t peer_port, std::string& app_path, std::string &pvd_id) {
+bool ICommunicatorImpl::connect_try(std::string &peer_ip, uint16_t peer_port, std::string& app_path, std::string &pvd_id) {
     bool ret = true;
     std::string peer_full_path;
     assert( peer_ip.empty() != true );
@@ -183,7 +196,7 @@ bool ICommunicator::connect_try(std::string &peer_ip, uint16_t peer_port, std::s
     return ret;
 }
 
-bool ICommunicator::connect_try(std::string && app_path, std::string && pvd_id) {
+bool ICommunicatorImpl::connect_try(std::string && app_path, std::string && pvd_id) {
     bool ret = true;
     assert( app_path.empty() == false );
     assert( pvd_id.empty() == false );
@@ -205,7 +218,7 @@ bool ICommunicator::connect_try(std::string && app_path, std::string && pvd_id) 
     return ret;
 }
 
-void ICommunicator::disconnect(std::string & app_path, std::string & pvd_id) {
+void ICommunicatorImpl::disconnect(std::string & app_path, std::string & pvd_id) {
     assert( app_path.empty() == false );
     assert( pvd_id.empty() == false );
 
@@ -223,7 +236,7 @@ void ICommunicator::disconnect(std::string & app_path, std::string & pvd_id) {
     }
 }
 
-void ICommunicator::disconnect(std::string && app_path, std::string && pvd_id) {
+void ICommunicatorImpl::disconnect(std::string && app_path, std::string && pvd_id) {
     assert( app_path.empty() == false );
     assert( pvd_id.empty() == false );
 
@@ -240,33 +253,29 @@ void ICommunicator::disconnect(std::string && app_path, std::string && pvd_id) {
         throw e;
     }
 }
-
-/*****
- * Protected Member Function.
- */ 
-void ICommunicator::set_send_payload_fp(SendPayloadType &&fp) {
-    assert(fp!=NULL);
-    this->m_send_payload = fp;
-}
-
-CReceiver& ICommunicator::get_cb_handlers(void) {
-    return cb_handlers;
-}
-
 
 /*****
  * Private Member Function.
  */ 
+void ICommunicatorImpl::set_send_payload_fp(SendPayloadType &&fp) {
+    assert(fp!=NULL);
+    this->m_send_payload = fp;
+}
+
+CReceiver& ICommunicatorImpl::get_cb_handlers(void) {
+    return cb_handlers;
+}
+
 static void cb_force_exit_thread(void* app_id) {
     assert(app_id != NULL);
     LOGW("%s Thread is force-exited.", (const char*)app_id);
 }
 
-void ICommunicator::clear(void) {
+void ICommunicatorImpl::clear(void) {
     this->runner_continue = false;
     this->provider_type = enum_c::ProviderType::E_PVDT_NOT_DEFINE;
-    this->app_id = "destroyed";
-    this->provider_id = "destroyed";
+    this->app_id.clear();
+    this->provider_id.clear();
     this->port = 0;
     this->ip.clear();
     this->mode=enum_c::ProviderMode::E_PVDM_NONE;
@@ -277,7 +286,7 @@ void ICommunicator::clear(void) {
     this->h_pvd.reset();
 }
 
-void ICommunicator::validation_check(void) {
+void ICommunicatorImpl::validation_check(void) {
     if(this->provider_type == enum_c::ProviderType::E_PVDT_NOT_DEFINE) {
         throw std::invalid_argument("Invalid Input: provider_type is NOT_DEFINE.");
     }
@@ -292,17 +301,17 @@ void ICommunicator::validation_check(void) {
     }
 }
 
-bool ICommunicator::is_running_continue(void) {
+bool ICommunicatorImpl::is_running_continue(void) {
     return runner_continue;
 }
 
-int ICommunicator::run(void) {
+int ICommunicatorImpl::run(void) {
     LOGD("Called.");
     std::shared_ptr<CAppInternalCaller> app_caller = std::make_shared<CAppInternalCaller>();
-    app_caller->set_send_payload_of_app = std::bind(&ICommunicator::set_send_payload_fp, this, std::placeholders::_1);
-    app_caller->get_cb_handlers = std::bind(&ICommunicator::get_cb_handlers, this);
-    app_caller->get_app_id = std::bind(&ICommunicator::get_app_id, this);
-    app_caller->get_provider_id = std::bind(&ICommunicator::get_provider_id, this);
+    app_caller->set_send_payload_of_app = std::bind(&ICommunicatorImpl::set_send_payload_fp, this, std::placeholders::_1);
+    app_caller->get_cb_handlers = std::bind(&ICommunicatorImpl::get_cb_handlers, this);
+    app_caller->get_app_id = std::bind(&ICommunicatorImpl::get_app_id, this);
+    app_caller->get_provider_id = std::bind(&ICommunicatorImpl::get_provider_id, this);
     h_pvd.reset();
 
     // when receive 'cancel' signal, terminate this thread immediatly.
@@ -362,7 +371,7 @@ int ICommunicator::run(void) {
     return 0;
 }
 
-void ICommunicator::force_exit_thread(std::thread &h_thread) {
+void ICommunicatorImpl::force_exit_thread(std::thread &h_thread) {
     if( h_thread.joinable() == true ) {
         auto n_thread = h_thread.native_handle();
 
@@ -376,7 +385,7 @@ void ICommunicator::force_exit_thread(std::thread &h_thread) {
     }
 }
 
-std::shared_ptr<cf_alias::IAliasPVD> ICommunicator::get_provider( void ) {
+std::shared_ptr<cf_alias::IAliasPVD> ICommunicatorImpl::get_provider( void ) {
     std::shared_ptr<cf_alias::IAliasPVD> res;
     try {
         res = alias_config->get_provider( app_id, provider_id, provider_type );
@@ -401,7 +410,7 @@ std::shared_ptr<cf_alias::IAliasPVD> ICommunicator::get_provider( void ) {
     return res;
 }
 
-void ICommunicator::sync_trans_provider( std::shared_ptr<cf_alias::CAliasTrans>& pvd ) {
+void ICommunicatorImpl::sync_trans_provider( std::shared_ptr<cf_alias::CAliasTrans>& pvd ) {
     try {
         std::string& pvd_ip = pvd->get_ip_ref();
         uint32_t& pvd_port = pvd->get_port_ref();

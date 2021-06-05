@@ -4,7 +4,7 @@ QT -= gui core
 
 VER_MAJ = 0
 VER_MIN = 2
-VER_PAT = 5
+VER_PAT = 6
 VERSION = $$VER_MAJ"."$$VER_MIN"."$$VER_PAT
 
 message( "[ Build 'communicator' " )
@@ -44,6 +44,7 @@ equals(BUILD_MODE, "release") {
 }
 
 INCLUDEPATH += \
+    $$_PRO_FILE_PWD_/api/include    \
     $$_PRO_FILE_PWD_/source/include/base    \
     $$_PRO_FILE_PWD_/source/include/implement    \
     $$ROOT_PATH/lib     \
@@ -55,6 +56,7 @@ INCLUDEPATH += \
     $$ROOT_PATH/lib/util
 
 SOURCES += \
+    $$files($$_PRO_FILE_PWD_/api/src/*.cpp)  \
     $$files($$_PRO_FILE_PWD_/source/src/base/*.cpp)  \
     $$files($$_PRO_FILE_PWD_/source/src/implement/provider/*.cpp)  \
     $$files($$ROOT_PATH/lib/json/*.cpp)     \
@@ -64,8 +66,8 @@ SOURCES += \
 
 # for installation.
 HEADERS += \
-    $$files($$_PRO_FILE_PWD_/api/common_api/*.h)    \
-    $$files($$_PRO_FILE_PWD_/api/common_api/*.hpp)
+    $$files($$_PRO_FILE_PWD_/api/include/*.h)    \
+    $$files($$_PRO_FILE_PWD_/api/include/*.hpp)
 
 EXTRA_BINFILES = \
     $$_PRO_FILE_PWD_/lib$$TARGET.so \

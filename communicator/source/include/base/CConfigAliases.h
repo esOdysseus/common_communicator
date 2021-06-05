@@ -221,6 +221,8 @@ namespace cf_alias {
 
         PVDListType& get_providers(std::string app_path, enum_c::ProviderType pvd_type);
 
+        std::shared_ptr<IAliasPVD> get_provider(std::string app_path, std::string pvd_id);
+
         std::shared_ptr<IAliasPVD> get_provider(std::string app_path, std::string pvd_id, std::string pvd_type);
 
         std::shared_ptr<IAliasPVD> get_provider(std::string app_path, std::string pvd_id, enum_c::ProviderType pvd_type);

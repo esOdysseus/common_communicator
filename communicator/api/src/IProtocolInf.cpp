@@ -9,6 +9,7 @@
 
 #include <logger.h>
 #include <IProtocolInf.h>
+#include <CRawMessage.h>
 
 #define GET_PROTOCOL(iterator)  (*(iterator))->get(payload::CPayload::Myself_Name)
 
@@ -138,7 +139,7 @@ IProtocolInf::SegmentsType& IProtocolInf::pack_recursive(const void* msg, size_t
 bool IProtocolInf::unpack_recurcive(const void* msg_raw, size_t msg_size) {
     LOGD("Called");
     bool res = false;
-    MsgType payload;
+    std::shared_ptr<payload::CPayload::DataType> payload;
     std::shared_ptr<CPayload::ProtoChainType> proto_chain;
     assert(msg_raw != NULL);
     assert(msg_size > 0);

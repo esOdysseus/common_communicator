@@ -1,31 +1,22 @@
 
 /***
- * IAppInf.h
+ * ICommunicator.h
  * Copyright [2019-] 
  * Written by EunSeok Kim <es.odysseus@gmail.com>
  * 
  * This file is part of the Common-Communicator framework.
  */
-#ifndef IAPP_INTERFACE_H_
-#define IAPP_INTERFACE_H_
+#ifndef ICOMMUNICATOR_INTERFACE_H_
+#define ICOMMUNICATOR_INTERFACE_H_
 
 #include <string>
-#include <thread>
-#include <functional>
+#include <memory>
 
 #include <Enum_common.h>
 #include <CReceiver.h>
 
-class ICommunicator;
+class ICommunicatorImpl;
 
-std::shared_ptr<ICommunicator> create_communicator(std::string app_id, 
-                                                   std::string provider_id, 
-                                                   enum_c::ProviderType provider_type, 
-                                                   unsigned short port=0, 
-                                                   const char* ip=NULL,
-                                                   enum_c::ProviderMode mode=enum_c::ProviderMode::E_PVDM_BOTH,
-                                                   const char* protocol_desp_path=NULL,
-                                                   const char* alias_desp_path=NULL);
 
 class ICommunicator {
 public:
@@ -35,11 +26,19 @@ public:
     using QuitCB_Type = CReceiver::QuitCB_Type;
 
 public:
+    // Constructor API for Dynamic-Auto parsed Provider.
     ICommunicator(std::string app_id, 
                   std::string provider_id, 
+                  std::string alias_file_path,
+                  std::string protocol_file_path,
+                  enum_c::ProviderMode mode=enum_c::ProviderMode::E_PVDM_BOTH);
+
+    // Constructor API for Static-Defined Provider. (Only for Unregisted Transaction-Communication)
+    ICommunicator(std::string app_id, 
+                  std::string provider_id, 
+                  std::string alias_file_path,
+                  std::string protocol_file_path,
                   enum_c::ProviderType provider_type, 
-                  std::shared_ptr<void> &proto_config,
-                  std::shared_ptr<void> &alias_config,
                   unsigned short port=0,
                   const char* ip=NULL,
                   enum_c::ProviderMode mode=enum_c::ProviderMode::E_PVDM_BOTH);
@@ -175,7 +174,7 @@ public:
     //   - Postcondition : Handler registered by cb_register_connection_handler() will be called.
     //                   : If authentication mode is DISABLE,
     //                     then Handler registered by cb_register_available_handler() will be called.
-    bool connect_try(std::string &peer_ip, uint16_t peer_port, std::string &new_alias_name);  // Mandatory
+    bool connect_try(std::string &peer_ip, uint16_t peer_port, std::string& app_path, std::string &pvd_id);  // Mandatory
 
     // connect to peer that is pre-named as 'alias' variable.
     bool connect_try(std::string &&app_path, std::string &&pvd_id);  // Mandatory
@@ -219,6 +218,19 @@ public:
      * Discovery API
      ******************************/
 
+private:
+    ICommunicator(void) = delete;
+    ICommunicator( ICommunicator& inst ) = delete;
+    ICommunicator( ICommunicator&& inst ) = delete;
+    
+
+private:
+#if __cplusplus > 201103L
+    std::unique_ptr<ICommunicatorImpl> _m_impl_;
+#else
+    std::shared_ptr<ICommunicatorImpl> _m_impl_;
+#endif
+
 };
 
-#endif // IAPP_INTERFACE_H_
+#endif // ICOMMUNICATOR_INTERFACE_H_

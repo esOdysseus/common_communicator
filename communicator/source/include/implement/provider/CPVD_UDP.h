@@ -10,7 +10,6 @@
 
 #include <string>
 #include <IPVDInf.h>
-#include <IAppInf.h>
 #include <Cinet_uds.h>
 
 template <typename ADDR_TYPE=struct sockaddr_in>

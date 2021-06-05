@@ -9,6 +9,7 @@
 #define C_PROTOCOL_BIG_ENDIAN_H_
 
 #include <IProtocolInf.h>
+#include <CRawMessage.h>
 
 class CPBigEndian : public IProtocolInf {
 public:

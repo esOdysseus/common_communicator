@@ -9,6 +9,7 @@
 #define C_PROTOCOL_LITTLE_ENDIAN_H_
 
 #include <IProtocolInf.h>
+#include <CRawMessage.h>
 
 class CPLittleEndian : public IProtocolInf {
 public:

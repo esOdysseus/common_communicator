@@ -157,6 +157,30 @@ CConfigAliases::PVDListType& CConfigAliases::get_providers(std::string app_path,
     return get_providers( app_path, IAliasPVD::convert(pvd_type) );
 }
 
+std::shared_ptr<IAliasPVD> CConfigAliases::get_provider(std::string app_path, std::string pvd_id) {
+    std::shared_ptr<IAliasPVD> result;
+
+    try {
+        for( int i=0; _ma_pvd_types_[i] != NULL; i++ ) {
+            result = get_provider( app_path, pvd_id, _ma_pvd_types_[i] );
+            
+            if( result.get() != NULL ) {
+                LOGI("Found provider.(%s/%s)", app_path.data(), pvd_id.data());
+                break;
+            }
+        }
+    }
+    catch ( const CException &e ) {
+        LOGW("%s", e.what());
+    }
+    catch( const std::exception& e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+
+    return result;
+}
+
 std::shared_ptr<IAliasPVD> CConfigAliases::get_provider(std::string app_path, std::string pvd_id, std::string pvd_type) {
     std::shared_ptr<IAliasPVD> result;
 

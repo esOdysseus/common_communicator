@@ -8,8 +8,10 @@
 #ifndef C_PROTOCOL_UNIVERSAL_COMMAND_H_
 #define C_PROTOCOL_UNIVERSAL_COMMAND_H_
 
-#include <IProtocolInf.h>
 #include <functional>
+
+#include <IProtocolInf.h>
+#include <CRawMessage.h>
 
 #define TOTAL_HEADER_SIZE      (4 + 4 + 4 + 8 + 1 + 3)     // 24 byte
 

@@ -10,9 +10,17 @@
 #include <logger.h>
 #include <CPayload.h>
 #include <IProtocolInf.h>
+#include <CRawMessage.h>
 
 namespace payload
 {
+
+typedef enum E_ERROR {
+    E_NO_ERROR = 0,
+    E_INVALID_MEMBER_VARIABLES = 2,
+    E_ITS_NOT_SUPPORTED_TYPE = 3,
+    E_INVALID_VALUE = 4
+} E_ERROR;
 
 static const char* exception_switch(E_ERROR err_num) {
     switch(err_num) {
@@ -31,18 +39,18 @@ static const char* exception_switch(E_ERROR err_num) {
 #include <CException.h>
 
 
+
 /************************************
  * Public Function Definition
  */
-CPayload::CPayload(std::string name) 
+CPayload::CPayload(std::string name)
 : _name_(name), _flag_op_(0) {
-    _payload_ = std::make_shared<DataType>();
-    _protocol_chain_name_.clear();
+    _payload_ = std::make_shared<CRawMessage>();
     _protocol_chain_.reset();
+    _protocol_chain_name_.clear();
 }
 
-CPayload::~CPayload(void) {
-    LOGD("Called.");
+CPayload::~CPayload(void) { 
     _protocol_chain_.reset();
     _protocol_chain_name_.clear();
     _name_.clear();
@@ -51,7 +59,7 @@ CPayload::~CPayload(void) {
 }
 
 const std::string CPayload::get_name(void) {
-    return this->_name_;
+    return _name_;
 }
 
 std::shared_ptr<IProtocolInf> CPayload::get(std::string proto_name) {
@@ -134,6 +142,7 @@ void CPayload::set_op_flag(E_PAYLOAD_FLAG target, bool value) {
 }
 
 
+
 /************************************
  * Protected Function Definition
  */
@@ -143,13 +152,13 @@ inline std::shared_ptr<IProtocolInf> CPayload::get_protocol(void) {
 }
 
 std::shared_ptr<CPayload::DataType> CPayload::get_payload(void) { 
-    return _payload_; 
+    return _payload_;
 }
 
-bool CPayload::set_payload(std::shared_ptr<CPayload::DataType>&& msg_raw) {
+bool CPayload::set_payload(std::shared_ptr<DataType>&& msg_raw) {
     try{
         _payload_.reset();
-        _payload_ = std::forward<std::shared_ptr<DataType>>(msg_raw);
+        _payload_ = std::forward<std::shared_ptr<CRawMessage>>(msg_raw);
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
@@ -179,6 +188,7 @@ void CPayload::set_proto_chain(std::string chain_name, std::shared_ptr<ProtoChai
 std::string CPayload::get_protocols_chain_name(void) {
     return _protocol_chain_name_;
 }
+
 
 
 }   // namespace payload

@@ -8,7 +8,6 @@
 #include <cassert>
 #include <logger.h>
 #include <Enum_common.h>
-#include <IAppInf.h>
 #include <provider/CHProtoBaseLan.h>
 
 using namespace std::placeholders;

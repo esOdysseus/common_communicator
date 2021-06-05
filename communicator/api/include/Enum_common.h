@@ -40,5 +40,13 @@ namespace enum_c
     };
 }
 
+namespace payload
+{
+    typedef enum E_PAYLOAD_FLAG {   // We will use it as Bit-Masking type flag.
+        E_NONE = 0,
+        E_KEEP_PAYLOAD_AFTER_TX = 1
+    } E_PAYLOAD_FLAG;
+}
+
 
 #endif // ENUM_COMMON_H_
