@@ -28,8 +28,11 @@ public:
     using PVDType = enum_c::ProviderType;
     using TfuncType = std::function<bool(MsgDataType* /*data*/)>;
 
+private:
+    static constexpr const uint64_t DEF_CAP_SIZE = 0xFFFFFFFFFFFFFFFFUL;
+
 public:
-    CRawMessage(size_t capacity=0);
+    CRawMessage(uint64_t capacity=DEF_CAP_SIZE);
 
     ~CRawMessage(void);
 
@@ -70,7 +73,7 @@ private:
 
     bool extend_capacity(size_t append_capacity);
 
-    bool init(size_t capacity);
+    bool init(uint64_t capacity);
 
     void clear(void);
 

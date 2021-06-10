@@ -13,6 +13,7 @@
 
 #include <logger.h>
 #include <json_manipulator.h>
+#include <CRawMessage.h>
 
 namespace json_mng
 {

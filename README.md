@@ -143,6 +143,7 @@ Date | Version | Description
 `2021-06-02` | Ver 0.2.5 | Refactoring Code-Structure to apply for Alias-Policy pair of App-path & PVD-id.
 `2021-06-05` | Ver 0.2.6 | Refactoring API-Structure to apply for API-Consistency.
 `2021-06-05` | Ver 0.2.7 | Modify legacy Sample-Test Program to Variable Sample-Test.
+`2021-06-10` | Ver 0.2.7 | Modify CPUniversalCMD & CRawMessage to support Zero-message Tx/Rx.
 
 
 ### TBD-list

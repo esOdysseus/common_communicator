@@ -262,7 +262,7 @@ bool CPUniversalCMD::pack_raw_data(const void* msg_raw, size_t msg_size,
                                    std::shared_ptr<SegmentType> segment, size_t raw_size) {
     bool res = false;
     assert( segment.get() != NULL );
-    assert( msg_raw != NULL && msg_size > 0 );
+    // assert( msg_raw != NULL && msg_size > 0 );
     assert( raw_size >= msg_size + get_header_size() );
 
     try {
@@ -281,7 +281,10 @@ bool CPUniversalCMD::pack_raw_data(const void* msg_raw, size_t msg_size,
                                     memcpy( raw_data+sizeof(protocol), m_from.data(), m_from.length() );
                                     *(raw_data + sizeof(protocol) + m_from.length()) = 0;
                                 }
-                                memcpy( raw_data+get_header_size(), src_buf, get_length() );
+
+                                if( get_length() > 0 ) {
+                                    memcpy( raw_data+get_header_size(), src_buf, get_length() );
+                                }
                                 return true;
                             }, raw_size );
     }

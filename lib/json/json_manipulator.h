@@ -14,8 +14,9 @@
 #include <string>
 #include <sstream>
 
-#include <CRawMessage.h>
 #include <json_headers.h>
+
+class CRawMessage;
 
 namespace json_mng
 {

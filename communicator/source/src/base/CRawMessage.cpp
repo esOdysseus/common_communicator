@@ -25,7 +25,7 @@ template bool CRawMessage::set_source(std::shared_ptr<int> addr, const char* app
 /***********************************************************
  * Definition member-function of CRawMessage Class.
  * */
-CRawMessage::CRawMessage(size_t capa) { 
+CRawMessage::CRawMessage(uint64_t capa) { 
     clear();
     init(capa);
 }
@@ -34,13 +34,14 @@ CRawMessage::~CRawMessage(void) {
     destroy();
 }
 
-bool CRawMessage::init(size_t capa) {
+bool CRawMessage::init(uint64_t capa) {
     try {
-        if (capa == 0) {
-            capa = 2*capacity_bin;
+        if (capa == DEF_CAP_SIZE) {
+            capa = (uint64_t)(2*capacity_bin);
         }
-        this->capacity = capa + 1; 
+        this->capacity = static_cast<size_t>(capa + 1); 
         this->msg_size = 0;
+        LOGD("Memory-Allocation with capacity=%lu", capacity);
         this->_m_msg_ = new MsgDataType[capacity];
         assert( this->_m_msg_ != NULL );
     }
