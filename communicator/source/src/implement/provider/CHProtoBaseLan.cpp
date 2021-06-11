@@ -41,11 +41,11 @@ bool CHProtoBaseLan::set_app_call_back(void) {
  */
 bool CHProtoBaseLan::write_payload(std::string app_path, std::string pvd_path, std::shared_ptr<payload::CPayload>&& payload) {
     LOGD("It's called.");
+    ProtocolType pro_payload = std::dynamic_pointer_cast<IProtocolInf>(payload);
 
     try {
         AppCallerType& app = get_app_instance();
         std::string from_full_path = cf_alias::IAlias::make_full_path( app->get_app_id(), app->get_provider_id() );
-        ProtocolType pro_payload = std::dynamic_pointer_cast<IProtocolInf>(payload);
         SegmentsType segments = encapsulation(pro_payload, s_server->get_provider_type(), std::move(from_full_path));
 
         // message write.
@@ -66,6 +66,7 @@ bool CHProtoBaseLan::write_payload(std::string app_path, std::string pvd_path, s
         return true;
     }
     catch(const std::exception &e) {
+        destroy_proto_chain(pro_payload);
         LOGERR("%s", e.what());
     }
     return false;
