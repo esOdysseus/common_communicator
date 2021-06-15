@@ -222,6 +222,12 @@ public:
      ******************************/
 
 private:
+    ICommunicatorImpl( void ) = delete;
+    ICommunicatorImpl( const ICommunicatorImpl& self ) = delete;
+    ICommunicatorImpl& operator=(const ICommunicatorImpl& self) = delete;
+    ICommunicatorImpl( ICommunicatorImpl&& self ) = delete;
+    ICommunicatorImpl& operator=(ICommunicatorImpl&& self) = delete;
+
     // Regist function-point for "send" member-function.
     void set_send_payload_fp(SendPayloadType &&fp);
 

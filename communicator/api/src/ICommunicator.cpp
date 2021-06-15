@@ -16,38 +16,41 @@
 #include <CConfigAliases.h>
 #include <ICommunicator.h>
 #include <ICommunicatorImpl.h>
+#include <IAliasSearcher.h>
+#include <CAliasSearcherImpl.h>
 
 /*****
  * Static Function.
  */ 
-using Tmap_alias = std::map<std::string /*alias_path*/, std::shared_ptr<cf_alias::CConfigAliases>>;
 using Tmap_proto = std::map<std::string /*proto_path*/, std::shared_ptr<cf_proto::CConfigProtocols>>;
-static Tmap_alias  _gm_aliases_;
 static Tmap_proto  _gm_protos_;
 
-static std::shared_ptr<cf_alias::CConfigAliases> update_get_alias(std::string& file_path) {
-    Tmap_alias::iterator iter;
+
+static std::shared_ptr<cf_alias::CConfigAliases> update_get_alias( std::string& file_path ) {
+    std::shared_ptr<cf_alias::CConfigAliases> res;
 
     try {
-        iter = _gm_aliases_.find(file_path);
-
-        if( iter == _gm_aliases_.end() ) {
-            auto res = _gm_aliases_.insert( {file_path, std::make_shared<cf_alias::CConfigAliases>(file_path.data())} );
-            if( res.second != true ) {
-                std::string err = "Key is duplicated. (" + file_path + ")";
-                throw std::logic_error(err);
-            }
-            iter = res.first;
+        auto searcher = alias::IAliasSearcher::get_searcher( file_path );
+        if( searcher.get() == NULL ) {
+            throw std::runtime_error("Fail to get AliasSearcher.");
         }
+
+        auto searcher_impl = std::dynamic_pointer_cast<alias::CAliasSearcherImpl>(searcher);
+        if( searcher_impl.get() == NULL ) {
+            throw std::runtime_error("Fail to get AliasSearcherImpl.");
+        }
+
+        res = searcher_impl->get_config_alias();
     }
     catch( const std::exception& e ) {
         LOGERR("%s", e.what());
         throw e;
     }
-    return iter->second;
+
+    return res;
 }
 
-static std::shared_ptr<cf_proto::CConfigProtocols> update_get_proto(std::string& file_path) {
+static std::shared_ptr<cf_proto::CConfigProtocols> update_get_proto( std::string& file_path ) {
     Tmap_proto::iterator iter;
 
     try {
@@ -82,6 +85,7 @@ ICommunicator::ICommunicator(std::string app_id,
     try {
         auto alias_config = update_get_alias( alias_file_path );
         auto proto_config = update_get_proto( protocol_file_path );
+
 #if __cplusplus > 201103L
         _m_impl_ = std::make_unique<ICommunicatorImpl>(std::move(app_id), std::move(provider_id), alias_config, proto_config, mode);
 #else
