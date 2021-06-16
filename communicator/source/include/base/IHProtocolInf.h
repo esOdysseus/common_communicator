@@ -21,6 +21,9 @@
 #include <CConfigProtocols.h>
 #include <CThreadPool.h>
 
+
+class IPVDInf;
+
 class IHProtocolInf {
 public:
     using RawMsgType = dtype_b::RawMsgType;
@@ -31,7 +34,7 @@ public:
 
 public:
 
-    IHProtocolInf(AppCallerType &app,
+    IHProtocolInf(std::shared_ptr<IPVDInf>& provider, AppCallerType &app,
                   std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager);
 
     ~IHProtocolInf(void);
@@ -57,6 +60,9 @@ protected:
     AppCallerType& get_app_instance(void);
 
     bool destroy_proto_chain(ProtocolType &chain);
+
+protected:
+    std::shared_ptr<IPVDInf> m_provider;
 
 private:
     AppCallerType s_app;

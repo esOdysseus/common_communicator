@@ -9,7 +9,7 @@
 #include <memory>
 #include <map>
 
-#include <config.h>
+#include <version.h>
 #include <logger.h>
 #include <CPayload.h>
 #include <CConfigProtocols.h>

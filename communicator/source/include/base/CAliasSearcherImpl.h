@@ -25,7 +25,9 @@ namespace alias {
         ~CAliasSearcherImpl(void) override;
 
         // Open-API Lists
-        std::shared_ptr<cf_alias::IAliasPVD> get_provider( const std::string& peer_app, const std::string& peer_pvd ) override;
+        std::shared_ptr<cf_alias::IAliasPVD> get_peer_provider( const std::string& peer_app, const std::string& peer_pvd ) override;
+
+        std::list<std::shared_ptr<cf_alias::IAliasPVD>> get_mypvds_sendable( const std::string& peer_app, const std::string& peer_pvd ) override;
 
 
         // Close-API Lists

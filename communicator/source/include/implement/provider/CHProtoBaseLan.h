@@ -16,11 +16,10 @@
 
 class CHProtoBaseLan : public IHProtocolInf {
 public:
-    using ServerType = std::shared_ptr<IPVDInf>;
     using AddressType = CRawMessage::LanAddrType;
 
 public:
-    CHProtoBaseLan(ServerType &&server, AppCallerType &app, 
+    CHProtoBaseLan(std::shared_ptr<IPVDInf> &&provider, AppCallerType &app, 
                    std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager);
 
     ~CHProtoBaseLan(void);
@@ -29,9 +28,6 @@ protected:
     bool set_app_call_back(void) override;
 
     bool write_payload(std::string app_path, std::string pvd_path, std::shared_ptr<payload::CPayload>&& payload) override;
-
-private:
-    ServerType s_server;
 
 };
 

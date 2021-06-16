@@ -68,13 +68,17 @@ void IPVDInf::CLooper::force_join(void) {
  * Definition for Public Member-Function of IPVDInf Class.
  */
 
-IPVDInf::IPVDInf(std::shared_ptr<cf_alias::IAliasPVD>& pvd_alias) {
+IPVDInf::IPVDInf(std::shared_ptr<cf_alias::IAliasPVD>& pvd_alias, std::shared_ptr<cf_alias::CConfigAliases>& alias_manager) {
     try {
         LOGD("Called.");
         clear();
 
         assert( pvd_alias.get() != NULL );
         _m_pvd_alias_ = pvd_alias; 
+        _m_config_alias_ = alias_manager;
+
+        // if myself is un-registed pvd_alias, then register it to config_alias.
+        regist_unknown_pvd_alias( _m_pvd_alias_ );
     }
     catch (const std::exception &e) {
         LOGERR("%s", e.what());
@@ -176,6 +180,7 @@ void IPVDInf::clear(void) {
     }
     hHprotocol.reset();
     _m_pvd_alias_.reset();
+    _m_config_alias_.reset();
 }
 
 template <typename PROTOCOL_H> 
@@ -269,4 +274,36 @@ bool IPVDInf::zombi_thread_migrate(std::shared_ptr<cf_alias::IAliasPVD> peer_ali
     return false;
 }
 
+bool IPVDInf::regist_connected_peer(std::shared_ptr<cf_alias::IAliasPVD> peer_alias) {
+    try {
+        // register IAliasPVD & peer_full_path to config_alias.
+        return _m_config_alias_->regist_connected_peer( peer_alias, _m_pvd_alias_ );
+    }
+    catch( const std::exception& e ) {
+        LOGERR("%s", e.what());
+    }
 
+    return false;
+}
+
+void IPVDInf::unregist_connected_peer( std::string peer_full_path ) {
+    try {
+        // unregister relationship of IAliasPVD & peer_full_path in config_alias.
+        auto my_pvd_full_path = _m_pvd_alias_->path();
+        _m_config_alias_->unregist_connected_peer( peer_full_path, my_pvd_full_path );
+    }
+    catch( const std::exception& e ) {
+        LOGERR("%s", e.what());
+    }
+}
+
+void IPVDInf::regist_unknown_pvd_alias(std::shared_ptr<cf_alias::IAliasPVD> pvd_alias) {
+    try {
+        // register IAliasPVD to config_alias if not exist. 
+        _m_config_alias_->regist_provider( pvd_alias );     // update [app, pvd]
+    }
+    catch( const std::exception& e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+}

@@ -1,12 +1,12 @@
 /***
- * config.h
+ * version.h
  * Copyright [2019-] 
  * Written by EunSeok Kim <es.odysseus@gmail.com>
  * 
  * This file is part of the Common-Communicator framework.
  */
-#ifndef _CONFIG_H_
-#define _CONFIG_H_
+#ifndef _VERSION_CONFIG_H_
+#define _VERSION_CONFIG_H_
 
 #include <string>
 
@@ -27,4 +27,4 @@
 
 
 
-#endif // _CONFIG_H_
+#endif // _VERSION_CONFIG_H_

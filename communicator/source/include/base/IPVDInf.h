@@ -46,13 +46,13 @@ private:
     using LoopPoolType = std::unordered_map<std::string /* peer_full_path */, std::shared_ptr<CLooper> >;
 
 public:
-    IPVDInf(std::shared_ptr<cf_alias::IAliasPVD>& pvd_alias);
+    IPVDInf(std::shared_ptr<cf_alias::IAliasPVD>& pvd_alias, std::shared_ptr<cf_alias::CConfigAliases>& alia_manager);
 
     ~IPVDInf(void);
 
     virtual bool init(uint16_t port=0, std::string ip=std::string(), ProviderMode mode=ProviderMode::E_PVDM_BOTH) = 0;
 
-    virtual bool start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) = 0;
+    virtual bool start(AppCallerType &app, std::shared_ptr<cf_proto::CConfigProtocols>& proto_manager) = 0;
 
     virtual bool stop(void) = 0;
 
@@ -73,6 +73,8 @@ public:
     enum_c::ProviderType get_provider_type(void);
 
     std::shared_ptr<cf_alias::IAliasPVD> get_pvd_alias( void );
+
+    void unregist_connected_peer( std::string peer_full_path );
 
 protected:
     virtual int enable_keepalive(int sock) = 0;
@@ -99,6 +101,11 @@ protected:
 
     bool zombi_thread_migrate(std::shared_ptr<cf_alias::IAliasPVD> peer_alias);
 
+    bool regist_connected_peer(std::shared_ptr<cf_alias::IAliasPVD> peer_alias);
+
+private:
+    void regist_unknown_pvd_alias(std::shared_ptr<cf_alias::IAliasPVD> peer_alias);
+
 protected:
     bool started;
 
@@ -122,6 +129,8 @@ protected:
 
 private:
     std::shared_ptr<cf_alias::IAliasPVD>  _m_pvd_alias_;
+
+    std::shared_ptr<cf_alias::CConfigAliases> _m_config_alias_;
 
     LoopPoolType mLooperPool;
 

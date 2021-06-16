@@ -15,7 +15,7 @@
 template <typename ADDR_TYPE=struct sockaddr_in>
 class CPVD_UDP : public IPVDInf, Cinet_uds {
 public:
-    CPVD_UDP(std::shared_ptr<cf_alias::IAliasPVD> self_alias, AliasPVDsType& alias_list);
+    CPVD_UDP(std::shared_ptr<cf_alias::IAliasPVD> self_alias, std::shared_ptr<cf_alias::CConfigAliases>& alia_manager, AliasPVDsType& alias_list);
 
     ~CPVD_UDP(void);
 

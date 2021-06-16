@@ -82,6 +82,7 @@ CConfigAliases::CConfigAliases(const char* config_path)
         }
 
         _mm_pvds_map_.clear();
+        _mm_connected_peers_.clear();
         _mm_rscs_.clear();
 
         if ( config_path != NULL ) {
@@ -100,6 +101,7 @@ CConfigAliases::~CConfigAliases(void) {
     _m_f_ready_ = false;
     _mm_pvds_.clear();
     _mm_pvds_map_.clear();
+    _mm_connected_peers_.clear();
     _mm_rscs_.clear();
 }
 
@@ -209,6 +211,30 @@ std::shared_ptr<IAliasPVD> CConfigAliases::get_provider(std::string app_path, st
     return get_provider( app_path, pvd_id, IAliasPVD::convert(pvd_type) );
 }
 
+CConfigAliases::PVDListType CConfigAliases::get_connected_provider_to_peer(std::string peer_app, std::string peer_pvd) {
+    try {
+        auto peer_full_path = IAlias::make_full_path(peer_app, peer_pvd);
+
+        std::shared_lock<std::shared_mutex> guard(_mtx_connected_peers_);
+        auto itr = _mm_connected_peers_.find( peer_full_path );
+        if( itr == _mm_connected_peers_.end() ) {
+            std::string str = "Peer(" + peer_full_path + ") is not exist in Connected_peer_mapper.";
+            throw std::out_of_range(str);
+        }
+
+        return itr->second;
+    }
+    catch ( const std::out_of_range& e ) {
+        LOGW("%s", e.what());
+    }
+    catch ( const std::exception& e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+
+    return std::list<std::shared_ptr<IAliasPVD>>();
+}
+
 std::shared_ptr<IAliasPVD> CConfigAliases::create_provider(std::string app_path, std::string pvd_id, enum_c::ProviderType pvd_type) {
     try {
         switch( pvd_type ) {
@@ -228,6 +254,110 @@ std::shared_ptr<IAliasPVD> CConfigAliases::create_provider(std::string app_path,
     }
 
     return std::shared_ptr<IAliasPVD>();
+}
+
+void CConfigAliases::regist_provider( std::shared_ptr<IAliasPVD>& context ) {
+    try {
+        if( context.get() == NULL ) {
+            throw std::invalid_argument("IAliasPVD arg is empty.");
+        }
+
+        auto pvd_type = IAliasPVD::convert(context->type());
+        append_pvd_context( context->path_parent(), pvd_type, context);
+    }
+    catch ( const std::exception& e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+}
+
+bool CConfigAliases::regist_connected_peer( std::shared_ptr<IAliasPVD>& peer_pvd, std::shared_ptr<IAliasPVD>& my_pvd ) {
+    bool result = false;
+
+    try {
+        if( my_pvd.get() == NULL ) {
+            throw std::invalid_argument("my_pvd is empty.");
+        }
+
+        regist_provider( peer_pvd );
+        auto peer_full_path = peer_pvd->path();
+
+        {
+            // Search peer-space in mapper. & if need it, then insert new peer-space.
+            std::lock_guard<std::shared_mutex> guard(_mtx_connected_peers_);
+            auto itr = _mm_connected_peers_.find( peer_full_path );
+
+            if( itr == _mm_connected_peers_.end() ) {
+                auto res = _mm_connected_peers_.insert( {peer_full_path, std::list<std::shared_ptr<IAliasPVD>>()} );
+                if( res.second != true ) {
+                    std::string err = "Key is duplicated. (" + peer_full_path + ")";
+                    throw std::logic_error(err);
+                }
+                itr = res.first;
+            }
+
+            // Check wether my_pvd exist in list, or not.
+            for( auto itr_list=itr->second.begin(); itr_list != itr->second.end(); itr_list++ ) {
+                if( (*itr_list)->path() == my_pvd->path() ) {
+                    result = true;
+                    std::string str = "Already exist my_pvd(" + my_pvd->path() + ") data in Connected_peer_mapper.";
+                    throw std::out_of_range(str);
+                }
+            }
+
+            // Append my_pvd in list.
+            itr->second.push_back( my_pvd );
+            result = true;
+        }
+    }
+    catch ( const std::out_of_range& e ) {
+        LOGI("%s", e.what());
+    }
+    catch ( const std::exception& e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+
+    return result;
+}
+
+void CConfigAliases::unregist_connected_peer( std::string& peer_full_path, std::string& my_pvd_full_path ) {
+    try {
+        if( peer_full_path.empty() == true ) {
+            throw std::invalid_argument("peer_full_path is empty.");
+        }
+
+        if( my_pvd_full_path.empty() == true ) {
+            throw std::invalid_argument("my_pvd_full_path is empty.");
+        }
+
+        std::lock_guard<std::shared_mutex> guard(_mtx_connected_peers_);
+        auto itr = _mm_connected_peers_.find( peer_full_path );
+        if( itr == _mm_connected_peers_.end() ) {
+            std::string str = "Peer(" + peer_full_path + ") is not exist in Connected_peer_mapper.";
+            throw std::out_of_range(str);
+        }
+
+        // Check wether my_pvd exist in list, or not.
+        for( auto itr_list=itr->second.begin(); itr_list != itr->second.end(); itr_list++ ) {
+            if( (*itr_list)->path() == my_pvd_full_path ) {
+                LOGI("Erase relationship of Peer(%s)<-->MyApp(%s)", peer_full_path.data(), my_pvd_full_path.data());
+                itr->second.erase(itr_list);
+                break;
+            }
+        }
+
+        if( itr->second.size() == 0 ) {
+            _mm_connected_peers_.erase(itr);
+        }
+    }
+    catch ( const std::out_of_range& e ) {
+        LOGW("%s", e.what());
+    }
+    catch ( const std::exception& e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
 }
 
 
@@ -435,6 +565,41 @@ bool CConfigAliases::append_pvd_alias( json_mng::MemberIterator& itr_, std::shar
     return false;
 }
 
+bool CConfigAliases::isthere_pvd_context( std::string& app_path, std::string& pvd_type, std::shared_ptr<IAliasPVD>& context ) {
+    bool res = false;
+
+    try {
+        auto itr = _mm_pvds_map_.find( app_path );
+        if( itr == _mm_pvds_map_.end() ) {
+            std::string err = "Can not found app_path(" + app_path + ") in config_alias.";
+            throw std::invalid_argument(err);
+        }
+
+        auto itr_pvd = itr->second.find(pvd_type);
+        if( itr_pvd == itr->second.end() ) {
+            std::string err = "Can not found pvd_type(" + pvd_type + ") in app_path(" + app_path + ") of config_alias.";
+            throw std::invalid_argument(err);
+        }
+
+        for( auto itr_list= itr_pvd->second.begin(); itr_list != itr_pvd->second.end(); itr_list++ ) {
+            if( (*itr_list)->path() == context->path() ) {
+                LOGD("There is PVD context. (%s)", context->path().data());
+                res = true;
+            }
+        }
+    }
+    catch( const std::invalid_argument& e ) {
+        LOGW("%s", e.what());
+        res = false;
+    }
+    catch( const std::exception& e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+
+    return res;
+}
+
 void CConfigAliases::append_pvd_context( std::string&& app_path, std::string& pvd_type, std::shared_ptr<IAliasPVD>& context ) {
     try {
         auto itr = _mm_pvds_map_.find( app_path );
@@ -447,9 +612,11 @@ void CConfigAliases::append_pvd_context( std::string&& app_path, std::string& pv
             }
         }
 
-        _mm_pvds_map_[ app_path ][pvd_type].push_back(context);
-        _mm_pvds_[pvd_type].push_back(context);
-        LOGI("PVD(%s) is saved to PVD-List.", context->path().data());
+        if( isthere_pvd_context( app_path, pvd_type, context ) == false ) {
+            _mm_pvds_map_[ app_path ][pvd_type].push_back(context);
+            _mm_pvds_[pvd_type].push_back(context);
+            LOGI("PVD(%s) is saved to PVD-List.", context->path().data());
+        }
     }
     catch( const std::exception& e ) {
         LOGERR("%s", e.what());

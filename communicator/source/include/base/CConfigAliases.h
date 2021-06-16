@@ -13,6 +13,11 @@
 #include <string>
 #include <memory>
 #include <cassert>
+#if __cplusplus > 201402L
+    #include <shared_mutex> // for c++17
+#else
+    #include <shared_mutex_kes.h>   // for c++11
+#endif
 
 #include <IAliasPVD.h>
 #include <json_manipulator.h>
@@ -209,6 +214,7 @@ namespace cf_alias {
 
         using RSCMapType = std::map< std::string /* rsc_name */, std::shared_ptr<CAliasRSC> >;
         using APPMapType = std::map< std::string /* app_path */, PVDMapType >;
+        using PeerMapType = std::map< std::string/* peer pvd_full_path */, PVDListType>;
 
     public:
         CConfigAliases(const char* config_path);
@@ -227,7 +233,15 @@ namespace cf_alias {
 
         std::shared_ptr<IAliasPVD> get_provider(std::string app_path, std::string pvd_id, enum_c::ProviderType pvd_type);
 
+        PVDListType get_connected_provider_to_peer(std::string peer_app, std::string peer_pvd);
+
         std::shared_ptr<IAliasPVD> create_provider(std::string app_path, std::string pvd_id, enum_c::ProviderType pvd_type);
+
+        void regist_provider( std::shared_ptr<IAliasPVD>& context );
+
+        bool regist_connected_peer( std::shared_ptr<IAliasPVD>& peer_pvd, std::shared_ptr<IAliasPVD>& my_pvd );
+
+        void unregist_connected_peer( std::string& peer_full_path, std::string& my_pvd_full_path );
 
     private:
         CConfigAliases(void) = delete;
@@ -248,6 +262,8 @@ namespace cf_alias {
         // provider builder 
         bool append_pvd_alias( json_mng::MemberIterator& itr, std::shared_ptr<CAliasAPP>& app_ );
 
+        bool isthere_pvd_context( std::string& app_path, std::string& pvd_type, std::shared_ptr<IAliasPVD>& context );
+
         void append_pvd_context( std::string&& app_path, std::string& pvd_type, std::shared_ptr<IAliasPVD>& context );
 
         std::shared_ptr<IAliasPVD> make_pvd_alias(std::string alias, 
@@ -267,18 +283,36 @@ namespace cf_alias {
                                             std::shared_ptr<json_mng::CMjson> &obj_ );
 
     private:
-        // // valid 'value' assignment of configuration.
+        // valid 'value' assignment of configuration.
         static const char* _ma_pvd_types_[];
 
-        // provider_type : 'udp' , 'tcp' , 'vsomeip' , 'udp_uds' , 'tcp_uds'
-        PVDMapType _mm_pvds_;
-
-        // store resource-instance per resource-name
+        /*** store resource-alias per resource-name */
         RSCMapType _mm_rscs_;
 
-        // store mapper for provider-instances per app-path
-        // app-path : 'APP-01/sub01/sub-app'
+        /***
+         * Store mapper for all of provider-aliases in alias-desp.json file.
+         *  - Key     : provider_type (Ex: 'udp' , 'tcp' , 'vsomeip' , 'udp_uds' , 'tcp_uds')
+         *  - Value   : List structure for pvd-alias in alias-desp.json file.
+         ***/
+        PVDMapType _mm_pvds_;
+        
+        /***
+         * Store mapper for provider-aliases per app-path
+         *  - Key  : app-path (Ex: 'APP-01/sub01/sub-app')
+         *  - Value: Map structure for pvd-alias in alias-desp.json file.
+         *         * Key     : pvd-type (Ex: 'udp' , 'tcp' , 'vsomeip' , 'udp_uds' , 'tcp_uds')
+         *         * Value   : List structure for pvd-alias in alias-desp.json file.
+         ***/
         APPMapType _mm_pvds_map_;
+
+        /***
+         * When my-app is connected with peer, regist pvd-full-path of peer to in this mapper.
+         *  - Key   : peer pvd-full-path (Ex: APP-02/sub01/sub-app/pvd-01)
+         *  - Value : List structure for pvd-alias of my-app.
+         ***/
+        std::shared_mutex _mtx_connected_peers_;
+        PeerMapType _mm_connected_peers_;
+        
 
         bool _m_f_ready_;
 

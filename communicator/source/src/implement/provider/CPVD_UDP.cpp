@@ -46,8 +46,8 @@ template class CPVD_UDP<struct sockaddr_un>;
  * Definition of Public Function.
  */ 
 template <>
-CPVD_UDP<struct sockaddr_in>::CPVD_UDP(std::shared_ptr<cf_alias::IAliasPVD> self_alias, AliasPVDsType& alias_list)
-: IPVDInf(self_alias), Cinet_uds(PF_INET, SOCK_DGRAM, AF_INET) {
+CPVD_UDP<struct sockaddr_in>::CPVD_UDP(std::shared_ptr<cf_alias::IAliasPVD> self_alias, std::shared_ptr<cf_alias::CConfigAliases>& alia_manager, AliasPVDsType& alias_list)
+: IPVDInf(self_alias, alia_manager), Cinet_uds(PF_INET, SOCK_DGRAM, AF_INET) {
     try{
         LOGD("Called.");
         _mm_ali4addr_.clear();
@@ -61,8 +61,8 @@ CPVD_UDP<struct sockaddr_in>::CPVD_UDP(std::shared_ptr<cf_alias::IAliasPVD> self
 }
 
 template <>
-CPVD_UDP<struct sockaddr_un>::CPVD_UDP(std::shared_ptr<cf_alias::IAliasPVD> self_alias, AliasPVDsType& alias_list)
-: IPVDInf(self_alias), Cinet_uds(PF_FILE, SOCK_DGRAM, AF_UNIX) {
+CPVD_UDP<struct sockaddr_un>::CPVD_UDP(std::shared_ptr<cf_alias::IAliasPVD> self_alias, std::shared_ptr<cf_alias::CConfigAliases>& alia_manager, AliasPVDsType& alias_list)
+: IPVDInf(self_alias, alia_manager), Cinet_uds(PF_FILE, SOCK_DGRAM, AF_UNIX) {
     try{
         LOGD("Called.");
         _mm_ali4addr_.clear();
@@ -170,6 +170,7 @@ int CPVD_UDP<ADDR_TYPE>::make_connection(std::string peer_full_path) {
             if( is_new == true ) {
                 // trig connected call-back to app.
                 hHprotocol->handle_connection(peer_alias->path_parent(), peer_alias->name(), true);
+                assert( regist_connected_peer( peer_alias ) == true );
             }
             return true;
         }
@@ -249,6 +250,9 @@ typename CPVD_UDP<ADDR_TYPE>::MessageType CPVD_UDP<ADDR_TYPE>::read_msg(int u_so
 
         assert( _mm_ali4addr_.insert(peer_alias, cliaddr, is_new, true) == true );
         msg->set_source(cliaddr, peer_alias);
+        if( is_new == true ) {
+            assert( regist_connected_peer( peer_alias ) == true );
+        }
     }
     catch(const std::exception &e) {
         LOGERR("%d: %s", errno, strerror(errno));

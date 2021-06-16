@@ -15,9 +15,9 @@ namespace alias {
 CAliasSearcherImpl::CAliasSearcherImpl( const std::string& alias_file_path )
 : _m_file_path_(alias_file_path) {
     try {
-        _m_cf_alias_ = std::make_shared<cf_alias::CConfigAliases>( alias_file_path.data() );
+        _m_cf_alias_ = std::make_shared<cf_alias::CConfigAliases>( _m_file_path_.data() );
         if( _m_cf_alias_.get() == NULL ) {
-            std::string err = "Fail to create CConfigAliases about " + alias_file_path + ".";
+            std::string err = "Fail to create CConfigAliases about " + _m_file_path_ + ".";
             throw std::runtime_error(err);
         }
     }
@@ -32,11 +32,24 @@ CAliasSearcherImpl::~CAliasSearcherImpl(void) {
     _m_file_path_.clear();
 }
 
-std::shared_ptr<cf_alias::IAliasPVD> CAliasSearcherImpl::get_provider( const std::string& peer_app, const std::string& peer_pvd ) {
-    std::shared_ptr<cf_alias::IAliasPVD> res;
+std::shared_ptr<cf_alias::IAliasPVD> CAliasSearcherImpl::get_peer_provider( const std::string& peer_app, const std::string& peer_pvd ) {
+    try {
+        return _m_cf_alias_->get_provider( peer_app, peer_pvd );
+    }
+    catch ( const std::exception& e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+}
 
-    // TODO
-    return res;
+std::list<std::shared_ptr<cf_alias::IAliasPVD>> CAliasSearcherImpl::get_mypvds_sendable( const std::string& peer_app, const std::string& peer_pvd ) {
+    try {
+        return _m_cf_alias_->get_connected_provider_to_peer( peer_app, peer_pvd );
+    }
+    catch ( const std::exception& e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
 }
 
 

@@ -8,6 +8,7 @@
 #ifndef _ALIAS_SEARCHER_INTERFACE_H_
 #define _ALIAS_SEARCHER_INTERFACE_H_
 
+#include <list>
 #include <memory>
 #include <string>
 
@@ -23,7 +24,11 @@ namespace alias {
 
         virtual ~IAliasSearcher(void) = default;
 
-        virtual std::shared_ptr<cf_alias::IAliasPVD> get_provider( const std::string& peer_app, const std::string& peer_pvd ) = 0;
+        /// Search peer-provider that is connected with my-app.
+        virtual std::shared_ptr<cf_alias::IAliasPVD> get_peer_provider( const std::string& peer_app, const std::string& peer_pvd ) = 0;
+
+        /// In multiple provider in a my-apps, search my-provider that is connected with wanted peer.
+        virtual std::list<std::shared_ptr<cf_alias::IAliasPVD>> get_mypvds_sendable(const std::string& peer_app, const std::string& peer_pvd ) = 0;
 
     protected:
         IAliasSearcher(void) = default;

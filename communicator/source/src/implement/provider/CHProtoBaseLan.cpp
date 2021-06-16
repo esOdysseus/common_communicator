@@ -13,14 +13,14 @@
 
 using namespace std::placeholders;
 
-CHProtoBaseLan::CHProtoBaseLan(ServerType &&server, AppCallerType& app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager)
-: IHProtocolInf(app, proto_manager) {
-    this->s_server = std::forward<ServerType>(server);
+CHProtoBaseLan::CHProtoBaseLan(std::shared_ptr<IPVDInf> &&provider, AppCallerType& app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager)
+: IHProtocolInf(provider, app, proto_manager) {
+    // this->s_server = std::forward<std::shared_ptr<IPVDInf>>(server);
     assert( set_app_call_back() == true );
 }
 
 CHProtoBaseLan::~CHProtoBaseLan(void) {
-    s_server.reset();
+    // s_server.reset();
 }
 
 bool CHProtoBaseLan::set_app_call_back(void) {
@@ -46,11 +46,11 @@ bool CHProtoBaseLan::write_payload(std::string app_path, std::string pvd_path, s
     try {
         AppCallerType& app = get_app_instance();
         std::string from_full_path = cf_alias::IAlias::make_full_path( app->get_app_id(), app->get_provider_id() );
-        SegmentsType segments = encapsulation(pro_payload, s_server->get_provider_type(), std::move(from_full_path));
+        SegmentsType segments = encapsulation(pro_payload, m_provider->get_provider_type(), std::move(from_full_path));
 
         // message write.
         for(SegmentsType::iterator itor = segments.begin(); itor != segments.end(); itor++) {
-            if(s_server->write_msg(app_path, pvd_path, *itor) != true) {
+            if(m_provider->write_msg(app_path, pvd_path, *itor) != true) {
                 throw std::logic_error("write message is failed.");
             }
         }

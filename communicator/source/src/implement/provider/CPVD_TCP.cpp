@@ -80,8 +80,8 @@ static const char* exception_switch(E_ERROR err_num) {
 
 
 template <>
-CPVD_TCP<struct sockaddr_in>::CPVD_TCP(std::shared_ptr<cf_alias::IAliasPVD> self_alias, AliasPVDsType& alias_list)
-: IPVDInf(self_alias), Cinet_uds(PF_INET, SOCK_STREAM, AF_INET) {
+CPVD_TCP<struct sockaddr_in>::CPVD_TCP(std::shared_ptr<cf_alias::IAliasPVD> self_alias, std::shared_ptr<cf_alias::CConfigAliases>& alia_manager, AliasPVDsType& alias_list)
+: IPVDInf(self_alias, alia_manager), Cinet_uds(PF_INET, SOCK_STREAM, AF_INET) {
     try{
         _mode_ = ProviderMode::E_PVDM_NONE;
         _available_sockfd_ = 0;
@@ -96,8 +96,8 @@ CPVD_TCP<struct sockaddr_in>::CPVD_TCP(std::shared_ptr<cf_alias::IAliasPVD> self
 }
 
 template <>
-CPVD_TCP<struct sockaddr_un>::CPVD_TCP(std::shared_ptr<cf_alias::IAliasPVD> self_alias, AliasPVDsType& alias_list)
-: IPVDInf(self_alias), Cinet_uds(PF_FILE, SOCK_STREAM, AF_UNIX) {
+CPVD_TCP<struct sockaddr_un>::CPVD_TCP(std::shared_ptr<cf_alias::IAliasPVD> self_alias, std::shared_ptr<cf_alias::CConfigAliases>& alia_manager, AliasPVDsType& alias_list)
+: IPVDInf(self_alias, alia_manager), Cinet_uds(PF_FILE, SOCK_STREAM, AF_UNIX) {
     try{
         _mode_ = ProviderMode::E_PVDM_NONE;
         _available_sockfd_ = 0;
@@ -361,7 +361,7 @@ void CPVD_TCP<ADDR_TYPE>::disconnection(std::string app_path, std::string pvd_id
         }
         u_sockfd = *(_mm_ali4sock_.get(peer_full_path).get());
 
-        // TODO need auto-lock
+        // need auto-lock
         std::lock_guard<std::mutex> guard(mtx_write);
 
         Close( u_sockfd );
@@ -369,6 +369,7 @@ void CPVD_TCP<ADDR_TYPE>::disconnection(std::string app_path, std::string pvd_id
         if(_mode_ == ProviderMode::E_PVDM_CLIENT) {
             release_self_sockfd(u_sockfd);
         }
+        unregist_connected_peer( peer_full_path );
     }
     catch( const std::exception &e ) {
         LOGERR("%s", e.what());
@@ -576,13 +577,14 @@ void CPVD_TCP<ADDR_TYPE>::run_receiver(std::shared_ptr<cf_alias::IAliasPVD> peer
     std::string peer_pvd = peer_alias->name();
 
     try {
-        std::string peer_path = peer_alias->path();
+        std::string peer_full_path = peer_alias->path();
         assert(is_continue != NULL && *is_continue == true);
-        assert( _mm_ali4sock_.is_there(peer_path) == true );
-        assert( (socket_fd = *(_mm_ali4sock_.get(peer_path).get())) > 0 );
+        assert( _mm_ali4sock_.is_there(peer_full_path) == true );
+        assert( (socket_fd = *(_mm_ali4sock_.get(peer_full_path).get())) > 0 );
         *(socket.get()) = socket_fd;
 
         // trig connected call-back to app.
+        assert( regist_connected_peer( peer_alias ) == true );
         hHprotocol->handle_connection(peer_app, peer_pvd, true);
 
         // Start receiver

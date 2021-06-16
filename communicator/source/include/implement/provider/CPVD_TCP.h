@@ -19,7 +19,7 @@
 template <typename ADDR_TYPE=struct sockaddr_in>
 class CPVD_TCP : public IPVDInf, Cinet_uds {
 public:
-    CPVD_TCP(std::shared_ptr<cf_alias::IAliasPVD> self_alias, AliasPVDsType& alias_list);
+    CPVD_TCP(std::shared_ptr<cf_alias::IAliasPVD> self_alias, std::shared_ptr<cf_alias::CConfigAliases>& alia_manager, AliasPVDsType& alias_list);
 
     ~CPVD_TCP(void);
 

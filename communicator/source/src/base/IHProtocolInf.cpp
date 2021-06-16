@@ -11,12 +11,14 @@
 
 #include <logger.h>
 #include <IHProtocolInf.h>
+#include <IPVDInf.h>
 
 /**********************************
  * Public Function definition.
  */
-IHProtocolInf::IHProtocolInf(AppCallerType &app,
+IHProtocolInf::IHProtocolInf(std::shared_ptr<IPVDInf>& provider, AppCallerType &app,
                              std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager) {
+    this->m_provider = std::forward<std::shared_ptr<IPVDInf>>(provider);
     this->s_app = app;
     this->_rxthr_pool_ = std::make_shared<CThreadPool<RawMsgType>>(1);
     this->s_proto_config = proto_manager;
@@ -26,6 +28,7 @@ IHProtocolInf::~IHProtocolInf(void) {
     s_app.reset();
     _rxthr_pool_.reset();
     s_proto_config.reset();
+    m_provider.reset();
 }
 
 /***********************************
@@ -104,6 +107,9 @@ void IHProtocolInf::handle_connection(std::string app_path, std::string pvd_path
         AppCallerType& app = get_app_instance();
         assert(app.get() != NULL);
 
+        if( flag == false ) {
+            m_provider->unregist_connected_peer( cf_alias::IAlias::make_full_path(app_path, pvd_path) );
+        }
         app->get_cb_handlers().cb_connection_handle( app_path, pvd_path, flag );
     }
     catch (const std::exception &e) {
