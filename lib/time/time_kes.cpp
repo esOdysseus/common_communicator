@@ -179,30 +179,18 @@ T CTime::get_next(unsigned int index,      E_WEEK_TIME_VALVE week,
 }
 
 /** GET-WEEK functions */
-template <>
-inline E_WEEK_TIME_VALVE CTime::get_week(struct timespec &time) {
+template E_WEEK_TIME_VALVE CTime::get_week<struct timespec>(struct timespec& time);
+template E_WEEK_TIME_VALVE CTime::get_week<double>(double& time);
+template E_WEEK_TIME_VALVE CTime::get_week<time_t>(time_t& time);
+template E_WEEK_TIME_VALVE CTime::get_week<struct tm>(struct tm& time);
+
+template <typename T>
+E_WEEK_TIME_VALVE CTime::get_week(T &time) {
     tm temp = convert<struct tm>(time);
     return (E_WEEK_TIME_VALVE)temp.tm_wday;
 }
 
-template <>
-inline E_WEEK_TIME_VALVE CTime::get_week(double &time) {
-    tm temp = convert<struct tm>(time);
-    return (E_WEEK_TIME_VALVE)temp.tm_wday;
-}
-
-template <>
-inline E_WEEK_TIME_VALVE CTime::get_week(time_t &time) {
-    tm temp = convert<struct tm>(time);
-    return (E_WEEK_TIME_VALVE)temp.tm_wday;
-}
-
-template <>
-inline E_WEEK_TIME_VALVE CTime::get_week(tm &time) {
-    return (E_WEEK_TIME_VALVE)time.tm_wday;
-}
-
-inline E_WEEK_TIME_VALVE CTime::get_week(void) {
+E_WEEK_TIME_VALVE CTime::get_week(void) {
     tm temp = CTime::get<tm>();
     return (E_WEEK_TIME_VALVE)temp.tm_wday;
 }
@@ -255,7 +243,7 @@ template time_t CTime::convert<time_t>(struct timespec &time);
 template struct tm CTime::convert<struct tm>(struct timespec &time);
 
 template <typename  T>
-inline CTime::TTYPE_timespec<T> CTime::convert(struct timespec &time) {
+CTime::TTYPE_timespec<T> CTime::convert(struct timespec &time) {
     return time;
 }
 
@@ -275,7 +263,7 @@ CTime::TTYPE_double<T> CTime::convert(struct timespec &time) {
 }
 
 template <typename  T>
-inline CTime::TTYPE_time_t<T> CTime::convert(struct timespec &time) {
+CTime::TTYPE_time_t<T> CTime::convert(struct timespec &time) {
     return (time_t)(time.tv_nsec);
 }
 
@@ -306,12 +294,12 @@ CTime::TTYPE_timespec<T> CTime::convert(double time) {
 }
 
 template <typename  T>
-inline CTime::TTYPE_double<T> CTime::convert(double time) {
+CTime::TTYPE_double<T> CTime::convert(double time) {
     return time;
 }
 
 template <typename  T>
-inline CTime::TTYPE_time_t<T> CTime::convert(double time) {
+CTime::TTYPE_time_t<T> CTime::convert(double time) {
     return (time_t)time;
 }
 
@@ -345,12 +333,12 @@ CTime::TTYPE_timespec<T> CTime::convert(time_t &time) {
 }
 
 template <typename  T>
-inline CTime::TTYPE_double<T> CTime::convert(time_t &time) {
+CTime::TTYPE_double<T> CTime::convert(time_t &time) {
     return (double)time;
 }
 
 template <typename  T>
-inline CTime::TTYPE_time_t<T> CTime::convert(time_t &time) {
+CTime::TTYPE_time_t<T> CTime::convert(time_t &time) {
     return time;
 }
 
@@ -388,17 +376,17 @@ CTime::TTYPE_timespec<T> CTime::convert(tm &time) {
 }
 
 template <typename  T>
-inline CTime::TTYPE_double<T> CTime::convert(tm &time) {
+CTime::TTYPE_double<T> CTime::convert(tm &time) {
     return (double)mktime(&time);
 }
 
 template <typename  T>
-inline CTime::TTYPE_time_t<T> CTime::convert(tm &time) {
+CTime::TTYPE_time_t<T> CTime::convert(tm &time) {
     return mktime(&time);
 }
 
 template <typename  T>
-inline CTime::TTYPE_tm<T> CTime::convert(tm &time) {
+CTime::TTYPE_tm<T> CTime::convert(tm &time) {
     return time;
 }
 
