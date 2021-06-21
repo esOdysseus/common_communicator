@@ -175,6 +175,16 @@ std::string CMjson::get_first(MemberIterator itor) {
     return get_first_member(itor);
 }
 
+bool CMjson::has_member(std::string &key) {
+    assert(is_there() == true);
+    return object->HasMember(key.c_str());
+}
+
+bool CMjson::is_array(std::string &key) {
+    assert(is_there() == true);
+    return (*object.get())[key.c_str()].IsArray();
+}
+
 /*******************************
  * Private Function Definiction.
  */
@@ -229,7 +239,7 @@ inline int8_t CMjson::get_data<int8_t>(const char* data) {
 
 template<>
 inline uint32_t CMjson::get_data<uint32_t>(const char* data) {
-    return (uint32_t)(atoi(data));
+    return static_cast<uint32_t>(std::stoul(std::string(data), nullptr, 10));
 }
 
 template<>
@@ -254,9 +264,7 @@ inline bool CMjson::get_data<bool>(const char* data) {
 
 template<>
 inline double CMjson::get_data<double>(const char* data) {
-    char* end;
-    // return atof(data);
-    return strtod(data, &end);
+    return std::stod( std::string(data), nullptr );
 }
 
 template<>
@@ -313,16 +321,6 @@ bool CMjson::parse(const char* msg_const) {
     object = std::make_shared<Value_Type>(manipulator.GetObject());
 
     return true;
-}
-
-bool CMjson::has_member(std::string &key) {
-    assert(is_there() == true);
-    return object->HasMember(key.c_str());
-}
-
-bool CMjson::is_array(std::string &key) {
-    assert(is_there() == true);
-    return (*object.get())[key.c_str()].IsArray();
 }
 
 // Definition of Get Functions.
