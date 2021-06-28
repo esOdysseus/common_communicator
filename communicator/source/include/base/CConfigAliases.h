@@ -207,11 +207,10 @@ namespace cf_alias {
         static constexpr const char* SELF = "self";
 
         using PVDListType = std::list<std::shared_ptr<IAliasPVD>>;
-
-    private:
         // provider_type : 'udp' , 'tcp' , 'vsomeip' , 'udp_uds' , 'tcp_uds'
         using PVDMapType = std::map< std::string /* provider_type */, PVDListType >;
 
+    private:
         using RSCMapType = std::map< std::string /* rsc_name */, std::shared_ptr<CAliasRSC> >;
         using APPMapType = std::map< std::string /* app_path */, PVDMapType >;
         using PeerMapType = std::map< std::string/* peer pvd_full_path */, PVDListType>;
@@ -221,7 +220,9 @@ namespace cf_alias {
 
         ~CConfigAliases(void);
 
-        PVDListType& get_providers(std::string type);
+        PVDListType& get_providers_4type(std::string type);
+
+        PVDMapType& get_providers( const std::string& app_path );
 
         PVDListType& get_providers(std::string app_path, std::string type);
 

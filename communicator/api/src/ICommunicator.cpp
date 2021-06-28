@@ -30,7 +30,7 @@ static std::shared_ptr<cf_alias::CConfigAliases> update_get_alias( std::string& 
     std::shared_ptr<cf_alias::CConfigAliases> res;
 
     try {
-        auto searcher = alias::IAliasSearcher::get_searcher( file_path );
+        auto searcher = alias::IAliasSearcher::get_instance( file_path );
         if( searcher.get() == NULL ) {
             throw std::runtime_error("Fail to get AliasSearcher.");
         }

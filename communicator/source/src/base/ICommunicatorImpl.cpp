@@ -325,7 +325,7 @@ int ICommunicatorImpl::run(void) {
         {
         case enum_c::ProviderType::E_PVDT_TRANS_TCP:
             {
-                h_pvd = std::make_shared<CPVD_TCP<>>( pvd_alias, alias_config, alias_config->get_providers(pvd_alias->TCP) );
+                h_pvd = std::make_shared<CPVD_TCP<>>( pvd_alias, alias_config, alias_config->get_providers_4type(pvd_alias->TCP) );
                 h_pvd->init(port, ip, mode);
                 h_pvd->start(app_caller, proto_config);
                 while(h_pvd->accept() && is_running_continue());  // Block
@@ -333,7 +333,7 @@ int ICommunicatorImpl::run(void) {
             break;
         case enum_c::ProviderType::E_PVDT_TRANS_UDP:
             {
-                h_pvd = std::make_shared<CPVD_UDP<>>(pvd_alias, alias_config, alias_config->get_providers(pvd_alias->UDP) );
+                h_pvd = std::make_shared<CPVD_UDP<>>(pvd_alias, alias_config, alias_config->get_providers_4type(pvd_alias->UDP) );
                 h_pvd->init(port, ip, mode);
                 h_pvd->start(app_caller, proto_config);
                 while(h_pvd->accept() && is_running_continue());  // Block
@@ -341,7 +341,7 @@ int ICommunicatorImpl::run(void) {
             break;
         case enum_c::ProviderType::E_PVDT_TRANS_UDS_TCP:
             {
-                h_pvd = std::make_shared<CPVD_TCP<struct sockaddr_un>>(pvd_alias, alias_config, alias_config->get_providers(pvd_alias->TCP_UDS) );
+                h_pvd = std::make_shared<CPVD_TCP<struct sockaddr_un>>(pvd_alias, alias_config, alias_config->get_providers_4type(pvd_alias->TCP_UDS) );
                 h_pvd->init(port, ip, mode);
                 h_pvd->start(app_caller, proto_config);
                 while(h_pvd->accept() && is_running_continue());  // Block
@@ -349,7 +349,7 @@ int ICommunicatorImpl::run(void) {
             break;
         case enum_c::ProviderType::E_PVDT_TRANS_UDS_UDP:
             {
-                h_pvd = std::make_shared<CPVD_UDP<struct sockaddr_un>>(pvd_alias, alias_config, alias_config->get_providers(pvd_alias->UDP_UDS) );
+                h_pvd = std::make_shared<CPVD_UDP<struct sockaddr_un>>(pvd_alias, alias_config, alias_config->get_providers_4type(pvd_alias->UDP_UDS) );
                 h_pvd->init(port, ip, mode);
                 h_pvd->start(app_caller, proto_config);
                 while(h_pvd->accept() && is_running_continue());  // Block

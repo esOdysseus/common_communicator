@@ -105,7 +105,7 @@ CConfigAliases::~CConfigAliases(void) {
     _mm_rscs_.clear();
 }
 
-CConfigAliases::PVDListType& CConfigAliases::get_providers(std::string pvd_type) {
+CConfigAliases::PVDListType& CConfigAliases::get_providers_4type(std::string pvd_type) {
     PVDMapType::iterator itr;
     assert( _m_f_ready_ == true );
     assert( pvd_type.empty() == false );
@@ -118,6 +118,29 @@ CConfigAliases::PVDListType& CConfigAliases::get_providers(std::string pvd_type)
         }
 
         return itr->second;
+    }
+    catch ( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+}
+
+CConfigAliases::PVDMapType& CConfigAliases::get_providers( const std::string& app_path ) {
+    PVDMapType::iterator itr;
+    assert( _m_f_ready_ == true );
+
+    try {
+        auto itr_app = _mm_pvds_map_.find(app_path);
+        if( itr_app == _mm_pvds_map_.end() ) {
+            LOGW("Not exist APP-path(%s)", app_path.data());
+            throw CException(E_ERROR::E_NOT_SUPPORTED_APP_PATH);
+        }
+
+        return itr_app->second;
+    }
+    catch ( const CException &e ) {
+        LOGW("%s", e.what());
+        throw e;
     }
     catch ( const std::exception &e ) {
         LOGERR("%s", e.what());

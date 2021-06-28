@@ -8,6 +8,7 @@
 #ifndef _ALIAS_SEARCHER_IMPLEMENTATION_H_
 #define _ALIAS_SEARCHER_IMPLEMENTATION_H_
 
+#include <map>
 #include <string>
 #include <memory>
 
@@ -25,9 +26,11 @@ namespace alias {
         ~CAliasSearcherImpl(void) override;
 
         // Open-API Lists
+        std::map<std::string, IAliasSearcher::TPvdList> get_mypvds( const std::string& my_app ) override;
+
         std::shared_ptr<cf_alias::IAliasPVD> get_peer_provider( const std::string& peer_app, const std::string& peer_pvd ) override;
 
-        std::list<std::shared_ptr<cf_alias::IAliasPVD>> get_mypvds_sendable( const std::string& peer_app, const std::string& peer_pvd ) override;
+        IAliasSearcher::TPvdList get_mypvds_sendable( const std::string& peer_app, const std::string& peer_pvd ) override;
 
 
         // Close-API Lists

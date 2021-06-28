@@ -32,6 +32,17 @@ CAliasSearcherImpl::~CAliasSearcherImpl(void) {
     _m_file_path_.clear();
 }
 
+/// Search my-provider list that is created by my application.
+std::map<std::string, IAliasSearcher::TPvdList> CAliasSearcherImpl::get_mypvds( const std::string& my_app ) {
+    try {
+        return _m_cf_alias_->get_providers( my_app );
+    }
+    catch ( const std::exception& e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+}
+
 std::shared_ptr<cf_alias::IAliasPVD> CAliasSearcherImpl::get_peer_provider( const std::string& peer_app, const std::string& peer_pvd ) {
     try {
         return _m_cf_alias_->get_provider( peer_app, peer_pvd );
@@ -42,7 +53,7 @@ std::shared_ptr<cf_alias::IAliasPVD> CAliasSearcherImpl::get_peer_provider( cons
     }
 }
 
-std::list<std::shared_ptr<cf_alias::IAliasPVD>> CAliasSearcherImpl::get_mypvds_sendable( const std::string& peer_app, const std::string& peer_pvd ) {
+IAliasSearcher::TPvdList CAliasSearcherImpl::get_mypvds_sendable( const std::string& peer_app, const std::string& peer_pvd ) {
     try {
         return _m_cf_alias_->get_connected_provider_to_peer( peer_app, peer_pvd );
     }

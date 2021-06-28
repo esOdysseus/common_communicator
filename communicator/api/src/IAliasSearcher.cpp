@@ -41,7 +41,7 @@ static std::shared_ptr<CAliasSearcherImpl> update_get_alias_searcher(const std::
     return iter->second;
 }
 
-std::shared_ptr<IAliasSearcher> IAliasSearcher::get_searcher( const std::string& alias_file_path ) {
+std::shared_ptr<IAliasSearcher> IAliasSearcher::get_instance( const std::string& alias_file_path ) {
     std::shared_ptr<IAliasSearcher> res;
 
     try {
