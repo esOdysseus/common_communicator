@@ -74,7 +74,7 @@ namespace cf_proto {
 
         bool destroy_protocols_chain(std::shared_ptr<payload::CPayload> payload);
 
-        std::shared_ptr<ProtoList> available_protocols(void);
+        std::shared_ptr<ProtoList>& available_protocols(void);
 
     private:
         CConfigProtocols(void) = delete;

@@ -57,7 +57,12 @@ static std::shared_ptr<cf_proto::CConfigProtocols> update_get_proto( std::string
         iter = _gm_protos_.find(file_path);
 
         if( iter == _gm_protos_.end() ) {
-            auto res = _gm_protos_.insert( {file_path, std::make_shared<cf_proto::CConfigProtocols>(file_path.data())} );
+            const char* file_path_str = file_path.data();
+            if( file_path.empty() == true ) {
+                file_path_str = NULL;
+            }
+            
+            auto res = _gm_protos_.insert( {file_path, std::make_shared<cf_proto::CConfigProtocols>(file_path_str)} );
             if( res.second != true ) {
                 std::string err = "Key is duplicated. (" + file_path + ")";
                 throw std::logic_error(err);
@@ -133,6 +138,10 @@ std::string ICommunicator::get_app_id(void) {
 
 std::string ICommunicator::get_provider_id(void) { 
     return _m_impl_->get_provider_id();
+}
+
+std::shared_ptr<std::list<std::string>> ICommunicator::get_protocol_list( void ) {
+    return _m_impl_->get_protocol_list();
 }
 
 std::string ICommunicator::get_version(void) {

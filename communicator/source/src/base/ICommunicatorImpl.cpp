@@ -114,6 +114,11 @@ std::string ICommunicatorImpl::get_provider_id(void) {
     return provider_id; 
 }
 
+std::shared_ptr<std::list<std::string>>& ICommunicatorImpl::get_protocol_list(void) {
+    assert( proto_config->is_ready() == true );
+    return proto_config->available_protocols();
+}
+
 void ICommunicatorImpl::init(void) {
     LOGD("Called.");
     this->runner_continue = true;

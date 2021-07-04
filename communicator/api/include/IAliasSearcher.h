@@ -8,6 +8,7 @@
 #ifndef _ALIAS_SEARCHER_INTERFACE_H_
 #define _ALIAS_SEARCHER_INTERFACE_H_
 
+#include <map>
 #include <list>
 #include <memory>
 #include <string>

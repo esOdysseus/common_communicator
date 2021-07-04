@@ -131,7 +131,7 @@ bool CConfigProtocols::destroy_protocols_chain(std::shared_ptr<payload::CPayload
     return res;    
 }
 
-std::shared_ptr<CConfigProtocols::ProtoList> CConfigProtocols::available_protocols(void) {
+std::shared_ptr<CConfigProtocols::ProtoList>& CConfigProtocols::available_protocols(void) {
     return proto_list;
 }
 

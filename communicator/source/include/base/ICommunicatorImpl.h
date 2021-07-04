@@ -12,6 +12,7 @@
 #include <string>
 #include <thread>
 #include <map>
+#include <list>
 #include <memory>
 #include <functional>
 
@@ -57,6 +58,8 @@ public:
     std::string get_app_id(void);
 
     std::string get_provider_id(void);
+
+    std::shared_ptr<std::list<std::string>>& get_protocol_list(void);
 
     /******************************
      * Communicator-Base API
