@@ -119,6 +119,15 @@ std::shared_ptr<std::list<std::string>>& ICommunicatorImpl::get_protocol_list(vo
     return proto_config->available_protocols();
 }
 
+bool ICommunicatorImpl::get_state(State_Type value) {
+    LOGI("state= 0x%X , value= 0x%X", state, value);
+    return (state & (uint16_t)value) != 0 ? true : false;
+}
+
+void ICommunicatorImpl::set_state(State_Type value) {
+    state |= (uint16_t)value;
+}
+
 void ICommunicatorImpl::init(void) {
     LOGD("Called.");
     this->runner_continue = true;
@@ -270,9 +279,10 @@ CReceiver& ICommunicatorImpl::get_cb_handlers(void) {
     return cb_handlers;
 }
 
-static void cb_force_exit_thread(void* app_id) {
-    assert(app_id != NULL);
-    LOGW("%s Thread is force-exited.", (const char*)app_id);
+static void cb_force_exit_thread(void* comm) {
+    assert(comm != NULL);
+    LOGW("%s Thread is force-exited.", ((ICommunicatorImpl*)comm)->get_app_id().data());
+    ((ICommunicatorImpl*)comm)->set_state( ICommunicatorImpl::State_Type::E_STATE_DONE_FORCE_EXIT );
 }
 
 void ICommunicatorImpl::clear(void) {
@@ -288,6 +298,7 @@ void ICommunicatorImpl::clear(void) {
 
     this->m_send_payload = NULL;
     this->h_pvd.reset();
+    this->state = (uint16_t)State_Type::E_STATE_NONE;
 }
 
 void ICommunicatorImpl::validation_check(void) {
@@ -321,7 +332,8 @@ int ICommunicatorImpl::run(void) {
     // when receive 'cancel' signal, terminate this thread immediatly.
     pthread_setcancelstate( PTHREAD_CANCEL_ENABLE, NULL );
     pthread_setcanceltype( PTHREAD_CANCEL_ASYNCHRONOUS, NULL );
-    pthread_cleanup_push( cb_force_exit_thread, (void*)(get_app_id().c_str()) );
+    // pthread_cleanup_push( cb_force_exit_thread, (void*)(get_app_id().c_str()) );
+    pthread_cleanup_push( cb_force_exit_thread, (void*)this );
 
     try {
         auto pvd_alias = get_provider();
@@ -372,6 +384,7 @@ int ICommunicatorImpl::run(void) {
     h_pvd.reset();
     pthread_cleanup_pop(0);     // Macro End of 'pthread_cleanup_push'
     LOGD("Soft-Exit of thread.");
+    set_state( State_Type::E_STATE_EXIT_THREAD );
     return 0;
 }
 
@@ -385,7 +398,10 @@ void ICommunicatorImpl::force_exit_thread(std::thread &h_thread) {
         LOGD("Done.(joinable=%d)", h_thread.joinable());
 
         // wait for calling of 'cb_force_exit_thread' function
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        while( get_state(State_Type::E_STATE_DONE_FORCE_EXIT) != true ) {
+            LOGI("Wait to terminate Thread & done Call-Back.");
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
     }
 }
 

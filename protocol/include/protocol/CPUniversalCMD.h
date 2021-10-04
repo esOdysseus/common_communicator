@@ -43,7 +43,7 @@ public:
             uint16_t        hsize       : 16;   // Header-Size: < 65535 byte
             State_Type      state       : 16;   // describe about Error/Event-State.
             MsgID_Type      msg_id      : 32;   // TID of Request-UCMD.
-            Length_Type     payload_size;       // size of body-payload. (for: where, what, how, why)
+            Length_Type     payload_size: 32;   // size of body-payload. (for: where, what, how, why)
             When_Type       when;               // Sent-TIME by Send-APP for time-driven task-scheduling.
             UnitData_Type   flag        : 8;    // TypeList example: KEEP-ALIVE/RESP/ACK/ACTION-DONE/ERROR/REQUIRED-OPT
             uint32_t        _reserve_   : 16;

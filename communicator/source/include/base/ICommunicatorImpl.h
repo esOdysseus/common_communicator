@@ -33,6 +33,11 @@ public:
     using ConnectionCB_Type = CReceiver::ConnectionCB_Type;
     using MessagePayloadCB_Type = CReceiver::MessagePayloadCB_Type;
     using QuitCB_Type = CReceiver::QuitCB_Type;
+    using State_Type = enum class _status_ {
+        E_STATE_NONE            = 0x0000,
+        E_STATE_EXIT_THREAD     = 0x0001,
+        E_STATE_DONE_FORCE_EXIT = 0x0002
+    };
 
 public:
     // Constructor API for Dynamic-Auto parsed Provider.
@@ -60,6 +65,10 @@ public:
     std::string get_provider_id(void);
 
     std::shared_ptr<std::list<std::string>>& get_protocol_list(void);
+
+    bool get_state(State_Type state);
+
+    void set_state(State_Type state);
 
     /******************************
      * Communicator-Base API
@@ -279,6 +288,8 @@ private:
     std::shared_ptr<cf_alias::CConfigAliases> alias_config;     // alias-configuration.
 
     std::shared_ptr<IPVDInf> h_pvd;  // Handler of provider instance.
+
+    uint16_t state;
 
 };
 
