@@ -12,6 +12,7 @@
 #include <cassert>
 #include <string>
 #include <memory>
+#include <functional>
 
 #include <CRawMessage.h>
 #include <Enum_common.h>
@@ -31,6 +32,7 @@ public:
     using SegmentsType = dtype_b::SegmentsType;
     using AppCallerType = dtype_b::AppCallerType;
     using ProtocolType = std::shared_ptr<IProtocolInf>;
+    using TfuncUpdator = std::function<void(std::string&&)>;
 
 public:
 
@@ -43,7 +45,7 @@ public:
 
     void handle_connection(std::string app_path, std::string pvd_path, bool flag);
 
-    bool handle_protocol_chain(RawMsgType msg_raw);
+    bool handle_protocol_chain(RawMsgType msg_raw, std::shared_ptr<TfuncUpdator> update_peer_alias=nullptr);
 
     bool handle_unintended_quit(const std::exception &e);
 

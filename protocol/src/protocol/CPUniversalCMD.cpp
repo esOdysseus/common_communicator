@@ -44,6 +44,10 @@ void CPUniversalCMD::clear(void) {
     clean_head_tail();
 }
 
+std::string CPUniversalCMD::who_is_owner( void ) {
+    return m_from;
+}
+
 std::shared_ptr<std::list<std::string>> CPUniversalCMD::get_keys(void) {
     using KeysType = std::list<std::string>;
     std::shared_ptr<KeysType> ret = std::make_shared<KeysType>();

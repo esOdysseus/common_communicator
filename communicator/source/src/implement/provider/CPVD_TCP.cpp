@@ -575,9 +575,54 @@ void CPVD_TCP<ADDR_TYPE>::run_receiver(std::shared_ptr<cf_alias::IAliasPVD> peer
     std::shared_ptr<int> socket = std::make_shared<int>();
     std::string peer_app = peer_alias->path_parent();
     std::string peer_pvd = peer_alias->name();
+    std::string peer_full_path = peer_alias->path();
+
+    auto decompose_full_path = [](std::string& full_path, std::string& app_path, std::string& pvd_id) -> bool {
+        auto found = full_path.rfind("/");
+        if( found != std::string::npos ) {
+            app_path = full_path.substr(0, found);
+            pvd_id = full_path.substr(found + 1, std::string::npos);
+
+            LOGI("Full-Path(%s) is decomposed to %s , %s", full_path.data(), app_path.data(), pvd_id.data());
+            return true;
+        }
+        return false;
+    };
+
+    auto lamda_update_peer_alias = std::make_shared<IHProtocolInf::TfuncUpdator>( [=](std::string&& full_path) mutable ->void {
+        if( full_path.empty() == true || peer_full_path == full_path ) {
+            return;
+        }
+
+        try {
+            LOGW("Update Peer-Alias from %s, to %s", peer_full_path.data(), full_path.data());
+
+            std::string new_app;
+            std::string new_pvd;
+            auto addr = _mm_ali4sock_.get(peer_full_path);
+            // update peer_alias, peer_app, peer_pvd
+            if( decompose_full_path( full_path, new_app, new_pvd ) == false ) {
+                throw std::runtime_error("Failed decompose_full_path() function.");
+            }
+
+            // remove old peer-alias
+            hHprotocol->handle_connection(peer_app, peer_pvd, false);
+            unregist_connected_peer(peer_full_path);
+            _mm_ali4sock_.remove(peer_full_path);
+
+            // insert new peer-alias
+            peer_full_path = full_path;
+            peer_alias->update( new_app, new_pvd );
+            _mm_ali4sock_.insert(peer_alias, addr, is_new, true);
+            assert( regist_connected_peer( peer_alias ) == true );
+            hHprotocol->handle_connection(new_app, new_pvd, true);
+        }
+        catch( const std::exception& e ) {
+            LOGERR("%s", e.what());
+        }
+    });
 
     try {
-        std::string peer_full_path = peer_alias->path();
         assert(is_continue != NULL && *is_continue == true);
         assert( _mm_ali4sock_.is_there(peer_full_path) == true );
         assert( (socket_fd = *(_mm_ali4sock_.get(peer_full_path).get())) > 0 );
@@ -600,7 +645,7 @@ void CPVD_TCP<ADDR_TYPE>::run_receiver(std::shared_ptr<cf_alias::IAliasPVD> peer
                 if( msg_raw->get_msg_size() > 0 ) {
                     msg_raw->set_source(socket, peer_alias); 
                     // trig handling of protocol & Call-back to app
-                    assert( hHprotocol->handle_protocol_chain(msg_raw) == true );
+                    assert( hHprotocol->handle_protocol_chain(msg_raw, lamda_update_peer_alias) == true );
                 }
                 else {
                     LOGW("msg_size == 0, we are regard this that connection close by peer.");
@@ -621,18 +666,18 @@ void CPVD_TCP<ADDR_TYPE>::run_receiver(std::shared_ptr<cf_alias::IAliasPVD> peer
         }
 
         // trig connected call-back to app.
-        hHprotocol->handle_connection(peer_app, peer_pvd, false);    
+        hHprotocol->handle_connection(peer_alias->path_parent(), peer_alias->name(), false);    
     }
     catch(const std::range_error &e) {  // occure when connection close by peer.
         LOGW("%s", e.what());
         // trig connected call-back to app.
-        hHprotocol->handle_connection(peer_app, peer_pvd, false);
+        hHprotocol->handle_connection(peer_alias->path_parent(), peer_alias->name(), false);
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
         
         // trig connected call-back to app.
-        hHprotocol->handle_connection(peer_app, peer_pvd, false);
+        hHprotocol->handle_connection(peer_alias->path_parent(), peer_alias->name(), false);
         hHprotocol->handle_unintended_quit(e);
     }
 

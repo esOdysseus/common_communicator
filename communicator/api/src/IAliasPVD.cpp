@@ -60,6 +60,11 @@ std::string IAlias::path_parent( void ) {
     return _m_path_;
 }
 
+void IAlias::update( std::string& parent, std::string& name ) {
+    _m_path_ = parent;
+    _m_name_ = name;
+}
+
 enum_c::AliasType IAlias::alias_type( void ) {
     return _m_type_;
 }

@@ -59,6 +59,8 @@ public:
 
     void clear(void);
 
+    std::string who_is_owner( void ) override;
+
     std::shared_ptr<std::list<std::string>> get_keys(void) override;
 
     std::string get_property(const std::string key) override;

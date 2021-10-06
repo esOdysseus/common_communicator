@@ -118,9 +118,9 @@ void IHProtocolInf::handle_connection(std::string app_path, std::string pvd_path
     }
 }
 
-bool IHProtocolInf::handle_protocol_chain(RawMsgType msg_raw) {
+bool IHProtocolInf::handle_protocol_chain(RawMsgType msg_raw, std::shared_ptr<TfuncUpdator> update_peer_alias) {
 
-    auto lamda_func = [this](RawMsgType msg_raw)->void {
+    auto lamda_func = [this, update_peer_alias](RawMsgType msg_raw)->void {
         std::shared_ptr<payload::CPayload> payload;
         ProtocolType protocol;
         size_t msg_size = 0;
@@ -137,10 +137,14 @@ bool IHProtocolInf::handle_protocol_chain(RawMsgType msg_raw) {
         while( data_size > 0 && (msg_size = protocol->get_msg_size(data, data_size)) > 0 ) {
             // message parsing with regard to PROTOCOL.
             assert( protocol->unpack_recurcive(data, msg_size) == true );
-            if(protocol->is_empty() == false) {
-                app->get_cb_handlers().cb_message_payload_handle(msg_raw->get_source_app(), msg_raw->get_source_pvd(), 
-                                                                 protocol);  // trig app-function.
+            if( update_peer_alias != nullptr ) {
+                (*update_peer_alias)( protocol->who_is_owner() );
             }
+
+            // if(protocol->is_empty() == false) {
+            app->get_cb_handlers().cb_message_payload_handle(msg_raw->get_source_app(), msg_raw->get_source_pvd(), 
+                                                             protocol);  // trig app-function.
+            // }
 
             // move to next msg
             protocol->clean_data();   // re-initialize proto_chain.
