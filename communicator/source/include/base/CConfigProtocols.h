@@ -11,6 +11,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <mutex>
 
 #include <pal/protocol.h>
 #include <IProtocolInf.h>
@@ -111,6 +112,7 @@ namespace cf_proto {
         std::shared_ptr<ProtoList> proto_list;
 
         /** It's mapper for management of available instances as protocols-chain. */
+        std::mutex _mtx_proto_chains_;
         std::map<std::string, std::shared_ptr<IProtocolInf::ProtoChainType>> proto_chains_map;
 
         static constexpr unsigned int MAX_PROTOCOL_CHAIN_INSTANCES = 2048;

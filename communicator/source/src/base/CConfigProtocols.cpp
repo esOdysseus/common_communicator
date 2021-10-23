@@ -81,15 +81,16 @@ std::shared_ptr<payload::CPayload> CConfigProtocols::create_protocols_chain(void
     LOGD("Called");
 
     try {
-        if( proto_chains_map.size() >= MAX_PROTOCOL_CHAIN_INSTANCES ) {
-            throw CException(E_ERROR::E_OVERFLOW_MAX_ELEMENTS_COUNT);
-        }
-        LOGI("Protocol-Chain instance is filled like [%lu/%u].", proto_chains_map.size(), MAX_PROTOCOL_CHAIN_INSTANCES);
-
         // make protocol-chain instance.
+        std::string chain_name;
         auto proto_chain = std::make_shared<IProtocolInf::ProtoChainType>();
-        std::string chain_name = std::to_string( (unsigned long)(proto_chain.get()) );
-        proto_chains_map[chain_name] = proto_chain;
+        if( proto_chain.get() == NULL ) {
+            throw std::runtime_error("Can not allocate memory for Protocol-Chanin.");
+        }
+        chain_name = std::to_string( (unsigned long)(proto_chain.get()) );
+        if( chain_name.empty() == true ) {
+            throw std::runtime_error("Can not get Number of Protocol-Chain.");
+        }
 
         for (auto itr=available_protocols()->begin(); itr!=available_protocols()->end(); itr++) {
             // append protocol to protocol-chain.
@@ -98,6 +99,15 @@ std::shared_ptr<payload::CPayload> CConfigProtocols::create_protocols_chain(void
             protocol->set_proto_chain(chain_name, proto_chain);     // register chain to protocol.
         }
 
+        {
+            std::lock_guard<std::mutex> guard(_mtx_proto_chains_);
+            // insert new protocol-chain instance to mapper.
+            if( proto_chains_map.size() >= MAX_PROTOCOL_CHAIN_INSTANCES ) {
+                throw CException(E_ERROR::E_OVERFLOW_MAX_ELEMENTS_COUNT);
+            }
+            LOGI("Protocol-Chain instance is filled like [%lu/%u].", proto_chains_map.size(), MAX_PROTOCOL_CHAIN_INSTANCES);
+            proto_chains_map[chain_name] = proto_chain;
+        }
         return (*proto_chain->begin());
     }
     catch ( const std::exception &e) {
@@ -115,9 +125,9 @@ bool CConfigProtocols::destroy_protocols_chain(std::shared_ptr<payload::CPayload
     LOGD("Called");
 
     try{
+        std::lock_guard<std::mutex> guard(_mtx_proto_chains_);
         auto itr = proto_chains_map.find(chain_name);
         if (itr != proto_chains_map.end()) {
-            // itr->second->clear();   // Clear elements in List.
             itr->second.reset();    // Delete shared_ptr of List.
             proto_chains_map.erase(itr);    // Delete protocol-chain instance.
             res = true;
