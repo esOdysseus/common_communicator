@@ -111,8 +111,10 @@ bool CPUniversalCMD::unpack(const void* msg_raw, size_t msg_size) {
         const void* classified_data = unpack_raw_data(msg_raw, msg_size);
         assert(classified_data != NULL);
 
-        // Set classified_data of msg_raw to payload.
-        get_payload()->set_new_msg(classified_data, get_length());
+        if( get_length() > 0 ) {
+            // Set classified_data of msg_raw to payload.
+            get_payload()->set_new_msg(classified_data, get_length());
+        }
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());

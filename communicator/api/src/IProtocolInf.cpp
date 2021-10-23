@@ -146,31 +146,40 @@ bool IProtocolInf::unpack_recurcive(const void* msg_raw, size_t msg_size) {
     bool res = false;
     std::shared_ptr<payload::CPayload::DataType> payload;
     std::shared_ptr<CPayload::ProtoChainType> proto_chain;
-    assert(msg_raw != NULL);
-    assert(msg_size > 0);
 
     try{
+        if( msg_raw == NULL || msg_size <= 0 ) {
+            throw std::invalid_argument("Input arguments are invalid values.");
+        }
+
         proto_chain = get_proto_chain();
-        assert(proto_chain->end() != proto_chain->begin());
+        if(proto_chain->end() == proto_chain->begin()) {
+            throw std::runtime_error("Protocol-chain is invalid. Please check it.");
+        }
 
         auto itr = proto_chain->end();
         itr--;
         auto pre_protocol = GET_PROTOCOL(itr);
-        assert( (res = pre_protocol->unpack(msg_raw, msg_size)) == true );
-        assert( (res = !pre_protocol->is_empty()) == true );
-        
+        res = pre_protocol->unpack(msg_raw, msg_size);
+        if( res == false ) {
+            throw std::runtime_error("Fail protocol unpack.");
+        }
         payload = pre_protocol->get_payload();
 
         for (; itr != proto_chain->begin();) {
+            if( pre_protocol->is_empty() == true ) {
+                LOGD("payload is empty.");
+                break;
+            }
+
             itr--;
             if ( (*itr)->get_name() !=  payload::CPayload::Default_Name ) {
                 pre_protocol.reset();
                 pre_protocol = GET_PROTOCOL(itr);
-                res = pre_protocol->unpack(payload->get_msg_read_only(), 
-                                            payload->get_msg_size());
-                assert(res == true);
-                assert( (res = !pre_protocol->is_empty()) == true );
-                
+                res = pre_protocol->unpack(payload->get_msg_read_only(), payload->get_msg_size());
+                if( res == false ) {
+                    throw std::runtime_error("Fail protocol unpack.");
+                }
                 payload = pre_protocol->get_payload();
             }
         }

@@ -89,7 +89,7 @@ size_t CRawMessage::get_msg(void* buffer, size_t cap) {
 }
 
 const void* CRawMessage::get_msg_read_only(size_t* msg_size) {
-    assert(_m_msg_ != NULL);
+    // assert(_m_msg_ != NULL);
     
     if (msg_size != NULL) {
         *msg_size = get_msg_size();
