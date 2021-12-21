@@ -404,8 +404,8 @@ T CTime::convert(std::string time, const char* date,
 
     try {
         if( date != NULL ) {
-            time += date;
-            time_format += date_format;
+            time = time + " " + date;
+            time_format = time_format + " " + date_format;
         }
 
         if( strptime(time.c_str(), time_format.c_str(), &time_tm) == NULL ) {

@@ -311,7 +311,6 @@ int CPVD_TCP<ADDR_TYPE>::make_connection(std::string peer_full_path) {
             // register new_sockfd to _mm_ali4sock_.
             *(address.get()) = new_sockfd;
             assert( _mm_ali4sock_.insert(peer_alias, address, is_new, true) == true );
-            assert( is_new == true );
 
             // create thread with PROTOCOL for new-sesseion by new-user.
             if (thread_create(peer_alias, std::bind(&CPVD_TCP::run_receiver, this, _1, _2)) == false) {
