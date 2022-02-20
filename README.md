@@ -41,7 +41,7 @@ limitations under the License.
 - esOdysseus (email: es.odysseus@gmail.com)
 
 ### Latest Release
-- version 0.2.8 (Date: 2021-06-16)
+- version 0.3.0 (Date: 2022-02-20)
 ---
 ## Installation
 > Please refer following commands.
@@ -116,5 +116,5 @@ $ bash ./build.sh -m release -t example -arch x86
 ### TBD-list
 - Build Routing-Manager.
 - Support vSOME/IP.
-- Support IoTivity of OCF.
+- Support HTTP for OAuth2 authentication.
 - Common-API will be improved through review-processing & consideration variety of situation.

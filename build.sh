@@ -46,8 +46,13 @@ function main() {
             echo ">>>> Clear all-data of installation & objects. <<<<"
             rm -rf ${BUILD_DIR}
             rm -rf ${INSTALL_DIR}
+            rm -rf ${ROOT_PATH}/lib/dlt/dlt-daemon
+            ;;
+        "common-lib")   # build common-lib
+            run_build_common_lib all
             ;;
         "comm")     # build communicator
+            run_build_common_lib all
             run_build_task  communicator  ${INSTALL_DIR}/lib
             ;;
         "protocol") # build protocol
@@ -103,6 +108,86 @@ function run_build_task() {
     qmake ${ROOT_PATH} TARGET=${BUILD_TARGET} BUILD_MODE=${BUILD_MODE} DESTDIR=${DESTDIR} CPU_ARCH=${CPU_ARCH}
     make
     make install
+}
+
+function run_build_common_lib() {
+    BUILD_TARGET=${1}
+    DESTDIR=${INSTALL_DIR}/common/lib
+    local BUILD_COMLIB_DIR=${BUILD_DIR}/common/lib
+
+    echo 
+    echo "----- Build Environment -----"
+    echo "BUILD_COMLIB_DIR=${BUILD_COMLIB_DIR}"
+    echo "BUILD_TARGET=${BUILD_TARGET}"
+    echo "BUILD_MODE=${BUILD_MODE}"
+    echo "DESTDIR=${DESTDIR}"
+    echo "CPU_ARCH=${CPU_ARCH}"
+    echo "BOARD_TARGET=${BOARD_TARGET}"
+    echo 
+
+    # Build Target
+    case ${BUILD_TARGET} in
+        "all") # build all components
+            build_common_dlt     ${BUILD_COMLIB_DIR}   ${DESTDIR}
+            ;;
+        "dlt")    # build dlt
+            build_common_dlt  ${BUILD_COMLIB_DIR}   ${DESTDIR}
+            ;;
+        *) 
+            echo -e "\e[1;31m [ERROR] Not Supported BUILD_TARGET common-lib.(${BUILD_TARGET}) \e[0m"
+            exit 1
+            ;;
+    esac
+}
+
+function build_common_dlt() {
+    local BUILD_COMLIB_DIR=${1}/dlt
+    local DESTDIR=${2}/dlt
+    local SRC_ROOT=${ROOT_PATH}/lib/dlt
+    local SRC_PATH=${SRC_ROOT}/dlt-daemon
+    local OPTIONS=
+    local INSTALL_OPT="-DCMAKE_INSTALL_PREFIX=${DESTDIR}"
+
+    if [ ! -d "${BUILD_COMLIB_DIR}" ]; then
+        mkdir -p ${BUILD_COMLIB_DIR}
+    fi
+
+    if [ ! -d "${DESTDIR}" ]; then
+        mkdir -p ${DESTDIR}
+    fi
+
+    # if dlt source is not exist, then git clone version 2.18.8
+    if [ ! -d "${SRC_PATH}" ]; then
+        cd ${SRC_ROOT}
+        git clone https://github.com/COVESA/dlt-daemon.git
+        cd ${SRC_PATH}
+        git checkout -b 2.18.8 1438fcf8c88cd47b20b2984180a8457c3eb9193d
+        sync
+    fi
+
+    # build source
+    cd ${BUILD_COMLIB_DIR}
+    echo 
+    echo "----- Start to build DLT-daemon -----"
+    if [ "${CPU_ARCH}" == "${DEF_CPU_ARCH}" ]; then
+        echo "- CPU-ARCH = ${CPU_ARCH}"
+        cmake ${SRC_PATH} ${OPTIONS} ${INSTALL_OPT}
+    else
+        echo "- CROSS-CPU-ARCH = ${CROSS_CPU_ARCH} (doing Cross-Compile)"
+        cmake ${SRC_PATH} ${OPTIONS} ${INSTALL_OPT}
+    fi
+    make
+    
+    echo 
+    echo "----- Start to install DLT-daemon -----"
+    echo 
+    make install
+    cp -Rdp "${SRC_ROOT}/dlt.conf"  "${DESTDIR}/etc/"
+    cp -Rdp "${SRC_ROOT}/dlt_logstorage.conf"  "${DESTDIR}/etc/"
+
+    echo 
+    echo "----- Done DLT-daemon -----"
+    echo 
 }
 
 function run_build_gtest() {

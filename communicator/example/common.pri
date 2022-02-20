@@ -10,6 +10,12 @@ isEmpty(ROOT_PATH) {
     error( "Not exist common_config.pri file." )
 }
 
+!include ($$ROOT_PATH/pkg_config.pri) {
+    message( "Not exist pkg_config.pri file." )
+}
+
 # Print configuration.
 message( "[$$TARGET] [BUILD_MODE=$$BUILD_MODE]" )
 message( "[$$TARGET] [DESTDIR=$$DESTDIR]" )
+
+LIBS += $$get_libs_pkgconfig(automotive-dlt)
