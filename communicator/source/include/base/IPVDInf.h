@@ -46,7 +46,9 @@ private:
     using LoopPoolType = std::unordered_map<std::string /* peer_full_path */, std::shared_ptr<CLooper> >;
 
 public:
-    IPVDInf(std::shared_ptr<cf_alias::IAliasPVD>& pvd_alias, std::shared_ptr<cf_alias::CConfigAliases>& alia_manager);
+    IPVDInf(std::shared_ptr<cf_alias::IAliasPVD>& pvd_alias, 
+            std::shared_ptr<cf_alias::CConfigAliases>& alia_manager,
+            unsigned int bufsize_read = BUFSIZE_READ);
 
     ~IPVDInf(void);
 
@@ -121,11 +123,11 @@ protected:
 
     HProtocolType hHprotocol;   // handle of Protocol-Handler
 
-    static const unsigned int read_bufsize = 2048;
+    unsigned int read_bufsize;
+
+    char* read_buf;
 
     static const unsigned short peer_name_bufsize = 20;
-
-    char read_buf[read_bufsize];
 
 private:
     std::shared_ptr<cf_alias::IAliasPVD>  _m_pvd_alias_;
@@ -135,6 +137,8 @@ private:
     LoopPoolType mLooperPool;
 
     LoopPoolType mLooperGarbage;
+
+    static constexpr const unsigned int BUFSIZE_READ = 2048U;
 
 };
 

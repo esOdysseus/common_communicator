@@ -48,6 +48,12 @@ function main() {
             rm -rf ${INSTALL_DIR}
             rm -rf ${ROOT_PATH}/lib/dlt/dlt-daemon
             ;;
+        "all")      # all
+            run_build_common_lib all
+            run_build_task  communicator  ${INSTALL_DIR}/lib
+            run_build_task  protocol  ${INSTALL_DIR}/lib
+            run_build_task  example  ${INSTALL_DIR}/bin
+            ;;
         "common-lib")   # build common-lib
             run_build_common_lib all
             ;;

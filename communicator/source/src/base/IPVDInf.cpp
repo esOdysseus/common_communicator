@@ -17,6 +17,8 @@
 
 template bool IPVDInf::create_hprotocol<CHProtoBaseLan>(AppCallerType& app, std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager);
 
+constexpr const unsigned int IPVDInf::BUFSIZE_READ;
+
 class IPVDInf::CLooper {
 public:
     template <typename _Callable>
@@ -68,12 +70,28 @@ void IPVDInf::CLooper::force_join(void) {
  * Definition for Public Member-Function of IPVDInf Class.
  */
 
-IPVDInf::IPVDInf(std::shared_ptr<cf_alias::IAliasPVD>& pvd_alias, std::shared_ptr<cf_alias::CConfigAliases>& alias_manager) {
+IPVDInf::IPVDInf(std::shared_ptr<cf_alias::IAliasPVD>& pvd_alias, 
+                 std::shared_ptr<cf_alias::CConfigAliases>& alias_manager,
+                 unsigned int bufsize_read) {
     try {
         LOGD("Called.");
+        read_buf = NULL;
         clear();
 
-        assert( pvd_alias.get() != NULL );
+        if ( bufsize_read <= 512U ) {
+            throw std::invalid_argument("bufsize_read have to be number more than 512 bytes.");
+        }
+        if ( pvd_alias.get() == NULL ) {
+            throw std::invalid_argument("pvd_alias is invalid data.");
+        }
+
+        // Make read-buffer.
+        read_bufsize = bufsize_read;
+        read_buf = new char[read_bufsize];
+        if( read_buf == NULL ) {
+            throw std::runtime_error("Can not allocate memory to read_buf.");
+        }
+
         _m_pvd_alias_ = pvd_alias; 
         _m_config_alias_ = alias_manager;
 
@@ -181,6 +199,13 @@ void IPVDInf::clear(void) {
     hHprotocol.reset();
     _m_pvd_alias_.reset();
     _m_config_alias_.reset();
+
+    // Delete read-buffer.
+    if ( read_buf != NULL ) {
+        delete [] read_buf;
+        read_buf = NULL;
+    }
+    read_bufsize = 0;
 }
 
 template <typename PROTOCOL_H> 

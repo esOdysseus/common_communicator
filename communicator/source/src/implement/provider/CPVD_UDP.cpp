@@ -25,6 +25,8 @@ using namespace std::placeholders;
 template class CPVD_UDP<struct sockaddr_in>;
 template class CPVD_UDP<struct sockaddr_un>;
 
+template <typename ADDR_TYPE> constexpr const size_t CPVD_UDP<ADDR_TYPE>::MSG_SIZE_NONE;
+
 // ***** Socket Type ****
 // SOCK_STREAM :    TCP socket
 // SOCK_DGRAM :     UDP socket
@@ -47,7 +49,7 @@ template class CPVD_UDP<struct sockaddr_un>;
  */ 
 template <>
 CPVD_UDP<struct sockaddr_in>::CPVD_UDP(std::shared_ptr<cf_alias::IAliasPVD> self_alias, std::shared_ptr<cf_alias::CConfigAliases>& alia_manager, AliasPVDsType& alias_list)
-: IPVDInf(self_alias, alia_manager), Cinet_uds(PF_INET, SOCK_DGRAM, AF_INET) {
+: IPVDInf(self_alias, alia_manager, READ_BUFSIZE), Cinet_uds(PF_INET, SOCK_DGRAM, AF_INET) {
     try{
         LOGD("Called.");
         _mm_ali4addr_.clear();
@@ -62,7 +64,7 @@ CPVD_UDP<struct sockaddr_in>::CPVD_UDP(std::shared_ptr<cf_alias::IAliasPVD> self
 
 template <>
 CPVD_UDP<struct sockaddr_un>::CPVD_UDP(std::shared_ptr<cf_alias::IAliasPVD> self_alias, std::shared_ptr<cf_alias::CConfigAliases>& alia_manager, AliasPVDsType& alias_list)
-: IPVDInf(self_alias, alia_manager), Cinet_uds(PF_FILE, SOCK_DGRAM, AF_UNIX) {
+: IPVDInf(self_alias, alia_manager, READ_BUFSIZE), Cinet_uds(PF_FILE, SOCK_DGRAM, AF_UNIX) {
     try{
         LOGD("Called.");
         _mm_ali4addr_.clear();
@@ -205,46 +207,73 @@ void CPVD_UDP<ADDR_TYPE>::disconnection(std::string app_path, std::string pvd_id
 
 template <typename ADDR_TYPE>
 typename CPVD_UDP<ADDR_TYPE>::MessageType CPVD_UDP<ADDR_TYPE>::read_msg(int u_sockfd, bool &is_new) {
-    size_t msg_size = read_bufsize;
+    size_t msg_size = MSG_SIZE_NONE;
     
     u_sockfd = this->sockfd;
     assert(u_sockfd != 0 && read_buf != NULL && read_bufsize > 0);
 
     MessageType msg = std::make_shared<CRawMessage>();
+    auto lamda_msg_reinit = [&](void) -> void {
+        msg.reset();
+        msg = std::make_shared<CRawMessage>();
+        msg_size = MSG_SIZE_NONE;
+    };
 
     try {
         auto cliaddr = std::make_shared<ADDR_TYPE>();
         ADDR_TYPE * p_cliaddr = cliaddr.get();
         socklen_t clilen = sizeof( *p_cliaddr );
-        std::string peer_full_path;
         std::shared_ptr<cf_alias::IAliasPVD> peer_alias;
         std::lock_guard<std::mutex> guard(mtx_read);
 
-        while(msg_size == read_bufsize) {
+        while(msg_size == MSG_SIZE_NONE) {
             bzero(p_cliaddr, clilen);
             peer_alias.reset();
 
             // >>>> Return value description
             // -1 : Error.
-            // >= 0 : The number of received message.
+            //  0 : Connection is closed.
+            // > 0: The number of received message.
             // >>>> Flag Option description
             // MSG_OOB : Emergency-message receiving-mode such as out-of-band(X.25).
             // MSG_PEEK : Keep data in receive-queue of socket. & Read data from queue.
             // MSG_WAITALL : Wait until buffer is fulled.
             msg_size = recvfrom(u_sockfd, (char *)read_buf, read_bufsize,  
                                 MSG_WAITALL, ( struct sockaddr *) p_cliaddr, &clilen); // Blocking Function.
-            assert( msg_size >= 0 && msg_size <= read_bufsize);
 
-            // Get client-ID
-            peer_alias = make_client_id(*p_cliaddr);
-            assert( peer_alias.get() != NULL );
-            
-            // Assumption : We will receive continuous-messages from identical-one-client.
-            assert( peer_full_path.empty() == true || peer_full_path.compare(peer_alias->path()) == 0);
-            peer_full_path = peer_alias->path();
+            switch(msg_size) {
+            case -1:    // Have some Error.
+                LOGERR("Have Some-Error: %d: %s", errno, strerror(errno));
+                {
+                    std::string err = "UDP socket-Errno: " + std::to_string(errno) + strerror(errno);
+                    throw std::runtime_error(err);
+                }
+            case 0:     // Disconnected by Peer.
+                LOGD("Disconnected by Peer.");
+                // Get client-ID
+                peer_alias = make_client_id(*p_cliaddr);
+                assert( peer_alias.get() != NULL );
+                LOGI("Disconnected by Peer.(%s)", peer_alias->path().data());
 
-            if( msg_size > 0 ) {
-                assert(msg->append_msg(read_buf, msg_size) == true);
+                disconnection( peer_alias );
+                lamda_msg_reinit();
+                continue;
+            default :
+                assert( msg_size > 0 && msg_size <= read_bufsize);
+
+                // Get client-ID
+                peer_alias = make_client_id(*p_cliaddr);
+                assert( peer_alias.get() != NULL );
+                
+                if( msg_size > 0 ) {
+                    assert(msg->append_msg(read_buf, msg_size) == true);
+                }
+
+                if( msg_size == read_bufsize ) {
+                    LOGERR("UDP received-msg size is equal with MAX buffer-size.(%u)", read_bufsize);
+                    LOGERR("UDP have to set read-buffer size more than current buffer-size.(%d)", read_bufsize);
+                    LOGERR("    Because, UDP discard message that can not be readed yet.");
+                }
             }
         }
 
@@ -261,6 +290,98 @@ typename CPVD_UDP<ADDR_TYPE>::MessageType CPVD_UDP<ADDR_TYPE>::read_msg(int u_so
     }
     return msg;
 }
+
+// template <typename ADDR_TYPE>
+// typename CPVD_UDP<ADDR_TYPE>::MessageType CPVD_UDP<ADDR_TYPE>::read_msg(int u_sockfd, bool &is_new) {
+//     std::string peer_full_path;
+//     size_t msg_size = read_bufsize;
+    
+//     u_sockfd = this->sockfd;
+//     assert(u_sockfd != 0 && read_buf != NULL && read_bufsize > 0);
+
+//     MessageType msg = std::make_shared<CRawMessage>();
+//     auto lamda_msg_reinit = [&](void) -> void {
+//         msg.reset();
+//         msg = std::make_shared<CRawMessage>();
+//         msg_size = read_bufsize;
+//         peer_full_path.clear();
+//     };
+
+//     try {
+//         auto cliaddr = std::make_shared<ADDR_TYPE>();
+//         ADDR_TYPE * p_cliaddr = cliaddr.get();
+//         socklen_t clilen = sizeof( *p_cliaddr );
+//         std::shared_ptr<cf_alias::IAliasPVD> peer_alias;
+//         std::lock_guard<std::mutex> guard(mtx_read);
+
+//         while(msg_size == read_bufsize) {
+//             bzero(p_cliaddr, clilen);
+//             peer_alias.reset();
+
+//             // >>>> Return value description
+//             // -1 : Error.
+//             //  0 : Connection is closed.
+//             // > 0: The number of received message.
+//             // >>>> Flag Option description
+//             // MSG_OOB : Emergency-message receiving-mode such as out-of-band(X.25).
+//             // MSG_PEEK : Keep data in receive-queue of socket. & Read data from queue.
+//             // MSG_WAITALL : Wait until buffer is fulled.
+//             msg_size = recvfrom(u_sockfd, (char *)read_buf, read_bufsize,  
+//                                 MSG_WAITALL, ( struct sockaddr *) p_cliaddr, &clilen); // Blocking Function.
+//             LOGD("recvfrom result=%d", msg_size);
+
+//             switch(msg_size) {
+//             case -1:    // Have some Error.
+//                 LOGERR("Have Some-Error: %d: %s", errno, strerror(errno));
+//                 {
+//                     std::string err = "UDP socket-Errno: " + std::to_string(errno) + strerror(errno);
+//                     throw std::runtime_error(err);
+//                 }
+//             case 0:     // Disconnected by Peer.
+//                 LOGD("Disconnected by Peer.");
+//                 // Get client-ID
+//                 peer_alias = make_client_id(*p_cliaddr);
+//                 assert( peer_alias.get() != NULL );
+//                 LOGI("Disconnected by Peer.(%s)", peer_alias->path().data());
+
+//                 disconnection( peer_alias );
+//                 lamda_msg_reinit();
+//                 continue;
+//             default :
+//                 assert( msg_size > 0 && msg_size <= read_bufsize);
+
+//                 // Get client-ID
+//                 peer_alias = make_client_id(*p_cliaddr);
+//                 assert( peer_alias.get() != NULL );
+                
+//                 // Assumption : We will receive continuous-messages from identical-one-client.
+//                 if( peer_full_path.empty() != true && peer_full_path.compare(peer_alias->path()) != 0 ) {
+//                     LOGERR("Missmatched between pre peer_alias and current peer_alias.");
+//                     LOGERR("%d: %s", errno, strerror(errno));
+//                     lamda_msg_reinit();
+//                     continue;
+//                 }
+//                 peer_full_path = peer_alias->path();
+
+//                 if( msg_size > 0 ) {
+//                     assert(msg->append_msg(read_buf, msg_size) == true);
+//                 }
+//             }
+//         }
+
+//         assert( _mm_ali4addr_.insert(peer_alias, cliaddr, is_new, true) == true );
+//         msg->set_source(cliaddr, peer_alias);
+//         if( is_new == true ) {
+//             assert( regist_connected_peer( peer_alias ) == true );
+//         }
+//     }
+//     catch(const std::exception &e) {
+//         LOGERR("%d: %s", errno, strerror(errno));
+//         msg->destroy();
+//         throw e;
+//     }
+//     return msg;
+// }
 
 template <typename ADDR_TYPE>
 bool CPVD_UDP<ADDR_TYPE>::write_msg(std::string app_path, std::string pvd_path, MessageType msg) {

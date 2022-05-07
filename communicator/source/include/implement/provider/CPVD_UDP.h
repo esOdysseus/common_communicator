@@ -54,6 +54,10 @@ private:
     std::shared_ptr<cf_alias::IAliasPVD> make_client_id(const ADDR_TYPE& cliaddr);
 
 private:
+    static constexpr const size_t MSG_SIZE_NONE = -10000;
+
+    static constexpr const unsigned int READ_BUFSIZE = 8192U;
+
     ADDR_TYPE servaddr;    // server-side address
 
     CAliasAddr<ADDR_TYPE, CALIAS_CMPFUNC<ADDR_TYPE>> _mm_ali4addr_;   // alias : essential-address
