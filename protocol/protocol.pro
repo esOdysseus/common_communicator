@@ -26,8 +26,11 @@ QMAKE_CXXFLAGS += -fPIC
 QMAKE_CFLAGS += -fPIC
 
 DEFINES += LOGGER_TAG=\\\"PROTO\\\"
-# for logger_mode (default logger == DLT logger)
-# DEFINES += LOG_MODE_STDOUT
+
+equals(CPU_ARCH,"x86") {
+    # for logger_mode (default logger == DLT logger)
+    DEFINES += LOG_MODE_STDOUT
+}
 
 !contains(DEFINES, LOG_MODE_STDOUT) {
     DEFINES += LOG_DLT_CID=\\\"prot\\\"

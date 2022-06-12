@@ -134,7 +134,9 @@ function run_build_common_lib() {
     # Build Target
     case ${BUILD_TARGET} in
         "all") # build all components
-            build_common_dlt     ${BUILD_COMLIB_DIR}   ${DESTDIR}
+            if [ "${CPU_ARCH}" != "x86" ]; then
+                build_common_dlt     ${BUILD_COMLIB_DIR}   ${DESTDIR}
+            fi
             ;;
         "dlt")    # build dlt
             build_common_dlt  ${BUILD_COMLIB_DIR}   ${DESTDIR}
