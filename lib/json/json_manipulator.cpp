@@ -18,8 +18,8 @@
 namespace json_mng
 {
 
-template std::shared_ptr<std::list<std::shared_ptr<std::string>>> CMjson::get_array<std::string>(std::string &key);
-template std::shared_ptr<std::list<std::shared_ptr<CMjson>>> CMjson::get_array<CMjson>(std::string &key);
+template CMjson::CList<std::string> CMjson::get_array<std::string>(std::string &key);
+template CMjson::CList<CMjson> CMjson::get_array<CMjson>(std::string &key);
 
 template std::string CMjson::get_second<std::string>(MemberIterator itor);
 template int CMjson::get_second<int>(MemberIterator itor);
@@ -32,6 +32,30 @@ template long CMjson::get_second<long>(MemberIterator itor);
 template bool CMjson::get_second<bool>(MemberIterator itor);
 template double CMjson::get_second<double>(MemberIterator itor);
 template float CMjson::get_second<float>(MemberIterator itor);
+
+template CMjson::CList<int> CMjson::get_second_array<int>(MemberIterator itor);
+template CMjson::CList<short> CMjson::get_second_array<short>(MemberIterator itor);
+template CMjson::CList<int8_t> CMjson::get_second_array<int8_t>(MemberIterator itor);
+template CMjson::CList<uint32_t> CMjson::get_second_array<uint32_t>(MemberIterator itor);
+template CMjson::CList<uint16_t> CMjson::get_second_array<uint16_t>(MemberIterator itor);
+template CMjson::CList<uint8_t> CMjson::get_second_array<uint8_t>(MemberIterator itor);
+template CMjson::CList<long> CMjson::get_second_array<long>(MemberIterator itor);
+template CMjson::CList<bool> CMjson::get_second_array<bool>(MemberIterator itor);
+template CMjson::CList<double> CMjson::get_second_array<double>(MemberIterator itor);
+template CMjson::CList<float> CMjson::get_second_array<float>(MemberIterator itor);
+template CMjson::CList<std::string> CMjson::get_second_array<std::string>(MemberIterator itor);
+template CMjson::CList<CMjson> CMjson::get_second_array<CMjson>(MemberIterator itor);
+
+template std::shared_ptr<int> CMjson::get<int>(ValueIterator itr);
+template std::shared_ptr<short> CMjson::get<short>(ValueIterator itr);
+template std::shared_ptr<int8_t> CMjson::get<int8_t>(ValueIterator itr);
+template std::shared_ptr<uint32_t> CMjson::get<uint32_t>(ValueIterator itr);
+template std::shared_ptr<uint16_t> CMjson::get<uint16_t>(ValueIterator itr);
+template std::shared_ptr<uint8_t> CMjson::get<uint8_t>(ValueIterator itr);
+template std::shared_ptr<long> CMjson::get<long>(ValueIterator itr);
+template std::shared_ptr<bool> CMjson::get<bool>(ValueIterator itr);
+template std::shared_ptr<double> CMjson::get<double>(ValueIterator itr);
+template std::shared_ptr<float> CMjson::get<float>(ValueIterator itr);
 
 template std::string CMjson::get<std::string>(std::string &key);
 template int CMjson::get<int>(std::string &key);
@@ -64,12 +88,16 @@ static const char* exception_switch(E_ERROR err_num) {
         return "E_NO_ERROR in json_mng pkg.";
     case E_ERROR::E_HAS_NOT_MEMBER:
         return "E_HAS_NOT_MEMBER in json_mng pkg.";
+    case E_ERROR::E_HAS_NOT_STRING_MEMBER:
+        return "E_HAS_NOT_STRING_MEMBER in json_mng pkg.";
     case E_ERROR::E_ITS_NOT_ARRAY:
         return "E_ITS_NOT_ARRAY in json_mng pkg.";
     case E_ERROR::E_ITS_NOT_SUPPORTED_TYPE:
         return "E_ITS_NOT_SUPPORTED_TYPE in json_mng pkg.";
     case E_ERROR::E_INVALID_VALUE:
         return "E_INVALID_VALUE in json_mng pkg.";
+    case E_ERROR::E_NOT_ALLOCATED_MEMORY:
+        return "E_NOT_ALLOCATED_MEMORY in json_mng pkg.";
     default:
         return "\'not support error_type\' in json_mng pkg.";
     }
@@ -219,56 +247,67 @@ std::shared_ptr<CRawMessage> CMjson::file_read(std::string &json_file_path) {
 
 template<>
 inline std::string CMjson::get_data<std::string>(const char* data) {
+    assert(data != NULL);
     return std::string(data);
 }
 
 template<>
 inline int CMjson::get_data<int>(const char* data) {
+    assert(data != NULL);
     return atoi(data);
 }
 
 template<>
 inline short CMjson::get_data<short>(const char* data) {
+    assert(data != NULL);
     return (short)(atoi(data));
 }
 
 template<>
 inline int8_t CMjson::get_data<int8_t>(const char* data) {
+    assert(data != NULL);
     return (int8_t)(atoi(data));
 }
 
 template<>
 inline uint32_t CMjson::get_data<uint32_t>(const char* data) {
+    assert(data != NULL);
     return static_cast<uint32_t>(std::stoul(std::string(data), nullptr, 10));
 }
 
 template<>
 inline uint16_t CMjson::get_data<uint16_t>(const char* data) {
+    assert(data != NULL);
     return (uint16_t)(atoi(data));
 }
 
 template<>
 inline uint8_t CMjson::get_data<uint8_t>(const char* data) {
+    assert(data != NULL);
     return (uint8_t)(atoi(data));
 }
 
 template<>
 inline long CMjson::get_data<long>(const char* data) {
+    assert(data != NULL);
     return atol(data);
 }
 
 template<>
 inline bool CMjson::get_data<bool>(const char* data) {
+    assert(data != NULL);
     return (bool)(atoi(data));
 }
 
 template<>
 inline double CMjson::get_data<double>(const char* data) {
+    assert(data != NULL);
     return std::stod( std::string(data), nullptr );
 }
 
 template<>
 inline float CMjson::get_data<float>(const char* data) {
+    assert(data != NULL);
     return atof(data);
 }
 
@@ -325,7 +364,7 @@ bool CMjson::parse(const char* msg_const) {
 
 // Definition of Get Functions.
 template <typename T>
-std::shared_ptr<std::list<std::shared_ptr<T>>> CMjson::get_array(std::string &key) {
+CMjson::CList<T> CMjson::get_array(std::string &key) {
     assert(is_there() == true);
     is_array_check(key);
 
@@ -334,24 +373,67 @@ std::shared_ptr<std::list<std::shared_ptr<T>>> CMjson::get_array(std::string &ke
         throw CException(E_ERROR::E_ITS_NOT_SUPPORTED_TYPE);
     }
 
-    std::shared_ptr<std::list<std::shared_ptr<T>>> ret = std::make_shared<std::list<std::shared_ptr<T>>>();
-    rapidjson::Value &target = (*object.get())[key.c_str()];
+    CList<T> ret = std::make_shared<std::list<std::shared_ptr<T>>>();
+    Value_Type &target = (*object.get())[key.c_str()];
     ValueIterator itr = target.Begin();
     for(; itr != target.End(); itr++) {
-        ret->push_back(get<T>(itr));
+        ret->push_back( CMjson::get<T>(itr) );
     }
-
     return ret;
+}
+
+template <typename T>
+std::shared_ptr<T> CMjson::get(ValueIterator itr) {
+    try {
+        auto ret = std::make_shared<T>();
+        if( ret.get() == NULL ) {
+            throw CException(E_ERROR::E_NOT_ALLOCATED_MEMORY);
+        }
+
+        if( itr->IsString() == false ) {
+            throw CException(E_ERROR::E_HAS_NOT_STRING_MEMBER);
+        }
+        *ret = get_data<T>( itr->GetString() );
+        return ret;
+    }
+    catch( const std::exception &e) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
 }
 
 template <>
 std::shared_ptr<std::string> CMjson::get<std::string>(ValueIterator itr) {
+    if( itr->IsString() == false ) {
+        throw CException(E_ERROR::E_HAS_NOT_STRING_MEMBER);
+    }
     return std::make_shared<std::string>(itr->GetString());
 }
 
 template <>
 std::shared_ptr<CMjson> CMjson::get<CMjson>(ValueIterator itr) {
+    if( itr->IsObject() == false ) {
+        throw CException(E_ERROR::E_HAS_NOT_MEMBER);
+    }
     return std::make_shared<CMjson>(itr->GetObject());
+}
+
+template<typename T>
+CMjson::CList<T> CMjson::get_second_array(MemberIterator itor) {
+    auto ret = std::make_shared< std::list<std::shared_ptr<T>> >();
+    if( ret.get() == NULL ) {
+        throw CException(E_ERROR::E_NOT_ALLOCATED_MEMORY);
+    }
+
+    if( itor->value.IsArray() == false ) {
+        throw CException(E_ERROR::E_ITS_NOT_ARRAY);
+    }
+
+    ValueIterator itr = itor->value.Begin();
+    for(; itr != itor->value.End(); itr++) {
+        ret->push_back( CMjson::get<T>(itr) );
+    }
+    return ret;
 }
 
 template <typename T>
@@ -361,7 +443,6 @@ T CMjson::get_second(MemberIterator itor) {
 
     if ( itor->value.IsString() == true ) {
         value = itor->value.GetString();
-        assert(value != NULL);
         ret = get_data<T>(value);
     }
     else {
@@ -378,13 +459,13 @@ std::shared_ptr<CMjson> CMjson::get_second< std::shared_ptr<CMjson> >(MemberIter
 template <typename T>
 T CMjson::get(std::string &key) {
     assert(is_there() == true);
-    rapidjson::Value::MemberIterator target = object->FindMember(key.c_str());
+    MemberIterator target = object->FindMember(key.c_str());
 
     if ( target == object->MemberEnd() ) {
         throw CException(E_ERROR::E_INVALID_VALUE);
     }
     
-    return get_second<T>(target);
+    return CMjson::get_second<T>(target);
 }
 
 

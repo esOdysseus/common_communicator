@@ -55,11 +55,24 @@ void CAppTest::cb_abnormally_quit(const std::exception &e) {
 }
 
 // Client was connected.
-void CAppTest::cb_connected(std::string peer_app_path, std::string peer_pvd_id, bool flag_connect) {
-    cout << "[Debug] CAppTest::cb_connected() is called (CONN: " << flag_connect << ") for " << peer_app_path << "/" << peer_pvd_id << endl;
+void CAppTest::cb_connected(std::string peer_app_path, std::string peer_pvd_id, rcv::ConnectionState flag, const char* from_app, const char* from_pvd) {
+    cout << "[Debug] CAppTest::cb_connected() is called (CONN: " << flag << ") for " << peer_app_path << "/" << peer_pvd_id << endl;
+
+    if( flag == rcv::ConnectionState::E_RESUME_UPDATE ) {
+        if( _m_peer_.app_path == std::string(from_app) && _m_peer_.pvd_id == std::string(from_pvd) ) {
+            _m_peer_.app_path = peer_app_path;
+            _m_peer_.pvd_id = peer_pvd_id;
+            cout << "[Debug] CAppTest::cb_connected() Update Peer-info to " << _m_peer_.app_path << "/" << _m_peer_.pvd_id << endl;
+        }
+    }
 
     if( peer_app_path == _m_peer_.app_path && peer_pvd_id == _m_peer_.pvd_id ) {
-        _m_peer_.flag = flag_connect;
+        if ( flag >= rcv::ConnectionState::E_RESUME ) {
+            _m_peer_.flag = true;
+        }
+        else {
+            _m_peer_.flag = false;
+        }
     }
 }
 

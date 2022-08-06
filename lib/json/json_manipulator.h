@@ -25,7 +25,9 @@ namespace json_mng
         E_HAS_NOT_MEMBER = 1,
         E_ITS_NOT_ARRAY = 2,
         E_ITS_NOT_SUPPORTED_TYPE = 3,
-        E_INVALID_VALUE = 4
+        E_INVALID_VALUE = 4,
+        E_NOT_ALLOCATED_MEMORY = 5,
+        E_HAS_NOT_STRING_MEMBER = 6
     }E_ERROR;
 
     typedef enum E_PARSE {
@@ -35,6 +37,10 @@ namespace json_mng
     } E_PARSE;
 
     class CMjson {
+    public:
+        template< typename T>
+        using CList = std::shared_ptr< std::list<std::shared_ptr<T>> >;
+
     public:
         CMjson(void);
 
@@ -59,6 +65,9 @@ namespace json_mng
         bool is_array(std::string &key);
 
         static std::string get_first(MemberIterator itor);
+
+        template<typename T>
+        static CList<T> get_second_array(MemberIterator itor);
 
         template <typename T=std::string>
         static T get_second(MemberIterator itor);
@@ -97,7 +106,7 @@ namespace json_mng
         }
 
         template <typename T=std::string>
-        std::shared_ptr<std::list<std::shared_ptr<T>>> get_array_member(std::string key) {
+        CList<T> get_array_member(std::string key) {
             validation_check(key);
             return get_array<T>(key);
         }
@@ -126,10 +135,10 @@ namespace json_mng
 
         // get
         template <typename T=std::string>
-        std::shared_ptr<std::list<std::shared_ptr<T>>> get_array(std::string &key);
+        CList<T> get_array(std::string &key);
 
         template <typename T>
-        std::shared_ptr<T> get(ValueIterator itr);
+        static std::shared_ptr<T> get(ValueIterator itr);
 
         template <typename T>
         T get(std::string &key);

@@ -102,15 +102,17 @@ bool IHProtocolInf::handle_initialization(enum_c::ProviderType pvd_type, bool fl
     return false;
 }
 
-void IHProtocolInf::handle_connection(std::string app_path, std::string pvd_path, bool flag) {
+void IHProtocolInf::handle_connection(std::string app_path, std::string pvd_path, 
+                                      rcv::ConnectionState flag, 
+                                      const char* from_app, const char* from_pvd) {
     try {
         AppCallerType& app = get_app_instance();
         assert(app.get() != NULL);
 
-        if( flag == false ) {
+        if( flag == rcv::ConnectionState::E_DISCONNECTED ) {
             m_provider->unregist_connected_peer( cf_alias::IAlias::make_full_path(app_path, pvd_path) );
         }
-        app->get_cb_handlers().cb_connection_handle( app_path, pvd_path, flag );
+        app->get_cb_handlers().cb_connection_handle( app_path, pvd_path, flag, from_app, from_pvd );
     }
     catch (const std::exception &e) {
         LOGERR("%s", e.what());

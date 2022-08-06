@@ -41,17 +41,17 @@ limitations under the License.
 - esOdysseus (email: es.odysseus@gmail.com)
 
 ### Latest Release
-- version 0.3.0 (Date: 2022-02-20)
+- version 0.4.0 (Date: 2022-08-06)
 ---
 ## Installation
 > Please refer following commands.
 > So, you can see the SDK library(libcommunicator.so) in api folder.
 ```shell
 $ cd ${work}
-$ bash ./build.sh -m release -t clean -arch x86
-$ bash ./build.sh -m release -t comm -arch x86
-$ bash ./build.sh -m release -t protocol -arch x86
-$ bash ./build.sh -m release -t example -arch x86
+$ bash ./build.sh -m debug -t clean -arch x86
+$ bash ./build.sh -m debug -t comm -arch x86
+$ bash ./build.sh -m debug -t protocol -arch x86
+$ bash ./build.sh -m debug -t example -arch x86
 ```
 ### Library Dependency
 - glibc     : for socket communication.
@@ -73,44 +73,44 @@ $ bash ./build.sh -m release -t example -arch x86
    > If you want to make a application with common-API, then reference following guide-line.
    ```shell
    $ cd ${work}
-   $ bash ./build.sh -m release -t example -arch x86
-   $ ./release/bin/sample_udp_server ${Path-of-desp-Alias.json} ${Path-of-desp-Protocol.json} &
-   $ ./release/bin/sample_udp_client ${Path-of-desp-Alias.json} ${Path-of-desp-Protocol.json} 
+   $ bash ./build.sh -m debug -t example -arch x86
+   $ ./debug/bin/sample_udp_server ${Path-of-desp-Alias.json} ${Path-of-desp-Protocol.json} &
+   $ ./debug/bin/sample_udp_client ${Path-of-desp-Alias.json} ${Path-of-desp-Protocol.json} 
    ```
-   - Attention : You have to set "LD_LIBRARY_PATH" with "${work}/release/lib".
+   - Attention : You have to set "LD_LIBRARY_PATH" with "${work}/debug/lib".
 
 ### Example (TCP)
 - You can test the communicator SDK library by using following guide-line.
    > If you want to make a application with common-API, then reference following guide-line.
    ```shell
    $ cd ${work}
-   $ bash ./build.sh -m release -t example -arch x86
-   $ ./release/bin/sample_tcp_server ${IP} ${Port} ${Path-of-desp-Alias.json} ${Path-of-desp-Protocol.json} &
-   $ ./release/bin/sample_tcp_client ${Path-of-desp-Alias.json} ${Path-of-desp-Protocol.json} ${Server-IP} ${Server-Port}
+   $ bash ./build.sh -m debug -t example -arch x86
+   $ ./debug/bin/sample_tcp_server ${IP} ${Port} ${Path-of-desp-Alias.json} ${Path-of-desp-Protocol.json} &
+   $ ./debug/bin/sample_tcp_client ${Path-of-desp-Alias.json} ${Path-of-desp-Protocol.json} ${Server-IP} ${Server-Port}
    ```
-   - Attention : You have to set "LD_LIBRARY_PATH" with "${work}/release/lib".
+   - Attention : You have to set "LD_LIBRARY_PATH" with "${work}/debug/lib".
 
 ### Example (UDS with UDP protocol)
 - You can test the communicator SDK library by using following guide-line.
    > If you want to make a application with common-API, then reference following guide-line.
    ```shell
    $ cd ${work}
-   $ bash ./build.sh -m release -t example -arch x86
-   $ ./release/bin/sample_uds_udp_server ${IP} ${Port} ${Path-of-desp-Alias.json} ${Path-of-desp-Protocol.json} &
-   $ ./release/bin/sample_uds_udp_client ${Path-of-desp-Alias.json} ${Path-of-desp-Protocol.json}
+   $ bash ./build.sh -m debug -t example -arch x86
+   $ ./debug/bin/sample_uds_udp_server ${IP} ${Port} ${Path-of-desp-Alias.json} ${Path-of-desp-Protocol.json} &
+   $ ./debug/bin/sample_uds_udp_client ${Path-of-desp-Alias.json} ${Path-of-desp-Protocol.json}
    ```
-   - Attention : You have to set "LD_LIBRARY_PATH" with "${work}/release/lib".
+   - Attention : You have to set "LD_LIBRARY_PATH" with "${work}/debug/lib".
 
 ### Example (UDS with TCP protocol)
 - You can test the communicator SDK library by using following guide-line.
    > If you want to make a application with common-API, then reference following guide-line.
    ```shell
    $ cd ${work}
-   $ bash ./build.sh -m release -t example -arch x86
-   $ ./release/bin/sample_uds_tcp_server ${Path-of-desp-Alias.json} ${Path-of-desp-Protocol.json} &
-   $ ./release/bin/sample_uds_tcp_client ${Path-of-desp-Alias.json} ${Path-of-desp-Protocol.json}
+   $ bash ./build.sh -m debug -t example -arch x86
+   $ ./debug/bin/sample_uds_tcp_server ${Path-of-desp-Alias.json} ${Path-of-desp-Protocol.json} &
+   $ ./debug/bin/sample_uds_tcp_client ${Path-of-desp-Alias.json} ${Path-of-desp-Protocol.json}
    ```
-   - Attention : You have to set "LD_LIBRARY_PATH" with "${work}/release/lib".
+   - Attention : You have to set "LD_LIBRARY_PATH" with "${work}/debug/lib".
 
 ---
 ### TBD-list

@@ -41,7 +41,7 @@ IProtocolInf::~IProtocolInf(void) {
 }
 
 std::string IProtocolInf::who_is_owner( void ) {
-    LOGW("Dumy protocol for Empty or NULL desp_protocol.json file.");
+    LOGW("Protocol is Empty or NULL in protocol-Json file.");
     return std::string();
 }
 
@@ -207,7 +207,7 @@ bool IProtocolInf::unpack_recurcive(const void* msg_raw, size_t msg_size) {
 // fragment message. & make some segments.
 bool IProtocolInf::pack(const void* msg_raw, size_t msg_size, enum_c::ProviderType provider_type,
                         std::string &&from_app) {
-    LOGW("Dumy protocol for Empty or NULL desp_protocol.json file.");
+    LOGW("Protocol is Empty or NULL in protocol-Json file.");
     assert(msg_raw != NULL);
     assert(msg_size > 0);
     bool res = false;
@@ -229,7 +229,7 @@ bool IProtocolInf::pack(const void* msg_raw, size_t msg_size, enum_c::ProviderTy
 
 // classify segment. & extract payloads. & combine payloads. => make One-payload.
 bool IProtocolInf::unpack(const void* msg_raw, size_t msg_size) {
-    LOGW("Dumy protocol for Empty or NULL desp_protocol.json file.");
+    LOGW("Protocol is Empty or NULL in protocol-Json file.");
     assert(msg_raw != NULL);
     assert(msg_size > 0);
     bool res = false;
@@ -248,7 +248,7 @@ bool IProtocolInf::unpack(const void* msg_raw, size_t msg_size) {
 }
 
 void IProtocolInf::clean_head_tail(void) {
-    LOGW("Dumy protocol for Empty or NULL desp_protocol.json file.");
+    LOGW("Protocol is Empty or NULL in protocol-Json file.");
 }
 
 bool IProtocolInf::set_property_raw(const std::string key, const std::string value) {
@@ -257,7 +257,7 @@ bool IProtocolInf::set_property_raw(const std::string key, const std::string val
 }
 
 size_t IProtocolInf::get_msg_size(const void* data, size_t data_size) {
-    LOGW("Dumy protocol for Empty or NULL desp_protocol.json file.");
+    LOGW("Protocol is Empty or NULL in protocol-Json file.");
     return data_size;
 }
 

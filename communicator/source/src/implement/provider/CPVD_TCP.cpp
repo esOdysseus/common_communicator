@@ -15,6 +15,7 @@
 #include <errno.h>
 
 #include <logger.h>
+#include <Enum_common.h>
 #include <CRawMessage.h>
 #include <CConfigAliases.h>
 #include <provider/CPVD_TCP.h>
@@ -605,7 +606,9 @@ void CPVD_TCP<ADDR_TYPE>::run_receiver(std::shared_ptr<cf_alias::IAliasPVD> peer
             }
 
             // remove old peer-alias
-            hHprotocol->handle_connection(peer_app, peer_pvd, false);
+            peer_app = peer_alias->path_parent();
+            peer_pvd = peer_alias->name();
+            hHprotocol->handle_connection(peer_app, peer_pvd, rcv::ConnectionState::E_SUSPEND);
             unregist_connected_peer(peer_full_path);
             _mm_ali4sock_.remove(peer_full_path);
 
@@ -614,7 +617,7 @@ void CPVD_TCP<ADDR_TYPE>::run_receiver(std::shared_ptr<cf_alias::IAliasPVD> peer
             peer_alias->update( new_app, new_pvd );
             _mm_ali4sock_.insert(peer_alias, addr, is_new, true);
             assert( regist_connected_peer( peer_alias ) == true );
-            hHprotocol->handle_connection(new_app, new_pvd, true);
+            hHprotocol->handle_connection(new_app, new_pvd, rcv::ConnectionState::E_RESUME_UPDATE, peer_app.data(), peer_pvd.data());
         }
         catch( const std::exception& e ) {
             LOGERR("%s", e.what());
@@ -629,7 +632,7 @@ void CPVD_TCP<ADDR_TYPE>::run_receiver(std::shared_ptr<cf_alias::IAliasPVD> peer
 
         // trig connected call-back to app.
         assert( regist_connected_peer( peer_alias ) == true );
-        hHprotocol->handle_connection(peer_app, peer_pvd, true);
+        hHprotocol->handle_connection(peer_app, peer_pvd, rcv::ConnectionState::E_CONNECTED);
 
         // Start receiver
         LOGD("Start MSG-receiver.");
@@ -664,19 +667,19 @@ void CPVD_TCP<ADDR_TYPE>::run_receiver(std::shared_ptr<cf_alias::IAliasPVD> peer
             msg_raw.reset();
         }
 
-        // trig connected call-back to app.
-        hHprotocol->handle_connection(peer_alias->path_parent(), peer_alias->name(), false);    
+        // trig disconnected call-back to app.
+        hHprotocol->handle_connection(peer_alias->path_parent(), peer_alias->name(), rcv::ConnectionState::E_DISCONNECTED);    
     }
     catch(const std::range_error &e) {  // occure when connection close by peer.
         LOGW("%s", e.what());
-        // trig connected call-back to app.
-        hHprotocol->handle_connection(peer_alias->path_parent(), peer_alias->name(), false);
+        // trig disconnected call-back to app.
+        hHprotocol->handle_connection(peer_alias->path_parent(), peer_alias->name(), rcv::ConnectionState::E_DISCONNECTED);
     }
     catch(const std::exception &e) {
         LOGERR("%s", e.what());
         
-        // trig connected call-back to app.
-        hHprotocol->handle_connection(peer_alias->path_parent(), peer_alias->name(), false);
+        // trig disconnected call-back to app.
+        hHprotocol->handle_connection(peer_alias->path_parent(), peer_alias->name(), rcv::ConnectionState::E_DISCONNECTED);
         hHprotocol->handle_unintended_quit(e);
     }
 

@@ -3,7 +3,7 @@ CUR_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 ROOT_PATH=${CUR_DIR}/../..
 
 # set custom variables
-BUILD_MODE=release
+BUILD_MODE=debug
 TARGET=sample_uds_tcp_client
 DESP_PROTOCOL=${ROOT_PATH}/${BUILD_MODE}/config/desp_BigEndian_protocol.json
 DESP_ALIAS=${ROOT_PATH}/${BUILD_MODE}/config/desp_alias.json

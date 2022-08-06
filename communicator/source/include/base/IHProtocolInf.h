@@ -35,7 +35,6 @@ public:
     using TfuncUpdator = std::function<void(std::string&&)>;
 
 public:
-
     IHProtocolInf(std::shared_ptr<IPVDInf>& provider, AppCallerType &app,
                   std::shared_ptr<cf_proto::CConfigProtocols> &proto_manager);
 
@@ -43,7 +42,7 @@ public:
 
     bool handle_initialization(enum_c::ProviderType pvd_type, bool flag);
 
-    void handle_connection(std::string app_path, std::string pvd_path, bool flag);
+    void handle_connection(std::string app_path, std::string pvd_path, rcv::ConnectionState flag, const char* from_app=NULL, const char* from_pvd=NULL);
 
     bool handle_protocol_chain(RawMsgType msg_raw, std::shared_ptr<TfuncUpdator> update_peer_alias=nullptr);
 

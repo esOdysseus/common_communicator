@@ -45,7 +45,7 @@ public:
 
     void cb_initialization(enum_c::ProviderType provider_type, bool flag_init);
 
-    void cb_connected(std::string peer_app_path, std::string peer_pvd_id, bool flag_connect);
+    void cb_connected(std::string peer_app_path, std::string peer_pvd_id, rcv::ConnectionState flag, const char* from_app, const char* from_pvd);
 
     void cb_receive_msg_handle(std::string peer_app_path, std::string peer_pvd_path, std::shared_ptr<payload::CPayload> payload);
 

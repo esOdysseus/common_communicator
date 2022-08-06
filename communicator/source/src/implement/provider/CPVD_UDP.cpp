@@ -16,6 +16,7 @@
 #include <memory>
 
 #include <logger.h>
+#include <Enum_common.h>
 #include <CRawMessage.h>
 #include <provider/CPVD_UDP.h>
 #include <provider/CHProtoBaseLan.h>
@@ -171,7 +172,7 @@ int CPVD_UDP<ADDR_TYPE>::make_connection(std::string peer_full_path) {
             assert( _mm_ali4addr_.insert(peer_alias, addr, is_new, true) == true );
             if( is_new == true ) {
                 // trig connected call-back to app.
-                hHprotocol->handle_connection(peer_alias->path_parent(), peer_alias->name(), true);
+                hHprotocol->handle_connection(peer_alias->path_parent(), peer_alias->name(), rcv::ConnectionState::E_CONNECTED);
                 assert( regist_connected_peer( peer_alias ) == true );
             }
             return true;
@@ -195,7 +196,7 @@ void CPVD_UDP<ADDR_TYPE>::disconnection(std::string app_path, std::string pvd_id
 
             if ( had_connected ) {
                 // trig connected call-back to app.
-                hHprotocol->handle_connection(app_path, pvd_id, false);
+                hHprotocol->handle_connection(app_path, pvd_id, rcv::ConnectionState::E_DISCONNECTED);
             }
         }
     }
@@ -556,7 +557,7 @@ void CPVD_UDP<ADDR_TYPE>::run_receiver(std::shared_ptr<cf_alias::IAliasPVD> peer
             if( msg_raw->get_msg_size() > 0 ) {
                 if( is_new == true ) {
                     // trig connected call-back to app.
-                    hHprotocol->handle_connection(msg_raw->get_source_app(), msg_raw->get_source_pvd(), true);
+                    hHprotocol->handle_connection(msg_raw->get_source_app(), msg_raw->get_source_pvd(), rcv::ConnectionState::E_CONNECTED);
                 }
                 // trig handling of protocol & Call-back to app
                 assert( hHprotocol->handle_protocol_chain(msg_raw) == true );

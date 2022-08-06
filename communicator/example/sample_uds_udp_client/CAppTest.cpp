@@ -47,8 +47,12 @@ void CAppTest::cb_abnormally_quit(const std::exception &e) {
 }
 
 // Client was connected.
-void CAppTest::cb_connected(std::string peer_app_path, std::string peer_pvd_id, bool flag_connect) {
-    cout << "[Debug] CAppTest::cb_connected() is called (CONN: " << flag_connect << ") for " << peer_app_path << "/" << peer_pvd_id << endl;
+void CAppTest::cb_connected(std::string peer_app_path, std::string peer_pvd_id, rcv::ConnectionState flag, const char* from_app, const char* from_pvd) {
+    cout << "[Debug] CAppTest::cb_connected() is called (CONN: " << flag << ") for " << peer_app_path << "/" << peer_pvd_id << endl;
+
+    if( flag == rcv::ConnectionState::E_RESUME_UPDATE ) {
+        cout << "[Debug] CAppTest::cb_connected() Need changing from " << std::string(from_app) << "/" << std::string(from_pvd) << " to " << peer_app_path << "/" << peer_pvd_id << endl;
+    }
 }
 
 // We receved a message from client_id.

@@ -48,5 +48,16 @@ namespace payload
     } E_PAYLOAD_FLAG;
 }
 
+namespace rcv
+{
+    typedef enum ConnectionState {
+        E_DISCONNECTED = 0,
+        E_SUSPEND = 1,
+        E_RESUME = 2,
+        E_RESUME_UPDATE = 3,
+        E_CONNECTED = 4
+    } ConnectionState;
+}
+
 
 #endif // ENUM_COMMON_H_
