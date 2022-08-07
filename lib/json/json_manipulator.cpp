@@ -542,6 +542,43 @@ bool CMjson::update<std::string>(std::string &key, std::string value) {
     return false;
 }
 
+template <>
+bool CMjson::update<CMjson::CList<std::string>>(std::string& key, CList<std::string> value) {
+    Value_Type temp;
+
+    try {
+        auto& val = temp.SetArray();
+        for( auto itr=value->begin(); itr != value->end(); itr++ ) {
+            Value_Type ele((*itr)->data(), manipulator.GetAllocator());
+            val.PushBack( ele, manipulator.GetAllocator() );
+        }
+        return update_value(key, val);
+    }
+    catch ( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+    return false;
+}
+
+template <>
+bool CMjson::update<CMjson::CList<CMjson>>(std::string& key, CList<CMjson> value) {
+    Value_Type temp;
+
+    try {
+        auto& val = temp.SetArray();
+        for( auto itr=value->begin(); itr != value->end(); itr++ ) {
+            val.PushBack( *((*itr)->get_object()), manipulator.GetAllocator() );
+        }
+        return update_value(key, val);
+    }
+    catch ( const std::exception &e ) {
+        LOGERR("%s", e.what());
+        throw e;
+    }
+    return false;
+}
+
 template <typename T>
 bool CMjson::update(std::string &key, T value) {
     Value_Type temp;
